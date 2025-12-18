@@ -114,8 +114,7 @@
           };
           localStorage.setItem(CURRENT_MANAGER_KEY, JSON.stringify(loginUserInfo));
 
-          // 友好提示 + 跳轉後台
-          alert(`🎉 登入成功！歡迎 ${validManager.fleetName} - ${validManager.managerName}`);
+          // 移除提示彈窗，直接跳轉後台
           window.location.href = DASHBOARD_URL;
         } else {
           // 登錄失敗：模糊提示（避免洩露帳號是否存在）
@@ -150,12 +149,11 @@
       }
     });
 
-    // 3. 頁面加載時：檢查是否已登入，避免重複登錄
+    // 3. 頁面加載時：檢查是否已登入，避免重複登錄（移除提示彈窗，直接跳轉）
     window.addEventListener('load', function() {
       const currentManager = JSON.parse(localStorage.getItem(CURRENT_MANAGER_KEY) || 'null');
       if (currentManager) {
-        // 已登入：直接跳轉後台
-        alert(`ℹ️ 檢測到您已登入：${currentManager.fleetName} - ${currentManager.managerName}\n即將跳轉到管理後台`);
+        // 已登入：直接跳轉後台，不彈提示
         window.location.href = DASHBOARD_URL;
       }
     });
