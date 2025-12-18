@@ -1,542 +1,231 @@
-<<<<<<< HEAD
+<!-- passenger/passenger-order.html（修改後） -->
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <title>乘客端 - 立即下單</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>乘客訂車 - 多元化乘車管理系統</title>
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      font-family: "Noto Sans TC", sans-serif;
+      font-family: 'Noto Sans TC', sans-serif;
     }
     body {
-      background-color: #f5f5f9;
-      padding: 20px 0;
-    }
-    .container {
-      max-width: 450px;
-      margin: 0 auto;
-      padding: 0 20px;
-    }
-    .header {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-    .header h1 {
-      font-size: 28px;
-      color: #1e293b;
-      margin-bottom: 8px;
-    }
-    .header p {
-      color: #6b7280;
-      font-size: 16px;
+      background: #f5f5f5;
+      padding: 2rem 1rem;
     }
     .order-card {
+      max-width: 600px;
+      margin: 0 auto;
       background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-      padding: 28px;
-    }
-    .fee-notice {
-      background-color: #f0f9ff;
+      padding: 2rem;
       border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 24px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
-    .fee-notice h3 {
-      font-size: 16px;
-      color: #083344;
-      margin-bottom: 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .fee-notice h3 svg {
-      width: 20px;
-      height: 20px;
-      fill: #3b82f6;
-    }
-    .fee-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-    .fee-item {
-      font-size: 14px;
-      color: #083344;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+    .order-card h1 {
+      color: #333;
+      margin-bottom: 1.5rem;
+      font-size: 1.5rem;
     }
     .form-group {
-      margin-bottom: 22px;
+      margin-bottom: 1rem;
     }
-    .form-label {
+    .form-group label {
       display: block;
-      margin-bottom: 8px;
-      color: #4b5563;
-      font-size: 16px;
+      margin-bottom: 0.5rem;
+      color: #666;
       font-weight: 500;
     }
-    .form-input {
+    .form-control {
       width: 100%;
-      padding: 14px 16px;
-      border: 1px solid #d1d5db;
-      border-radius: 8px;
-      font-size: 16px;
-      transition: all 0.2s;
+      padding: 0.8rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1rem;
     }
-    .form-input:focus {
-      outline: none;
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-    .submit-btn {
+    .btn-submit {
       width: 100%;
-      padding: 16px;
-      background-color: #22c55e;
+      padding: 0.8rem;
+      background: #228B22;
       color: white;
       border: none;
-      border-radius: 8px;
-      font-size: 18px;
-      font-weight: 600;
+      border-radius: 4px;
+      font-size: 1rem;
       cursor: pointer;
-      transition: background-color 0.2s;
+      margin-top: 1rem;
     }
-    .submit-btn:hover {
-      background-color: #16a34a;
+    .success-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
     }
-    .back-link {
-      display: block;
+    .modal-content {
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
       text-align: center;
-      margin-top: 18px;
-      color: #3b82f6;
-      text-decoration: none;
-      font-size: 16px;
+      max-width: 400px;
+      width: 90%;
     }
-    .back-link:hover {
-      text-decoration: underline;
+    .modal-content h2 {
+      color: #228B22;
+      margin-bottom: 1rem;
+    }
+    .modal-content p {
+      margin-bottom: 1.5rem;
+      color: #666;
+    }
+    .btn-confirm {
+      padding: 0.6rem 1.5rem;
+      background: #228B22;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>立即下單</h1>
-      <p>填寫行程資訊，司機將盡快接單</p>
-    </div>
-
-    <div class="order-card">
-      <!-- 费用说明（同步管理员配置） -->
-      <div class="fee-notice">
-        <h3>
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
-          </svg>
-          費用說明（管理員配置）
-        </h3>
-        <div class="fee-list">
-          <div class="fee-item">• 起步價：<span id="startPrice">10</span> 元</div>
-          <div class="fee-item">• 每公里：<span id="distanceFee">2.5</span> 元</div>
-          <div class="fee-item">• 跳表費：<span id="jumpFee">1.5</span> 元/次</div>
-        </div>
+  <div class="order-card">
+    <h1>乘客訂車表單</h1>
+    <form id="passenger-order-form">
+      <div class="form-group">
+        <label for="passenger-name">乘客姓名</label>
+        <input type="text" id="passenger-name" class="form-control" placeholder="請輸入您的姓名" required>
       </div>
+      <div class="form-group">
+        <label for="passenger-phone">聯繫電話</label>
+        <input type="tel" id="passenger-phone" class="form-control" placeholder="請輸入您的手機號碼" required>
+      </div>
+      <div class="form-group">
+        <label for="pickup-location">上車地點</label>
+        <input type="text" id="pickup-location" class="form-control" placeholder="請輸入上車地點（如：台北車站1號出口）" required>
+      </div>
+      <div class="form-group">
+        <label for="dropoff-location">下車地點</label>
+        <input type="text" id="dropoff-location" class="form-control" placeholder="請輸入下車地點（如：台北101）" required>
+      </div>
+      <div class="form-group">
+        <label for="order-time">預計乘車時間</label>
+        <input type="datetime-local" id="order-time" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label for="passenger-count">乘客人數</label>
+        <select id="passenger-count" class="form-control" required>
+          <option value="1">1人</option>
+          <option value="2">2人</option>
+          <option value="3">3人</option>
+          <option value="4">4人</option>
+          <option value="5+">5人以上</option>
+        </select>
+      </div>
+      <button type="submit" class="btn-submit">提交訂單</button>
+    </form>
+  </div>
 
-      <!-- 下单表单 -->
-      <form id="passengerOrderForm">
-        <div class="form-group">
-          <label class="form-label">乘客姓名</label>
-          <input type="text" class="form-input" id="passengerName" placeholder="請輸入您的姓名" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label">聯絡電話</label>
-          <input type="tel" class="form-input" id="phone" placeholder="請輸入聯絡電話" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label">出發地</label>
-          <input type="text" class="form-input" id="startPoint" placeholder="請輸入出發地（例如：台北車站）" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label">目的地</label>
-          <input type="text" class="form-input" id="endPoint" placeholder="請輸入目的地（例如：101大樓）" required>
-        </div>
-        <button type="submit" class="submit-btn">確認下單</button>
-        <a href="../index.html" class="back-link">返回總入口</a>
-      </form>
+  <!-- 提交成功彈窗 -->
+  <div class="success-modal" id="success-modal">
+    <div class="modal-content">
+      <h2>訂單提交成功！</h2>
+      <p>您的訂單已發送，司機將盡快接單，請保持電話暢通。</p>
+      <p>訂單編號：<span id="order-number"></span></p>
+      <button class="btn-confirm" id="confirm-btn">確認</button>
     </div>
   </div>
 
-  <script src="../js/auth.js"></script>
-  <script src="../js/common.js"></script>
   <script>
-    window.onload = () => {
-      if (window.Auth && !Auth.requireActiveMember({ redirect: '../index.html' })) return;
-      const settings = TaxiSystem.getSettings();
-      document.getElementById('startPrice').textContent = settings.startPrice;
-      document.getElementById('distanceFee').textContent = settings.distanceFee;
-      document.getElementById('jumpFee').textContent = settings.jumpFee;
-    };
+    // 訂單數據儲存鍵名（與司機訂單頁同步）
+    const DRIVER_ORDER_KEY = 'driverOrders';
+    const PASSENGER_ORDER_KEY = 'passengerOrders';
 
-    // 核心新增：過濾不可接單的司機（僅分配訂單給活躍司機）
-    function getAvailableDrivers() {
-      // 1. 讀取所有透過 member-system 新增的會員數據
-      const memberSystemData = localStorage.getItem('memberSystemMembers');
-      if (!memberSystemData) return [];
+    const orderForm = document.getElementById('passenger-order-form');
+    const successModal = document.getElementById('success-modal');
+    const orderNumberEl = document.getElementById('order-number');
+    const confirmBtn = document.getElementById('confirm-btn');
 
-      try {
-        const allMembers = JSON.parse(memberSystemData);
-        // 2. 讀取不可接單的車隊/司機ID列表
-        const inactiveFleets = JSON.parse(localStorage.getItem('inactiveFleets') || '[]');
-
-        // 3. 過濾條件：
-        // - 角色為司機（driver）
-        // - 帳號狀態為活躍（active）
-        // - 可接單標記為true（canReceiveOrders）
-        // - 所屬車隊未被停權（fleetId不在inactiveFleets中）
-        const availableDrivers = allMembers.filter(member => 
-          member.role === 'driver' &&
-          member.status === 'active' &&
-          member.canReceiveOrders === true &&
-          !inactiveFleets.includes(member.fleetId)
-        );
-
-        return availableDrivers;
-      } catch (error) {
-        console.error('獲取可用司機出錯：', error);
-        return [];
-      }
+    // 生成訂單編號
+    function generateOrderNumber() {
+      const date = new Date();
+      const year = date.getFullYear().toString().slice(-2);
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+      return `ORD${year}${month}${day}${random}`;
     }
 
-    document.getElementById('passengerOrderForm').addEventListener('submit', (e) => {
-      e.preventDefault(); // 阻止表单默认提交
-      if (window.Auth && !Auth.requireActiveMember({})) return;
-
-      // 收集表单数据
-      const orderInfo = {
-        passengerName: document.getElementById('passengerName').value.trim(),
-        phone: document.getElementById('phone').value.trim(),
-        start: document.getElementById('startPoint').value.trim(),
-        end: document.getElementById('endPoint').value.trim()
+    // 提交訂單
+    orderForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      // 獲取表單數據
+      const passengerName = document.getElementById('passenger-name').value.trim();
+      const passengerPhone = document.getElementById('passenger-phone').value.trim();
+      const pickupLocation = document.getElementById('pickup-location').value.trim();
+      const dropoffLocation = document.getElementById('dropoff-location').value.trim();
+      const orderTime = document.getElementById('order-time').value;
+      const passengerCount = document.getElementById('passenger-count').value;
+      
+      // 生成訂單編號
+      const orderNumber = generateOrderNumber();
+      
+      // 計算預計金額（簡易模擬）
+      const estimatedAmount = Math.floor(Math.random() * 200) + 150; // 150-350元隨機
+      
+      // 組裝訂單數據
+      const orderData = {
+        id: orderNumber,
+        passengerName: passengerName,
+        passengerPhone: passengerPhone,
+        pickup: pickupLocation,
+        dropoff: dropoffLocation,
+        orderTime: orderTime,
+        passengerCount: passengerCount,
+        amount: estimatedAmount,
+        status: 'pending', // pending:待接單, active:進行中, completed:已完成
+        createTime: new Date().toLocaleString('zh-TW')
       };
+      
+      // 1. 儲存到乘客訂單記錄
+      const passengerOrders = JSON.parse(localStorage.getItem(PASSENGER_ORDER_KEY) || '[]');
+      passengerOrders.push(orderData);
+      localStorage.setItem(PASSENGER_ORDER_KEY, JSON.stringify(passengerOrders));
+      
+      // 2. 同步到司機訂單池（供司機查看接單）
+      const driverOrders = JSON.parse(localStorage.getItem(DRIVER_ORDER_KEY) || '[]');
+      driverOrders.push(orderData);
+      localStorage.setItem(DRIVER_ORDER_KEY, JSON.stringify(driverOrders));
+      
+      // 顯示成功彈窗
+      orderNumberEl.textContent = orderNumber;
+      successModal.style.display = 'flex';
+      
+      // 重置表單
+      orderForm.reset();
+    });
 
-      // 表单验证
-      if (!orderInfo.passengerName) {
-        alert('請填寫乘客姓名！');
-        return;
-      }
-      if (!orderInfo.phone) {
-        alert('請填寫聯絡電話！');
-        return;
-      }
-      if (!orderInfo.start) {
-        alert('請填寫出發地！');
-        return;
-      }
-      if (!orderInfo.end) {
-        alert('請填寫目的地！');
-        return;
-      }
+    // 關閉成功彈窗
+    confirmBtn.addEventListener('click', () => {
+      successModal.style.display = 'none';
+      // 可選擇跳轉回乘客首頁
+      // window.location.href = 'passenger-index.html';
+    });
 
-      // 关键新增：下单前检查可用司机数量
-      const availableDrivers = getAvailableDrivers();
-      if (availableDrivers.length === 0) {
-        alert('暫無可用司機（可能所有司機或所屬車隊已停權），請稍後再試！');
-        return;
-      }
-
-      // 调用common.js的方法下单
-      const newOrder = TaxiSystem.passengerCreateOrder(orderInfo);
-
-      // 优化提示：显示分配的可用司机信息（可选，增强用户体验）
-      const assignedDriver = availableDrivers[Math.floor(Math.random() * availableDrivers.length)]; // 随机分配给可用司机
-      const driverInfo = assignedDriver ? `分配司機：${assignedDriver.account}（車隊ID：${assignedDriver.fleetId}）` : '司機將盡快搶單';
-
-      // 下单成功提示
-      alert(`
-        下單成功！
-        訂單ID：${newOrder.id}
-        行程：${newOrder.start} → ${newOrder.end}
-        ${driverInfo}
-        請保持電話暢通~
-      `);
-
-      // 重置表单
-      document.getElementById('passengerOrderForm').reset();
+    // 初始化：設置預設時間為當前時間+30分鐘
+    window.addEventListener('load', () => {
+      const now = new Date();
+      now.setMinutes(now.getMinutes() + 30);
+      const defaultTime = now.toISOString().slice(0, 16);
+      document.getElementById('order-time').value = defaultTime;
     });
   </script>
 </body>
-=======
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-  <meta charset="UTF-8">
-  <title>乘客端 - 立即下單</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: "Noto Sans TC", sans-serif;
-    }
-    body {
-      background-color: #f5f5f9;
-      padding: 20px 0;
-    }
-    .container {
-      max-width: 450px;
-      margin: 0 auto;
-      padding: 0 20px;
-    }
-    .header {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-    .header h1 {
-      font-size: 28px;
-      color: #1e293b;
-      margin-bottom: 8px;
-    }
-    .header p {
-      color: #6b7280;
-      font-size: 16px;
-    }
-    .order-card {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-      padding: 28px;
-    }
-    .fee-notice {
-      background-color: #f0f9ff;
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 24px;
-    }
-    .fee-notice h3 {
-      font-size: 16px;
-      color: #083344;
-      margin-bottom: 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .fee-notice h3 svg {
-      width: 20px;
-      height: 20px;
-      fill: #3b82f6;
-    }
-    .fee-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-    .fee-item {
-      font-size: 14px;
-      color: #083344;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .form-group {
-      margin-bottom: 22px;
-    }
-    .form-label {
-      display: block;
-      margin-bottom: 8px;
-      color: #4b5563;
-      font-size: 16px;
-      font-weight: 500;
-    }
-    .form-input {
-      width: 100%;
-      padding: 14px 16px;
-      border: 1px solid #d1d5db;
-      border-radius: 8px;
-      font-size: 16px;
-      transition: all 0.2s;
-    }
-    .form-input:focus {
-      outline: none;
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-    .submit-btn {
-      width: 100%;
-      padding: 16px;
-      background-color: #22c55e;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 18px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-    .submit-btn:hover {
-      background-color: #16a34a;
-    }
-    .back-link {
-      display: block;
-      text-align: center;
-      margin-top: 18px;
-      color: #3b82f6;
-      text-decoration: none;
-      font-size: 16px;
-    }
-    .back-link:hover {
-      text-decoration: underline;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>立即下單</h1>
-      <p>填寫行程資訊，司機將盡快接單</p>
-    </div>
-
-    <div class="order-card">
-      <!-- 费用说明（同步管理员配置） -->
-      <div class="fee-notice">
-        <h3>
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
-          </svg>
-          費用說明（管理員配置）
-        </h3>
-        <div class="fee-list">
-          <div class="fee-item">• 起步價：<span id="startPrice">10</span> 元</div>
-          <div class="fee-item">• 每公里：<span id="distanceFee">2.5</span> 元</div>
-          <div class="fee-item">• 跳表費：<span id="jumpFee">1.5</span> 元/次</div>
-        </div>
-      </div>
-
-      <!-- 下单表单 -->
-      <form id="passengerOrderForm">
-        <div class="form-group">
-          <label class="form-label">乘客姓名</label>
-          <input type="text" class="form-input" id="passengerName" placeholder="請輸入您的姓名" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label">聯絡電話</label>
-          <input type="tel" class="form-input" id="phone" placeholder="請輸入聯絡電話" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label">出發地</label>
-          <input type="text" class="form-input" id="startPoint" placeholder="請輸入出發地（例如：台北車站）" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label">目的地</label>
-          <input type="text" class="form-input" id="endPoint" placeholder="請輸入目的地（例如：101大樓）" required>
-        </div>
-        <button type="submit" class="submit-btn">確認下單</button>
-        <a href="../index.html" class="back-link">返回總入口</a>
-      </form>
-    </div>
-  </div>
-
-  <script src="../js/auth.js"></script>
-  <script src="../js/common.js"></script>
-  <script>
-    window.onload = () => {
-      if (window.Auth && !Auth.requireActiveMember({ redirect: '../index.html' })) return;
-      const settings = TaxiSystem.getSettings();
-      document.getElementById('startPrice').textContent = settings.startPrice;
-      document.getElementById('distanceFee').textContent = settings.distanceFee;
-      document.getElementById('jumpFee').textContent = settings.jumpFee;
-    };
-
-    // 核心新增：過濾不可接單的司機（僅分配訂單給活躍司機）
-    function getAvailableDrivers() {
-      // 1. 讀取所有透過 member-system 新增的會員數據
-      const memberSystemData = localStorage.getItem('memberSystemMembers');
-      if (!memberSystemData) return [];
-
-      try {
-        const allMembers = JSON.parse(memberSystemData);
-        // 2. 讀取不可接單的車隊/司機ID列表
-        const inactiveFleets = JSON.parse(localStorage.getItem('inactiveFleets') || '[]');
-
-        // 3. 過濾條件：
-        // - 角色為司機（driver）
-        // - 帳號狀態為活躍（active）
-        // - 可接單標記為true（canReceiveOrders）
-        // - 所屬車隊未被停權（fleetId不在inactiveFleets中）
-        const availableDrivers = allMembers.filter(member => 
-          member.role === 'driver' &&
-          member.status === 'active' &&
-          member.canReceiveOrders === true &&
-          !inactiveFleets.includes(member.fleetId)
-        );
-
-        return availableDrivers;
-      } catch (error) {
-        console.error('獲取可用司機出錯：', error);
-        return [];
-      }
-    }
-
-    document.getElementById('passengerOrderForm').addEventListener('submit', (e) => {
-      e.preventDefault(); // 阻止表单默认提交
-      if (window.Auth && !Auth.requireActiveMember({})) return;
-
-      // 收集表单数据
-      const orderInfo = {
-        passengerName: document.getElementById('passengerName').value.trim(),
-        phone: document.getElementById('phone').value.trim(),
-        start: document.getElementById('startPoint').value.trim(),
-        end: document.getElementById('endPoint').value.trim()
-      };
-
-      // 表单验证
-      if (!orderInfo.passengerName) {
-        alert('請填寫乘客姓名！');
-        return;
-      }
-      if (!orderInfo.phone) {
-        alert('請填寫聯絡電話！');
-        return;
-      }
-      if (!orderInfo.start) {
-        alert('請填寫出發地！');
-        return;
-      }
-      if (!orderInfo.end) {
-        alert('請填寫目的地！');
-        return;
-      }
-
-      // 关键新增：下单前检查可用司机数量
-      const availableDrivers = getAvailableDrivers();
-      if (availableDrivers.length === 0) {
-        alert('暫無可用司機（可能所有司機或所屬車隊已停權），請稍後再試！');
-        return;
-      }
-
-      // 调用common.js的方法下单
-      const newOrder = TaxiSystem.passengerCreateOrder(orderInfo);
-
-      // 优化提示：显示分配的可用司机信息（可选，增强用户体验）
-      const assignedDriver = availableDrivers[Math.floor(Math.random() * availableDrivers.length)]; // 随机分配给可用司机
-      const driverInfo = assignedDriver ? `分配司機：${assignedDriver.account}（車隊ID：${assignedDriver.fleetId}）` : '司機將盡快搶單';
-
-      // 下单成功提示
-      alert(`
-        下單成功！
-        訂單ID：${newOrder.id}
-        行程：${newOrder.start} → ${newOrder.end}
-        ${driverInfo}
-        請保持電話暢通~
-      `);
-
-      // 重置表单
-      document.getElementById('passengerOrderForm').reset();
-    });
-  </script>
-</body>
->>>>>>> 352392ca9f8cf542e966877407b0fdb95cd821aa
 </html>
