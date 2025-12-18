@@ -3,317 +3,423 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LINE多元化搭車 - 訂單詳情</title>
+    <title>訂單詳情 - 多元化乘車管理系統</title>
+    <!-- 引入 Tailwind CSS 簡化樣式 -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Font Awesome 圖標 -->
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    <!-- 地圖SDK -->
-    <script src='https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js'></script>
-    <link href='https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css' rel='stylesheet'>
     <style>
-        /* 地圖容器樣式 */
-        #orderMap {
-            width: 100%;
-            height: 280px;
-            border-radius: 0.75rem;
-            overflow: hidden;
-            border: 1px solid #e5e7eb;
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
         }
-        /* 動畫效果 */
-        .btn-hover {
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        .detail-card {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
-        }
-        .btn-hover:hover {
-            transform: translateY(-2px);
-        }
-        /* 修復地圖控制按鈕樣式衝突 */
-        .mapboxgl-ctrl {
-            z-index: 10 !important;
         }
     </style>
 </head>
-<body class="bg-gray-50 font-sans text-gray-800">
-    <!-- 頁首 -->
-    <header class="bg-white shadow-sm sticky top-0 z-10">
-        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
-            <div class="flex items-center space-x-2">
-                <i class="fa fa-car text-green-600 text-xl"></i>
-                <h1 class="text-lg md:text-xl font-bold">LINE多元化搭車</h1>
+<body class="bg-gray-50 min-h-screen">
+    <!-- 頁頭 -->
+    <header class="bg-green-600 text-white py-4 px-6 shadow-md">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <a href="driver-order.html" class="text-white hover:text-gray-100">
+                    <i class="fa fa-arrow-left text-xl"></i>
+                </a>
+                <h1 class="text-xl font-bold">訂單詳情</h1>
             </div>
-            <span class="text-sm text-gray-500" id="orderStatusTag">進行中訂單</span>
+            <div class="flex items-center gap-4">
+                <span id="driver-name" class="hidden md:inline-block">您好，司機</span>
+                <button id="logout-btn" class="bg-white text-green-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2">
+                    <i class="fa fa-sign-out"></i>
+                    <span>退出登錄</span>
+                </button>
+            </div>
         </div>
     </header>
 
-    <!-- 主內容 -->
-    <main class="container mx-auto px-4 py-6 max-w-md">
-        <!-- 訂單基本資訊 -->
-        <div class="bg-white rounded-xl shadow-md p-5 mb-5">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-semibold">訂單資訊</h2>
-                <span class="text-sm text-gray-500" id="orderId">訂單號：--</span>
+    <!-- 主要內容 -->
+    <main class="max-w-4xl mx-auto px-4 py-8">
+        <!-- 訂單狀態欄 -->
+        <div class="mb-6 flex justify-between items-center">
+            <h2 class="text-xl font-semibold text-gray-800">訂單編號：<span id="order-id" class="text-green-600"></span></h2>
+            <div id="order-status" class="status-badge bg-blue-100 text-blue-800">
+                進行中
             </div>
-            
-            <!-- 乘客資訊 -->
-            <div class="flex items-center space-x-3 mb-6">
-                <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
-                    <i class="fa fa-user text-gray-500 text-xl"></i>
-                </div>
+        </div>
+
+        <!-- 訂單詳情卡片 -->
+        <div class="bg-white rounded-xl p-6 detail-card mb-6">
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- 乘客信息 -->
                 <div>
-                    <p class="font-medium" id="passengerName">未知乘客</p>
-                    <p class="text-sm text-gray-500" id="passengerPhone">未留電話</p>
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <i class="fa fa-user text-blue-500"></i>
+                        乘客信息
+                    </h3>
+                    <div class="space-y-3">
+                        <div>
+                            <span class="text-gray-600 font-medium">姓名：</span>
+                            <span id="passenger-name">-</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600 font-medium">聯繫電話：</span>
+                            <span id="passenger-phone">-</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600 font-medium">乘客人數：</span>
+                            <span id="passenger-count">-</span>
+                        </div>
+                    </div>
                 </div>
-                <button id="callPassengerBtn" class="ml-auto bg-green-100 text-green-600 p-2 rounded-full btn-hover">
-                    <i class="fa fa-phone"></i>
-                </button>
-            </div>
 
-            <!-- 路線資訊 -->
-            <div class="space-y-4 mb-6">
-                <!-- 出發地 -->
-                <div class="flex items-start space-x-3">
-                    <div class="w-6 h-6 rounded-full bg-green-600 text-white flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <i class="fa fa-map-marker text-xs"></i>
-                    </div>
-                    <div>
-                        <p class="text-xs text-gray-500 mb-1">出發地</p>
-                        <p class="text-sm font-medium" id="startPoint">未設定</p>
-                    </div>
-                </div>
-                
-                <!-- 目的地 -->
-                <div class="flex items-start space-x-3">
-                    <div class="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <i class="fa fa-flag text-xs"></i>
-                    </div>
-                    <div>
-                        <p class="text-xs text-gray-500 mb-1">目的地</p>
-                        <p class="text-sm font-medium" id="endPoint">未設定</p>
-                    </div>
-                </div>
-                
-                <!-- 距離與時間 -->
-                <div class="flex justify-between text-sm text-gray-600">
-                    <div class="flex items-center">
-                        <i class="fa fa-road text-green-600 mr-1"></i>
-                        <span id="orderDistance">距離：約3公里</span>
-                    </div>
-                    <div class="flex items-center">
-                        <i class="fa fa-clock-o text-green-600 mr-1"></i>
-                        <span id="estimatedTime">預計時間：約20分鐘</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 地圖區塊 -->
-            <div class="mb-6">
-                <p class="text-sm font-medium mb-2">行駛路線</p>
-                <div id="orderMap"></div>
-            </div>
-
-            <!-- 費用明細 -->
-            <div class="border-t border-gray-100 pt-4">
-                <p class="text-sm font-medium mb-3">費用明細（新台幣）</p>
-                <div class="space-y-2 text-sm">
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">起步價</span>
-                        <span id="feeStart">¥100</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">里程費</span>
-                        <span id="feeDistance">¥75</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">跳表費</span>
-                        <span id="feeJump">¥15</span>
-                    </div>
-                    <div class="flex justify-between pt-2 border-t border-gray-100 mt-2 font-medium">
-                        <span>預估總車資</span>
-                        <span id="totalFare" class="text-green-600 text-base">¥190</span>
-                    </div>
-                    <div class="flex justify-between pt-1 text-green-600">
-                        <span class="text-sm">司機固定回給</span>
-                        <span id="driverReward" class="font-medium">¥50</span>
+                <!-- 乘車信息 -->
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <i class="fa fa-map-marker text-red-500"></i>
+                        乘車信息
+                    </h3>
+                    <div class="space-y-3">
+                        <div>
+                            <span class="text-gray-600 font-medium">上車地點：</span>
+                            <span id="pickup-location">-</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600 font-medium">下車地點：</span>
+                            <span id="dropoff-location">-</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600 font-medium">預計乘車時間：</span>
+                            <span id="order-time">-</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600 font-medium">接單時間：</span>
+                            <span id="accept-time">-</span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 操作按鈕 -->
-        <div class="space-y-3">
-            <button id="contactPassengerBtn" class="w-full py-3 bg-green-600 text-white font-medium rounded-lg flex items-center justify-center gap-2 btn-hover shadow-md">
-                <i class="fa fa-comment"></i>
-                <span>與乘客文字聯絡</span>
+        <!-- 費用信息 -->
+        <div class="bg-white rounded-xl p-6 detail-card mb-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <i class="fa fa-money text-green-500"></i>
+                費用信息
+            </h3>
+            <div class="space-y-3">
+                <div>
+                    <span class="text-gray-600 font-medium">預計金額：</span>
+                    <span id="order-amount" class="text-green-600 font-bold">-</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 操作按鈕區 -->
+        <div class="flex flex-wrap gap-4 justify-center">
+            <button id="arrive-btn" class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2">
+                <i class="fa fa-map-marker"></i>
+                <span>抵達上車點</span>
             </button>
-            <button id="abandonOrderBtn" class="w-full py-3 bg-white text-red-600 border border-red-200 font-medium rounded-lg flex items-center justify-center gap-2 btn-hover shadow-sm">
+            <button id="start-service-btn" class="bg-yellow-600 text-white px-6 py-3 rounded-lg hover:bg-yellow-700 transition-colors flex items-center gap-2">
+                <i class="fa fa-play"></i>
+                <span>開始接駁</span>
+            </button>
+            <button id="complete-order-btn" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
+                <i class="fa fa-check"></i>
+                <span>完成訂單</span>
+            </button>
+            <button id="cancel-order-btn" class="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2">
                 <i class="fa fa-times"></i>
-                <span>放棄此訂單</span>
+                <span>取消訂單</span>
             </button>
         </div>
     </main>
 
-    <!-- 頁腳 -->
-    <footer class="bg-white border-t border-gray-100 py-4 mt-8">
-        <div class="container mx-auto px-4 text-center text-xs text-gray-500">
-            <p>© 2025 LINE多元化搭車 版權所有 | 司機端訂單系統</p>
-        </div>
-    </footer>
+    <!-- 操作成功提示 -->
+    <div id="success-toast" class="fixed bottom-6 right-6 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 z-50 hidden">
+        <i class="fa fa-check-circle"></i>
+        <span id="toast-message">操作成功！</span>
+    </div>
 
     <script>
-        // 全局變量
-        let currentOrder = {};
-        let feeConfig = {};
-        let map = null; // 地圖實例
+        // 核心常量定義
+        const DRIVER_ORDER_KEY = 'driverOrders';
+        const DRIVER_LOGIN_KEY = 'driverLoggedIn';
+        let currentOrder = null; // 當前訂單數據
 
-        // 初始化頁面數據
-        function initPageData() {
-            // 優先讀取URL參數（乘客叫車頁傳遞的數據）
-            const params = new URLSearchParams(window.location.search);
-            const start = params.get('start') || '';
-            const end = params.get('end') || '';
+        // DOM 元素獲取
+        const driverNameEl = document.getElementById('driver-name');
+        const logoutBtn = document.getElementById('logout-btn');
+        const orderIdEl = document.getElementById('order-id');
+        const orderStatusEl = document.getElementById('order-status');
+        const passengerNameEl = document.getElementById('passenger-name');
+        const passengerPhoneEl = document.getElementById('passenger-phone');
+        const passengerCountEl = document.getElementById('passenger-count');
+        const pickupLocationEl = document.getElementById('pickup-location');
+        const dropoffLocationEl = document.getElementById('dropoff-location');
+        const orderTimeEl = document.getElementById('order-time');
+        const acceptTimeEl = document.getElementById('accept-time');
+        const orderAmountEl = document.getElementById('order-amount');
+        const arriveBtn = document.getElementById('arrive-btn'); // 新增抵達按鈕
+        const startServiceBtn = document.getElementById('start-service-btn');
+        const completeOrderBtn = document.getElementById('complete-order-btn');
+        const cancelOrderBtn = document.getElementById('cancel-order-btn');
+        const successToast = document.getElementById('success-toast');
+        const toastMessage = document.getElementById('toast-message');
 
-            // 讀取訂單數據（從driver.html傳遞）
-            const orderStr = localStorage.getItem('currentOrder');
-            currentOrder = orderStr ? JSON.parse(orderStr) : {
-                orderId: 'ORD' + Math.floor(Math.random() * 1000000),
-                passengerName: '未知乘客',
-                passengerPhone: '未留電話',
-                startPoint: start, // 從URL參數獲取上車點
-                endPoint: end,     // 從URL參數獲取目的地
-                distance: '3',
-                estimatedTime: '約20分鐘'
-            };
+        // 初始化頁面
+        window.addEventListener('load', () => {
+            // 1. 驗證司機登錄狀態
+            const loggedInDriver = JSON.parse(localStorage.getItem(DRIVER_LOGIN_KEY));
+            if (!loggedInDriver) {
+                alert('請先登錄司機賬號！');
+                window.location.href = 'driver-login.html';
+                return;
+            }
+            driverNameEl.textContent = `您好，${loggedInDriver.name || '司機'}`;
 
-            // 讀取管理員費用配置
-            const feeStr = localStorage.getItem('rideFeeConfig');
-            feeConfig = feeStr ? JSON.parse(feeStr) : {
-                startPrice: 100,    // 預設起步價100元
-                distancePrice: 25,  // 預設每公里25元
-                jumpPrice: 15,      // 預設跳表費15元/次
-                fixedReward: 50     // 預設固定回給50元
-            };
-
-            // 更新頁面顯示
-            updateOrderInfo();
-            calculateFees();
-        }
-
-        // 更新訂單基本資訊
-        function updateOrderInfo() {
-            document.getElementById('orderId').textContent = `訂單號：${currentOrder.orderId}`;
-            document.getElementById('passengerName').textContent = currentOrder.passengerName;
-            document.getElementById('passengerPhone').textContent = currentOrder.passengerPhone || '未留電話';
-            document.getElementById('startPoint').textContent = currentOrder.startPoint || '未設定';
-            document.getElementById('endPoint').textContent = currentOrder.endPoint || '未設定';
-            document.getElementById('orderDistance').textContent = `距離：約${currentOrder.distance}公里`;
-            document.getElementById('estimatedTime').textContent = `預計時間：${currentOrder.estimatedTime}`;
-        }
-
-        // 計算費用（新台幣）
-        function calculateFees() {
-            const distance = parseFloat(currentOrder.distance) || 0;
-            const jumpTimes = Math.ceil(distance / 5); // 每5公里跳表1次（可調整規則）
-
-            // 各項費用
-            const startFee = feeConfig.startPrice;
-            const distanceFee = Math.round(distance * feeConfig.distancePrice);
-            const jumpFee = jumpTimes * feeConfig.jumpPrice;
-            const total = startFee + distanceFee + jumpFee;
-            const reward = feeConfig.fixedReward;
-
-            // 更新費用顯示
-            document.getElementById('feeStart').textContent = `¥${startFee}`;
-            document.getElementById('feeDistance').textContent = `¥${distanceFee}`;
-            document.getElementById('feeJump').textContent = `¥${jumpFee}`;
-            document.getElementById('totalFare').textContent = `¥${total}`;
-            document.getElementById('driverReward').textContent = `¥${reward}`;
-        }
-
-        // 初始化地圖（修復加載失敗處理）
-        function initMap() {
-            if (!window.mapboxgl) {
-                document.getElementById('orderMap').innerHTML = 
-                    '<div class="w-full h-full flex items-center justify-center text-gray-500 text-sm p-4">地圖加載失敗，請檢查網絡後刷新重試</div>';
+            // 2. 获取URL中的訂單ID
+            const urlParams = new URLSearchParams(window.location.search);
+            const orderId = urlParams.get('orderId');
+            
+            if (!orderId) {
+                alert('訂單ID不存在，請返回訂單列表！');
+                window.location.href = 'driver-order.html';
                 return;
             }
 
-            try {
-                // 設定地圖Token
-                mapboxgl.accessToken = 'pk.eyJ1IjoiaWY5Mjlob25nIiwiYSI6ImNtajJ2bTRibTB4eXAzZXM4ZXphcXVhcXkifQ.uGR1UwaA6kLyWe3BGKODww';
-                
-                // 建立地圖（預設台北座標，可根據實際地址調整）
-                map = new mapboxgl.Map({
-                    container: 'orderMap',
-                    style: 'mapbox://styles/mapbox/streets-v12',
-                    center: [121.5654, 25.0330], // 台北市經緯度
-                    zoom: 14
-                });
+            // 3. 加載訂單數據
+            loadOrderData(orderId);
+        });
 
-                // 加入控制元件
-                map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
+        // 加載訂單數據
+        function loadOrderData(orderId) {
+            const orders = JSON.parse(localStorage.getItem(DRIVER_ORDER_KEY) || '[]');
+            currentOrder = orders.find(order => order.id === orderId);
 
-                // 模擬起點和終點經緯度（實際專案需透過地址轉換API獲取）
-                const startLngLat = [121.5654, 25.0330];    // 上車點
-                const endLngLat = [121.5784, 25.0450];      // 目的地
+            if (!currentOrder) {
+                alert('訂單信息不存在，請返回訂單列表！');
+                window.location.href = 'driver-order.html';
+                return;
+            }
 
-                // 標記上車點（綠色）
-                new mapboxgl.Marker({ color: '#10B981' })
-                    .setLngLat(startLngLat)
-                    .setPopup(new mapboxgl.Popup().setHTML(`<h3 class="text-sm font-medium">上車點</h3><p class="text-xs text-gray-600">${currentOrder.startPoint || '未設定'}</p>`))
-                    .addTo(map);
+            // 渲染訂單數據到頁面
+            orderIdEl.textContent = currentOrder.id;
+            passengerNameEl.textContent = currentOrder.passengerName || '-';
+            passengerPhoneEl.textContent = currentOrder.passengerPhone || '-';
+            passengerCountEl.textContent = currentOrder.passengerCount || '1人';
+            pickupLocationEl.textContent = currentOrder.pickup || '-';
+            dropoffLocationEl.textContent = currentOrder.dropoff || '-';
+            orderTimeEl.textContent = currentOrder.orderTime || '未設定';
+            acceptTimeEl.textContent = currentOrder.startTime || '未記錄';
+            orderAmountEl.textContent = `NT$ ${currentOrder.amount || 0}`;
 
-                // 標記目的地（藍色）
-                new mapboxgl.Marker({ color: '#3B82F6' })
-                    .setLngLat(endLngLat)
-                    .setPopup(new mapboxgl.Popup().setHTML(`<h3 class="text-sm font-medium">目的地</h3><p class="text-xs text-gray-600">${currentOrder.endPoint || '未設定'}</p>`))
-                    .addTo(map);
+            // 更新訂單狀態顯示
+            updateOrderStatusDisplay();
 
-                // 調整地圖視角，同時顯示兩個標記
-                const bounds = new mapboxgl.LngLatBounds()
-                    .extend(startLngLat)
-                    .extend(endLngLat);
-                map.fitBounds(bounds, { padding: 40 });
+            // 根據訂單狀態調整按鈕狀態
+            adjustButtonState();
+        }
 
-                // 地圖加載完成回調
-                map.on('load', () => {
-                    // 可添加路線規劃功能（需調用地圖API）
-                });
-            } catch (error) {
-                console.error('地圖初始化失敗：', error);
-                document.getElementById('orderMap').innerHTML = 
-                    '<div class="w-full h-full flex items-center justify-center text-gray-500 text-sm p-4">地圖加載異常，請稍後重試</div>';
+        // 更新訂單狀態顯示
+        function updateOrderStatusDisplay() {
+            switch (currentOrder.status) {
+                case 'pending':
+                    orderStatusEl.className = 'status-badge bg-yellow-100 text-yellow-800';
+                    orderStatusEl.textContent = '待接單';
+                    break;
+                case 'active':
+                    orderStatusEl.className = 'status-badge bg-blue-100 text-blue-800';
+                    orderStatusEl.textContent = '進行中';
+                    break;
+                case 'arrived': // 新增抵達狀態
+                    orderStatusEl.className = 'status-badge bg-purple-100 text-purple-800';
+                    orderStatusEl.textContent = '已抵達上車點';
+                    break;
+                case 'serving':
+                    orderStatusEl.className = 'status-badge bg-purple-100 text-purple-800';
+                    orderStatusEl.textContent = '接駁中';
+                    break;
+                case 'completed':
+                    orderStatusEl.className = 'status-badge bg-green-100 text-green-800';
+                    orderStatusEl.textContent = '已完成';
+                    break;
+                case 'cancelled':
+                    orderStatusEl.className = 'status-badge bg-red-100 text-red-800';
+                    orderStatusEl.textContent = '已取消';
+                    break;
+                default:
+                    orderStatusEl.className = 'status-badge bg-gray-100 text-gray-800';
+                    orderStatusEl.textContent = '未知狀態';
             }
         }
 
-        // 初始化按鈕事件
-        function initButtons() {
-            // 與乘客文字聯絡（跳轉到聯絡界面）
-            document.getElementById('contactPassengerBtn').addEventListener('click', () => {
-                alert(`已開啟與【${currentOrder.passengerName}】的文字對話`);
-                // 真實場景可替換為：window.location.href = 'driver-chat.html?orderId=' + currentOrder.orderId;
-            });
+        // 調整按鈕狀態
+        function adjustButtonState() {
+            // 重置所有按鈕狀態
+            arriveBtn.disabled = false;
+            startServiceBtn.disabled = false;
+            completeOrderBtn.disabled = false;
+            cancelOrderBtn.disabled = false;
+            arriveBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            startServiceBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            completeOrderBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            cancelOrderBtn.classList.remove('opacity-50', 'cursor-not-allowed');
 
-            // 撥打乘客電話（修復電話格式處理）
-            document.getElementById('callPassengerBtn').addEventListener('click', () => {
-                const phone = currentOrder.passengerPhone || '0912345678';
-                const cleanPhone = phone.replace(/[^0-9]/g, ''); // 只保留數字
-                if (confirm(`是否撥打乘客電話：${phone}`)) {
-                    window.location.href = `tel:${cleanPhone}`;
-                }
-            });
-
-            // 放棄此訂單（返回司機主頁）
-            document.getElementById('abandonOrderBtn').addEventListener('click', () => {
-                if (confirm('確定要放棄此訂單嗎？放棄後將返回接單頁面')) {
-                    localStorage.removeItem('currentOrder');
-                    window.location.href = 'driver.html';
-                }
-            });
+            switch (currentOrder.status) {
+                case 'arrived': // 已抵達上車點
+                    arriveBtn.disabled = true;
+                    arriveBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    break;
+                case 'serving': // 接駁中
+                    arriveBtn.disabled = true;
+                    startServiceBtn.disabled = true;
+                    arriveBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    startServiceBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    break;
+                case 'completed': // 已完成
+                case 'cancelled': // 已取消
+                    arriveBtn.disabled = true;
+                    startServiceBtn.disabled = true;
+                    completeOrderBtn.disabled = true;
+                    cancelOrderBtn.disabled = true;
+                    arriveBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    startServiceBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    completeOrderBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    cancelOrderBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    break;
+            }
         }
 
-        // 頁面加載完成後初始化
-        document.addEventListener('DOMContentLoaded', () => {
-            initPageData();
-            initMap();
-            initButtons();
+        // 顯示提示框
+        function showToast(message) {
+            toastMessage.textContent = message;
+            successToast.classList.remove('hidden');
+            
+            // 3秒後隱藏
+            setTimeout(() => {
+                successToast.classList.add('hidden');
+            }, 3000);
+        }
+
+        // 新增：抵達上車點操作（跳轉計費頁）
+        arriveBtn.addEventListener('click', () => {
+            if (!currentOrder) return;
+
+            if (confirm('確認已抵達乘客上車點？將進入計費頁面！')) {
+                const orders = JSON.parse(localStorage.getItem(DRIVER_ORDER_KEY) || '[]');
+                const orderIndex = orders.findIndex(order => order.id === currentOrder.id);
+                
+                if (orderIndex !== -1) {
+                    // 更新訂單狀態為「已抵達上車點」
+                    orders[orderIndex].status = 'arrived';
+                    orders[orderIndex].arriveTime = new Date().toLocaleString('zh-TW');
+                    localStorage.setItem(DRIVER_ORDER_KEY, JSON.stringify(orders));
+                    
+                    // 跳轉到計費頁面（傳遞訂單ID）
+                    window.location.href = `driver-meter.html?orderId=${currentOrder.id}`;
+                }
+            }
+        });
+
+        // 開始接駁操作
+        startServiceBtn.addEventListener('click', () => {
+            if (!currentOrder) return;
+
+            if (confirm('確認開始接駁乘客嗎？')) {
+                const orders = JSON.parse(localStorage.getItem(DRIVER_ORDER_KEY) || '[]');
+                const orderIndex = orders.findIndex(order => order.id === currentOrder.id);
+                
+                if (orderIndex !== -1) {
+                    // 更新訂單狀態為「接駁中」
+                    orders[orderIndex].status = 'serving';
+                    orders[orderIndex].serviceStartTime = new Date().toLocaleString('zh-TW');
+                    localStorage.setItem(DRIVER_ORDER_KEY, JSON.stringify(orders));
+                    
+                    // 更新當前訂單數據
+                    currentOrder = orders[orderIndex];
+                    
+                    // 刷新頁面顯示
+                    updateOrderStatusDisplay();
+                    adjustButtonState();
+                    
+                    // 顯示成功提示
+                    showToast('已開始接駁乘客！');
+                }
+            }
+        });
+
+        // 完成訂單操作
+        completeOrderBtn.addEventListener('click', () => {
+            if (!currentOrder) return;
+
+            if (confirm('確認完成此訂單嗎？完成後將無法修改！')) {
+                const orders = JSON.parse(localStorage.getItem(DRIVER_ORDER_KEY) || '[]');
+                const orderIndex = orders.findIndex(order => order.id === currentOrder.id);
+                
+                if (orderIndex !== -1) {
+                    // 更新訂單狀態為「已完成」
+                    orders[orderIndex].status = 'completed';
+                    orders[orderIndex].finishTime = new Date().toLocaleString('zh-TW');
+                    localStorage.setItem(DRIVER_ORDER_KEY, JSON.stringify(orders));
+                    
+                    // 更新當前訂單數據
+                    currentOrder = orders[orderIndex];
+                    
+                    // 刷新頁面顯示
+                    updateOrderStatusDisplay();
+                    adjustButtonState();
+                    
+                    // 顯示成功提示
+                    showToast('訂單已完成！');
+                }
+            }
+        });
+
+        // 取消訂單操作
+        cancelOrderBtn.addEventListener('click', () => {
+            if (!currentOrder) return;
+
+            const cancelReason = prompt('請輸入取消訂單的原因：', '');
+            if (!cancelReason) return; // 用戶取消輸入
+            
+            if (confirm(`確認取消訂單？原因：${cancelReason}`)) {
+                const orders = JSON.parse(localStorage.getItem(DRIVER_ORDER_KEY) || '[]');
+                const orderIndex = orders.findIndex(order => order.id === currentOrder.id);
+                
+                if (orderIndex !== -1) {
+                    // 更新訂單狀態為「已取消」
+                    orders[orderIndex].status = 'cancelled';
+                    orders[orderIndex].cancelReason = cancelReason;
+                    orders[orderIndex].cancelTime = new Date().toLocaleString('zh-TW');
+                    localStorage.setItem(DRIVER_ORDER_KEY, JSON.stringify(orders));
+                    
+                    // 更新當前訂單數據
+                    currentOrder = orders[orderIndex];
+                    
+                    // 刷新頁面顯示
+                    updateOrderStatusDisplay();
+                    adjustButtonState();
+                    
+                    // 顯示成功提示
+                    showToast('訂單已取消！');
+                }
+            }
+        });
+
+        // 退出登錄
+        logoutBtn.addEventListener('click', () => {
+            if (confirm('確認退出登錄嗎？')) {
+                localStorage.removeItem(DRIVER_LOGIN_KEY);
+                window.location.href = 'driver-login.html';
+            }
         });
     </script>
 </body>
