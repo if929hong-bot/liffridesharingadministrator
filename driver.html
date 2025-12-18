@@ -121,7 +121,7 @@
             <button class="btn-primary w-full">登錄</button>
           </div>
           
-          <!-- 司機註冊表單 - 提交後直接跳轉 driver-audit.html -->
+          <!-- 司機註冊表單 - 提交後直接跳轉 driver/driver-audit.html -->
           <form id="driver-register-form" class="hidden" enctype="multipart/form-data">
             <div class="space-y-6 mb-6">
               <!-- 基本資訊 -->
@@ -386,7 +386,7 @@
       });
     });
     
-    // 核心修正：註冊表單提交後直接跳轉（移除彈窗中轉）
+    // 核心修正：註冊表單提交後跳轉到 driver/driver-audit.html
     const driverRegisterForm = document.getElementById('driver-register-form');
     if (driverRegisterForm) {
       driverRegisterForm.addEventListener('submit', function(e) {
@@ -414,13 +414,12 @@
         //   return;
         // }
         
-        // 3. 強制跳轉（優先使用最穩定的方式）
+        // 3. 跳轉到 driver/driver-audit.html（修改後的路徑）
         console.log('表單驗證通過，跳轉到審核頁面...');
-        // 方式1：直接重定向（最穩定）
-        window.location.href = 'driver-audit.html';
-        // 方式2：備用方案（如果方式1失效）
+        window.location.href = 'driver/driver-audit.html';
+        // 備用方案（防止第一種方式失效）
         setTimeout(() => {
-          window.location.replace('driver-audit.html');
+          window.location.replace('driver/driver-audit.html');
         }, 100);
       });
     }
