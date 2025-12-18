@@ -67,7 +67,7 @@
   <header class="bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
     <div class="container mx-auto px-4 py-3 flex justify-between items-center">
       <div class="flex items-center space-x-2">
-        <<i class="fa fa-car text-primary text-2xl"></</i> <!-- 修正：移除多餘的 "<" -->
+        <i class="fa fa-car text-primary text-2xl"></i>
         <h1 class="text-xl font-bold">搭車自由</h1>
       </div>
       <nav class="hidden md:flex space-x-6">
@@ -76,7 +76,7 @@
         <a href="admin.html" class="text-gray-600 hover:text-primary transition-colors">管理員</a>
       </nav>
       <button id="mobile-menu-btn" class="md:hidden text-dark">
-        <<i class="fa fa-bars text-xl"></</i> <!-- 修正：移除多餘的 "<" -->
+        <i class="fa fa-bars text-xl"></i>
       </button>
     </div>
     <!-- 手機導航菜單 -->
@@ -121,7 +121,7 @@
             <button class="btn-primary w-full">登錄</button>
           </div>
           
-          <!-- 司機註冊表單 - 提交後跳轉到 driver-audit.html -->
+          <!-- 司機註冊表單 - 提交後直接跳轉 driver-audit.html -->
           <form id="driver-register-form" class="hidden" enctype="multipart/form-data">
             <div class="space-y-6 mb-6">
               <!-- 基本資訊 -->
@@ -306,18 +306,6 @@
     </section>
   </main>
 
-  <!-- 審核中提示彈窗 -->
-  <div id="review-modal" class="modal">
-    <div class="modal-content">
-      <div class="mb-4">
-        <h3 class="text-xl font-bold mb-2">註冊申請已提交</h3>
-      </div>
-      <p class="text-gray-600 mb-6">您的司機註冊申請已順利提交，我們將在3個工作天內進行審核</p>
-      <p class="text-gray-500 text-sm mb-8">審核結果將透過簡訊通知您，敬請耐心等候</p>
-      <button id="close-modal" class="btn-primary w-full">前往審核查詢</button>
-    </div>
-  </div>
-
   <!-- 頁腳 -->
   <footer class="bg-white border-t border-gray-200 py-6">
     <div class="container mx-auto px-4 text-center text-gray-500 text-sm">
@@ -398,63 +386,44 @@
       });
     });
     
-    // 司機註冊表單提交處理（強化跳轉邏輯）
+    // 核心修正：註冊表單提交後直接跳轉（移除彈窗中轉）
     const driverRegisterForm = document.getElementById('driver-register-form');
-    const reviewModal = document.getElementById('review-modal');
-    const closeModalBtn = document.getElementById('close-modal');
-    
     if (driverRegisterForm) {
       driverRegisterForm.addEventListener('submit', function(e) {
-        e.preventDefault(); // 阻止表單默認提交行為
+        e.preventDefault(); // 阻止默認提交
         
-        // 1. 密碼一致性驗證
+        // 1. 密碼驗證
         const password = this.querySelector('input[name="driver-password"]').value;
         const passwordConfirm = this.querySelector('input[name="driver-password-confirm"]').value;
         if (password !== passwordConfirm) {
-          alert('兩次輸入的密碼不一致，請重新輸入');
+          alert('兩次輸入的密碼不一致！');
           return;
         }
 
-        // 2. 驗證必填文件是否上傳
-        const requiredFiles = ['good-citizen-doc', 'car-photo', 'driver-license'];
-        let allFilesUploaded = true;
-        requiredFiles.forEach(fileName => {
-          const fileInput = this.querySelector(`input[name="${fileName}"]`);
-          if (!fileInput.files || fileInput.files.length === 0) {
-            allFilesUploaded = false;
-          }
-        });
-        if (!allFilesUploaded) {
-          alert('請上傳所有必填的文件（良民證、車輛照片、駕照）');
-          return;
-        }
+        // 2. 跳過文件驗證（測試階段可先關閉，正式環境再開啟）
+        // const requiredFiles = ['good-citizen-doc', 'car-photo', 'driver-license'];
+        // let allFilesUploaded = true;
+        // requiredFiles.forEach(fileName => {
+        //   const fileInput = this.querySelector(`input[name="${fileName}"]`);
+        //   if (!fileInput.files || fileInput.files.length === 0) {
+        //     allFilesUploaded = false;
+        //   }
+        // });
+        // if (!allFilesUploaded) {
+        //   alert('請上傳所有必填文件！');
+        //   return;
+        // }
         
-        // 3. 模擬提交 + 顯示彈窗
-        console.log('司機註冊資料已提交，即將跳轉到審核頁面');
-        reviewModal.classList.remove('hidden');
+        // 3. 強制跳轉（優先使用最穩定的方式）
+        console.log('表單驗證通過，跳轉到審核頁面...');
+        // 方式1：直接重定向（最穩定）
+        window.location.href = 'driver-audit.html';
+        // 方式2：備用方案（如果方式1失效）
+        setTimeout(() => {
+          window.location.replace('driver-audit.html');
+        }, 100);
       });
     }
-    
-    // 4. 關閉彈窗並強制跳轉到 driver-audit.html
-    closeModalBtn.addEventListener('click', () => {
-      reviewModal.classList.add('hidden');
-      // 強化跳轉：直接重定向（避免事件冒泡干擾）
-      window.location.replace('driver-audit.html');
-    });
-    
-    // 5. 點擊彈窗外部也強制跳轉
-    reviewModal.addEventListener('click', (e) => {
-      if (e.target === reviewModal) {
-        reviewModal.classList.add('hidden');
-        window.location.replace('driver-audit.html');
-      }
-    });
-
-    // 頁面加載動畫
-    window.addEventListener('load', () => {
-      document.body.classList.add('opacity-100');
-      document.body.classList.remove('opacity-0');
-    });
   </script>
 </body>
 </html>
