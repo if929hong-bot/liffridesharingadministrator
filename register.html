@@ -26,6 +26,21 @@
         <label class="block text-gray-700 mb-2" for="managerPhone">聯繫電話</label>
         <input type="tel" id="managerPhone" class="w-full px-4 py-2 border rounded-lg" required>
       </div>
+      <!-- 新增：帳號 -->
+      <div class="mb-4">
+        <label class="block text-gray-700 mb-2" for="managerAccount">帳號</label>
+        <input type="text" id="managerAccount" class="w-full px-4 py-2 border rounded-lg" placeholder="設定登入帳號" required>
+      </div>
+      <!-- 新增：密碼 -->
+      <div class="mb-4">
+        <label class="block text-gray-700 mb-2" for="managerPassword">密碼</label>
+        <input type="password" id="managerPassword" class="w-full px-4 py-2 border rounded-lg" placeholder="至少8位字元" minlength="8" required>
+      </div>
+      <!-- 新增：密碼確認 -->
+      <div class="mb-4">
+        <label class="block text-gray-700 mb-2" for="managerPasswordConfirm">密碼確認</label>
+        <input type="password" id="managerPasswordConfirm" class="w-full px-4 py-2 border rounded-lg" placeholder="再次輸入密碼" minlength="8" required>
+      </div>
       <!-- 提交按鈕 -->
       <button type="submit" class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition">
         提交註冊
@@ -38,11 +53,21 @@
     document.getElementById('fleetManagerRegisterForm').addEventListener('submit', function(e) {
       e.preventDefault();
       
-      // 獲取表單數據
+      // 密碼一致性驗證
+      const password = document.getElementById('managerPassword').value;
+      const passwordConfirm = document.getElementById('managerPasswordConfirm').value;
+      if (password !== passwordConfirm) {
+        alert('兩次輸入的密碼不一致，請重新輸入！');
+        return;
+      }
+      
+      // 獲取表單數據（包含新增的帳號、密碼）
       const fleetManagerData = {
         fleetName: document.getElementById('fleetName').value,
         managerName: document.getElementById('managerName').value,
         managerPhone: document.getElementById('managerPhone').value,
+        managerAccount: document.getElementById('managerAccount').value, // 新增
+        managerPassword: password, // 新增（正式環境建議加密存儲）
         status: "待審核" // 初始狀態為待審核
       };
       
