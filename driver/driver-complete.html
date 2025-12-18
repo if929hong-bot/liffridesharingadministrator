@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LINE多元化搭車 - 行程完成</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#00C300',
+                        secondary: '#00A600',
+                        accent: '#008700',
+                        'text-dark': '#333333',
+                        'text-light': '#666666'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- 頁首 -->
+    <header class="bg-white shadow-sm py-3 px-4">
+        <h1 class="text-xl font-bold text-text-dark text-center">LINE多元化搭車</h1>
+    </header>
+
+    <!-- 主內容 -->
+    <main class="max-w-md mx-auto my-5 px-4">
+        <div class="bg-white rounded-lg shadow-md p-5">
+            <!-- 行程狀態 -->
+            <div class="text-center mb-4">
+                <p class="text-lg font-medium text-text-dark">已到達目的地</p>
+                <p class="text-2xl font-bold text-primary mt-1" id="finalAmount">000元</p>
+            </div>
+
+            <!-- 操作按鈕 -->
+            <div class="space-y-3">
+                <button id="paymentBtn" class="w-full py-3 bg-primary text-white font-medium rounded-md">
+                    乘客已支付金額
+                </button>
+                <button id="passengerOffBtn" class="w-full py-3 bg-primary text-white font-medium rounded-md">
+                    乘客已下車
+                </button>
+                <button id="takeOrderBtn" class="w-full py-3 bg-primary text-white font-medium rounded-md">
+                    我要接單 (回到接單頁面)
+                </button>
+                <button id="offWorkBtn" class="w-full py-3 bg-primary text-white font-medium rounded-md">
+                    我要下班 (登出頁面)
+                </button>
+            </div>
+
+            <!-- 備註 -->
+            <p class="text-xs text-text-light mt-4 text-center">
+                (下班前請將今日行程截圖上傳給管理員核對金額)
+            </p>
+        </div>
+    </main>
+
+    <script>
+        // 讀取最終金額
+        function loadFinalAmount() {
+            const finalAmount = localStorage.getItem('totalAmount') || '000';
+            document.getElementById('finalAmount').textContent = `${finalAmount}元`;
+        }
+
+        // 按鈕事件
+        document.getElementById('offWorkBtn').addEventListener('click', () => {
+            // 檢查是否已截圖
+            if (!localStorage.getItem('tripScreenshot')) {
+                alert('請先截圖今日行程再下班！');
+                return;
+            }
+            // 上傳截圖給管理員 (模擬)
+            alert('已上傳今日行程截圖給管理員，即將登出');
+            localStorage.clear();
+            window.location.href = 'driver-login.html';
+        });
+
+        document.getElementById('takeOrderBtn').addEventListener('click', () => {
+            window.location.href = 'driver.html';
+        });
+
+        // 初始化
+        window.onload = () => {
+            loadFinalAmount();
+        };
+    </script>
+</body>
+=======
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LINE多元化搭車 - 行程完成</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#00C300',
+                        secondary: '#00A600',
+                        accent: '#008700',
+                        'text-dark': '#333333',
+                        'text-light': '#666666'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- 頁首 -->
+    <header class="bg-white shadow-sm py-3 px-4">
+        <h1 class="text-xl font-bold text-text-dark text-center">LINE多元化搭車</h1>
+    </header>
+
+    <!-- 主內容 -->
+    <main class="max-w-md mx-auto my-5 px-4">
+        <div class="bg-white rounded-lg shadow-md p-5">
+            <!-- 行程狀態 -->
+            <div class="text-center mb-4">
+                <p class="text-lg font-medium text-text-dark">已到達目的地</p>
+                <p class="text-2xl font-bold text-primary mt-1" id="finalAmount">000元</p>
+            </div>
+
+            <!-- 操作按鈕 -->
+            <div class="space-y-3">
+                <button id="paymentBtn" class="w-full py-3 bg-primary text-white font-medium rounded-md">
+                    乘客已支付金額
+                </button>
+                <button id="passengerOffBtn" class="w-full py-3 bg-primary text-white font-medium rounded-md">
+                    乘客已下車
+                </button>
+                <button id="takeOrderBtn" class="w-full py-3 bg-primary text-white font-medium rounded-md">
+                    我要接單 (回到接單頁面)
+                </button>
+                <button id="offWorkBtn" class="w-full py-3 bg-primary text-white font-medium rounded-md">
+                    我要下班 (登出頁面)
+                </button>
+            </div>
+
+            <!-- 備註 -->
+            <p class="text-xs text-text-light mt-4 text-center">
+                (下班前請將今日行程截圖上傳給管理員核對金額)
+            </p>
+        </div>
+    </main>
+
+    <script>
+        // 讀取最終金額
+        function loadFinalAmount() {
+            const finalAmount = localStorage.getItem('totalAmount') || '000';
+            document.getElementById('finalAmount').textContent = `${finalAmount}元`;
+        }
+
+        // 按鈕事件
+        document.getElementById('offWorkBtn').addEventListener('click', () => {
+            // 檢查是否已截圖
+            if (!localStorage.getItem('tripScreenshot')) {
+                alert('請先截圖今日行程再下班！');
+                return;
+            }
+            // 上傳截圖給管理員 (模擬)
+            alert('已上傳今日行程截圖給管理員，即將登出');
+            localStorage.clear();
+            window.location.href = 'driver-login.html';
+        });
+
+        document.getElementById('takeOrderBtn').addEventListener('click', () => {
+            window.location.href = 'driver.html';
+        });
+
+        // 初始化
+        window.onload = () => {
+            loadFinalAmount();
+        };
+    </script>
+</body>
+>>>>>>> 352392ca9f8cf542e966877407b0fdb95cd821aa
+</html>

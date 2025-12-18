@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LINE多元化搭車 - 行程計費</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src='https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css' rel='stylesheet'>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#00C300',
+                        secondary: '#00A600',
+                        accent: '#008700',
+                        'text-dark': '#333333',
+                        'text-light': '#666666'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        #tripMap {
+            width: 100%;
+            height: 250px;
+            border-radius: 0.5rem;
+            border: 1px solid #e5e7eb;
+        }
+        .card {
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            background-color: #ffffff;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-text-dark font-sans">
+    <!-- 頁首 -->
+    <header class="py-3 px-4 bg-white shadow-sm">
+        <h1 class="text-xl font-bold text-center text-text-dark">LINE多元化搭車 - 行程</h1>
+        <div class="text-center text-sm text-text-light mt-1">
+            11/20 20:47 - <span id="currentTime">21:04</span>
+        </div>
+    </header>
+
+    <!-- 主內容 -->
+    <main class="max-w-md mx-auto my-5 px-4">
+        <!-- 地圖 -->
+        <div class="mb-4 card p-1">
+            <div id="tripMap"></div>
+        </div>
+
+        <!-- 里程/時長/金額 -->
+        <div class="card p-3 mb-4 flex justify-between items-center">
+            <div class="flex items-center">
+                <i class="fa fa-road mr-1 text-primary"></i>
+                <span id="totalMileage" class="font-medium">8.4km</span>
+            </div>
+            <div class="flex items-center">
+                <i class="fa fa-clock-o mr-1 text-primary"></i>
+                <span id="totalTime" class="font-medium">00:16:42</span>
+            </div>
+            <div class="flex items-center">
+                <i class="fa fa-money mr-1 text-primary"></i>
+                <span id="totalAmount" class="font-medium">236.08元</span>
+            </div>
+        </div>
+
+        <!-- 費用規則 -->
+        <div class="card p-3 mb-4 flex justify-between">
+            <div><span class="text-primary font-medium">$15/km</span> 距離費</div>
+            <div><span class="text-primary font-medium">$3/min</span> 時間費</div>
+        </div>
+
+        <!-- 費用明細 -->
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <!-- 客收框 -->
+            <div class="card p-4">
+                <div class="text-xl font-bold text-primary mb-2" id="totalCharge">$260</div>
+                <div class="text-sm text-text-light">客收</div>
+                <div class="space-y-1 mt-3 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-text-light">起步價格</span>
+                        <span id="startPrice" class="font-medium">$60.00</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-text-light">距離費用</span>
+                        <span id="distanceFee" class="font-medium">$126.00</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-text-light">時間費用</span>
+                        <span id="timeFee" class="font-medium">$50.10</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-text-light">固定回給</span>
+                        <span id="fixedReward" class="font-medium">$30.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 回款框 -->
+            <div class="card p-4">
+                <div class="text-xl font-bold text-primary mb-2" id="totalReturn">$50</div>
+                <div class="text-sm text-text-light">回款</div>
+                <div class="space-y-1 mt-3 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-text-light">固定回給</span>
+                        <span id="returnReward" class="font-medium">$30</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-text-light">百回金額</span>
+                        <span id="hundredReturn" class="font-medium">$20</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 操作按鈕 -->
+        <div class="flex gap-3">
+            <button id="screenshotBtn" class="flex-1 py-3 bg-primary text-white font-medium rounded-md flex items-center justify-center hover:bg-secondary transition-all duration-300">
+                <i class="fa fa-camera mr-2"></i>截圖
+            </button>
+            <button id="closeBtn" class="flex-1 py-3 bg-primary text-white font-medium rounded-md flex items-center justify-center hover:bg-secondary transition-all duration-300">
+                <i class="fa fa-times mr-2"></i>關閉
+            </button>
+        </div>
+    </main>
+
+    <script>
+        // 初始化地圖
+        function initMap() {
+            mapboxgl.accessToken = 'pk.eyJ1IjoiaWY5Mjlob25nIiwiYSI6ImNtajJ2bTRibTB4eXAzZXM4ZXphcXVhcXkifQ.uGR1UwaA6kLyWe3BGKODww';
+            const map = new mapboxgl.Map({
+                container: 'tripMap',
+                style: 'mapbox://styles/mapbox/streets-v12', // 切換為白底地圖樣式
+                center: [120.683, 24.150],
+                zoom: 12
+            });
+            map.addLayer({
+                id: 'route',
+                type: 'line',
+                source: {
+                    type: 'geojson',
+                    data: {
+                        type: 'Feature',
+                        properties: {},
+                        geometry: {
+                            type: 'LineString',
+                            coordinates: [[120.65, 24.13], [120.72, 24.17]]
+                        }
+                    }
+                },
+                layout: { 'line-join': 'round', 'line-cap': 'round' },
+                paint: { 'line-color': '#00C300', 'line-width': 4 } // 路線顏色對應主色
+            });
+        }
+
+        // 讀取管理員費用配置
+        function loadAdminConfig() {
+            const feeConfig = JSON.parse(localStorage.getItem('rideFeeConfig')) || {
+                startPrice: 60,
+                distancePrice: 15,
+                jumpPrice: 3,
+                fixedReward: 30,
+                hundredReturn: 20
+            };
+            document.getElementById('startPrice').textContent = `$${feeConfig.startPrice}.00`;
+            document.getElementById('fixedReward').textContent = `$${feeConfig.fixedReward}.00`;
+            document.getElementById('returnReward').textContent = `$${feeConfig.fixedReward}`;
+            document.getElementById('hundredReturn').textContent = `$${feeConfig.hundredReturn}`;
+        }
+
+        // 按鈕事件
+        document.getElementById('screenshotBtn').addEventListener('click', () => {
+            // 模擬截圖並保存
+            localStorage.setItem('tripScreenshot', 'saved');
+            alert('已截圖，將在下班時上傳給管理員核對');
+        });
+
+        document.getElementById('closeBtn').addEventListener('click', () => {
+            // 跳轉到行程完成頁
+            window.location.href = 'driver-complete.html';
+        });
+
+        // 初始化
+        window.onload = () => {
+            initMap();
+            loadAdminConfig();
+            document.getElementById('currentTime').textContent = new Date().toTimeString().slice(0,5);
+        };
+    </script>
+</body>
+=======
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LINE多元化搭車 - 行程計費</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src='https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css' rel='stylesheet'>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#00C300',
+                        secondary: '#00A600',
+                        accent: '#008700',
+                        'text-dark': '#333333',
+                        'text-light': '#666666'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        #tripMap {
+            width: 100%;
+            height: 250px;
+            border-radius: 0.5rem;
+            border: 1px solid #e5e7eb;
+        }
+        .card {
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            background-color: #ffffff;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-text-dark font-sans">
+    <!-- 頁首 -->
+    <header class="py-3 px-4 bg-white shadow-sm">
+        <h1 class="text-xl font-bold text-center text-text-dark">LINE多元化搭車 - 行程</h1>
+        <div class="text-center text-sm text-text-light mt-1">
+            11/20 20:47 - <span id="currentTime">21:04</span>
+        </div>
+    </header>
+
+    <!-- 主內容 -->
+    <main class="max-w-md mx-auto my-5 px-4">
+        <!-- 地圖 -->
+        <div class="mb-4 card p-1">
+            <div id="tripMap"></div>
+        </div>
+
+        <!-- 里程/時長/金額 -->
+        <div class="card p-3 mb-4 flex justify-between items-center">
+            <div class="flex items-center">
+                <i class="fa fa-road mr-1 text-primary"></i>
+                <span id="totalMileage" class="font-medium">8.4km</span>
+            </div>
+            <div class="flex items-center">
+                <i class="fa fa-clock-o mr-1 text-primary"></i>
+                <span id="totalTime" class="font-medium">00:16:42</span>
+            </div>
+            <div class="flex items-center">
+                <i class="fa fa-money mr-1 text-primary"></i>
+                <span id="totalAmount" class="font-medium">236.08元</span>
+            </div>
+        </div>
+
+        <!-- 費用規則 -->
+        <div class="card p-3 mb-4 flex justify-between">
+            <div><span class="text-primary font-medium">$15/km</span> 距離費</div>
+            <div><span class="text-primary font-medium">$3/min</span> 時間費</div>
+        </div>
+
+        <!-- 費用明細 -->
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <!-- 客收框 -->
+            <div class="card p-4">
+                <div class="text-xl font-bold text-primary mb-2" id="totalCharge">$260</div>
+                <div class="text-sm text-text-light">客收</div>
+                <div class="space-y-1 mt-3 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-text-light">起步價格</span>
+                        <span id="startPrice" class="font-medium">$60.00</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-text-light">距離費用</span>
+                        <span id="distanceFee" class="font-medium">$126.00</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-text-light">時間費用</span>
+                        <span id="timeFee" class="font-medium">$50.10</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-text-light">固定回給</span>
+                        <span id="fixedReward" class="font-medium">$30.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 回款框 -->
+            <div class="card p-4">
+                <div class="text-xl font-bold text-primary mb-2" id="totalReturn">$50</div>
+                <div class="text-sm text-text-light">回款</div>
+                <div class="space-y-1 mt-3 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-text-light">固定回給</span>
+                        <span id="returnReward" class="font-medium">$30</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-text-light">百回金額</span>
+                        <span id="hundredReturn" class="font-medium">$20</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 操作按鈕 -->
+        <div class="flex gap-3">
+            <button id="screenshotBtn" class="flex-1 py-3 bg-primary text-white font-medium rounded-md flex items-center justify-center hover:bg-secondary transition-all duration-300">
+                <i class="fa fa-camera mr-2"></i>截圖
+            </button>
+            <button id="closeBtn" class="flex-1 py-3 bg-primary text-white font-medium rounded-md flex items-center justify-center hover:bg-secondary transition-all duration-300">
+                <i class="fa fa-times mr-2"></i>關閉
+            </button>
+        </div>
+    </main>
+
+    <script>
+        // 初始化地圖
+        function initMap() {
+            mapboxgl.accessToken = 'pk.eyJ1IjoiaWY5Mjlob25nIiwiYSI6ImNtajJ2bTRibTB4eXAzZXM4ZXphcXVhcXkifQ.uGR1UwaA6kLyWe3BGKODww';
+            const map = new mapboxgl.Map({
+                container: 'tripMap',
+                style: 'mapbox://styles/mapbox/streets-v12', // 切換為白底地圖樣式
+                center: [120.683, 24.150],
+                zoom: 12
+            });
+            map.addLayer({
+                id: 'route',
+                type: 'line',
+                source: {
+                    type: 'geojson',
+                    data: {
+                        type: 'Feature',
+                        properties: {},
+                        geometry: {
+                            type: 'LineString',
+                            coordinates: [[120.65, 24.13], [120.72, 24.17]]
+                        }
+                    }
+                },
+                layout: { 'line-join': 'round', 'line-cap': 'round' },
+                paint: { 'line-color': '#00C300', 'line-width': 4 } // 路線顏色對應主色
+            });
+        }
+
+        // 讀取管理員費用配置
+        function loadAdminConfig() {
+            const feeConfig = JSON.parse(localStorage.getItem('rideFeeConfig')) || {
+                startPrice: 60,
+                distancePrice: 15,
+                jumpPrice: 3,
+                fixedReward: 30,
+                hundredReturn: 20
+            };
+            document.getElementById('startPrice').textContent = `$${feeConfig.startPrice}.00`;
+            document.getElementById('fixedReward').textContent = `$${feeConfig.fixedReward}.00`;
+            document.getElementById('returnReward').textContent = `$${feeConfig.fixedReward}`;
+            document.getElementById('hundredReturn').textContent = `$${feeConfig.hundredReturn}`;
+        }
+
+        // 按鈕事件
+        document.getElementById('screenshotBtn').addEventListener('click', () => {
+            // 模擬截圖並保存
+            localStorage.setItem('tripScreenshot', 'saved');
+            alert('已截圖，將在下班時上傳給管理員核對');
+        });
+
+        document.getElementById('closeBtn').addEventListener('click', () => {
+            // 跳轉到行程完成頁
+            window.location.href = 'driver-complete.html';
+        });
+
+        // 初始化
+        window.onload = () => {
+            initMap();
+            loadAdminConfig();
+            document.getElementById('currentTime').textContent = new Date().toTimeString().slice(0,5);
+        };
+    </script>
+</body>
+>>>>>>> 352392ca9f8cf542e966877407b0fdb95cd821aa
+</html>

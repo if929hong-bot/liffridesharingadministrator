@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LINE多元化搭車 - 乘客上車確認</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src='https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css' rel='stylesheet'>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#00C300',
+                        secondary: '#00A600',
+                        accent: '#008700',
+                        'text-dark': '#333333',
+                        'text-light': '#666666'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        #passengerMap {
+            width: 100%;
+            height: 200px;
+            border-radius: 0.5rem;
+            border: 1px solid #e5e7eb;
+            overflow: hidden; /* 防止地圖邊框溢出 */
+        }
+        /* 按鈕hover效果優化 */
+        .btn-hover {
+            transition: background-color 0.3s ease;
+        }
+        .btn-hover:hover {
+            background-color: #00A600; /* secondary色值 */
+        }
+        /* 地圖控制按鈕z-index修復 */
+        .mapboxgl-ctrl {
+            z-index: 5 !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- 頁首 -->
+    <header class="bg-white shadow-sm py-3 px-4 sticky top-0 z-10">
+        <h1 class="text-xl font-bold text-text-dark text-center">LINE多元化搭車</h1>
+    </header>
+
+    <!-- 主內容 -->
+    <main class="max-w-md mx-auto my-5 px-4">
+        <div class="bg-white rounded-lg shadow-md p-5">
+            <!-- 地圖區塊 -->
+            <div class="mb-4">
+                <p class="text-text-light text-sm mb-1">距離乘客指定位置</p>
+                <div id="passengerMap"></div>
+            </div>
+
+            <!-- 操作按鈕 -->
+            <div class="space-y-3">
+                <button id="passengerOnBtn" class="w-full py-3 bg-primary text-white font-medium rounded-md btn-hover">
+                    <i class="fa fa-check-circle mr-2"></i>乘客已上車
+                </button>
+                <button id="startMeterBtn" class="w-full py-3 bg-primary text-white font-medium rounded-md btn-hover">
+                    <i class="fa fa-tachometer mr-2"></i>開始跳表
+                </button>
+            </div>
+
+            <!-- 計時器 -->
+            <div class="mt-6 text-center">
+                <p class="text-sm text-text-light mb-1">等待上車計時</p>
+                <p class="text-3xl font-bold text-text-dark" id="timer">00:00</p>
+            </div>
+
+            <!-- 聯絡乘客按鈕（新增，符合備註需求） -->
+            <button id="callPassengerBtn" class="w-full py-2 mt-4 bg-gray-100 text-text-dark font-medium rounded-md flex items-center justify-center gap-2">
+                <i class="fa fa-phone"></i>
+                <span>聯絡乘客</span>
+            </button>
+
+            <!-- 備註 -->
+            <p class="text-xs text-text-light mt-4 text-center">
+                (可隨時撥打乘客電話，或透過手機直接與乘客聯繫)
+            </p>
+        </div>
+    </main>
+
+    <script>
+        // 全局變量
+        let timerInterval;
+        let seconds = 0;
+        let map = null;
+
+        // 初始化地圖（增加錯誤處理）
+        function initMap() {
+            if (!window.mapboxgl) {
+                document.getElementById('passengerMap').innerHTML = 
+                    '<div class="w-full h-full flex items-center justify-center text-text-light text-sm p-4">地圖加載失敗，請檢查網絡</div>';
+                return;
+            }
+
+            try {
+                mapboxgl.accessToken = 'pk.eyJ1IjoiaWY5Mjlob25nIiwiYSI6ImNtajJ2bTRibTB4eXAzZXM4ZXphcXVhcXkifQ.uGR1UwaA6kLyWe3BGKODww';
+                map = new mapboxgl.Map({
+                    container: 'passengerMap',
+                    style: 'mapbox://styles/mapbox/streets-v12',
+                    center: [121.5654, 25.0330], // 台北市經緯度
+                    zoom: 15
+                });
+
+                // 加入導航控制按鈕
+                map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
+
+                // 標記乘客位置（紅色）
+                new mapboxgl.Marker({ color: '#FF0000' })
+                    .setLngLat([121.5654, 25.0330])
+                    .setPopup(new mapboxgl.Popup().setHTML('<p class="text-sm">乘客上車點</p>'))
+                    .addTo(map);
+
+                // 地圖加載完成回調
+                map.on('load', () => {
+                    console.log('地圖加載完成');
+                });
+            } catch (error) {
+                console.error('地圖初始化失敗：', error);
+                document.getElementById('passengerMap').innerHTML = 
+                    '<div class="w-full h-full flex items-center justify-center text-text-light text-sm p-4">地圖加載異常，請稍後重試</div>';
+            }
+        }
+
+        // 計時器（修正初始值為00:00，避免一開始顯示00:01）
+        function startTimer() {
+            // 清除之前的計時器（防止重複）
+            if (timerInterval) clearInterval(timerInterval);
+            
+            timerInterval = setInterval(() => {
+                seconds++;
+                const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+                const secs = (seconds % 60).toString().padStart(2, '0');
+                document.getElementById('timer').textContent = `${mins}:${secs}`;
+            }, 1000);
+        }
+
+        // 按鈕事件
+        function initButtons() {
+            // 乘客已上車
+            document.getElementById('passengerOnBtn').addEventListener('click', () => {
+                // 讀取當前訂單ID（與訂單詳情頁對應）
+                const currentOrder = JSON.parse(localStorage.getItem('currentOrder') || '{}');
+                const orderId = currentOrder.orderId || '未知訂單';
+                
+                // 存儲行程狀態（供管理員後台讀取）
+                localStorage.setItem('orderStatus', '行駛中');
+                localStorage.setItem(`order_${orderId}_status`, '行駛中'); // 按訂單ID存儲，支援多訂單
+                
+                alert(`已通知管理員：\n訂單號 ${orderId}\n狀態更新為「乘客已上車」`);
+            });
+
+            // 開始跳表（跳轉到計費頁）
+            document.getElementById('startMeterBtn').addEventListener('click', () => {
+                // 驗證是否已確認乘客上車
+                const orderStatus = localStorage.getItem('orderStatus');
+                if (orderStatus !== '行駛中') {
+                    if (confirm('尚未確認乘客上車，是否直接開始跳表？')) {
+                        window.location.href = 'driver-meter.html';
+                    }
+                    return;
+                }
+                window.location.href = 'driver-meter.html';
+            });
+
+            // 聯絡乘客（新增功能，符合備註需求）
+            document.getElementById('callPassengerBtn').addEventListener('click', () => {
+                const currentOrder = JSON.parse(localStorage.getItem('currentOrder') || '{}');
+                const passengerPhone = currentOrder.passengerPhone || '0912345678';
+                const cleanPhone = passengerPhone.replace(/[^0-9]/g, ''); // 過濾非數字字符
+                
+                if (confirm(`是否撥打乘客電話：${passengerPhone}`)) {
+                    window.location.href = `tel:${cleanPhone}`;
+                }
+            });
+        }
+
+        // 初始化（統一使用DOMContentLoaded，比window.onload更穩定）
+        document.addEventListener('DOMContentLoaded', () => {
+            initMap();
+            startTimer();
+            initButtons();
+        });
+
+        // 頁面離開時清除計時器（節省資源）
+        window.addEventListener('beforeunload', () => {
+            if (timerInterval) clearInterval(timerInterval);
+        });
+    </script>
+</body>
+</html>

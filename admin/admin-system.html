@@ -1,0 +1,733 @@
+<<<<<<< HEAD
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>管理員後台 - 系統設置</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .sidebar {
+      width: 220px;
+      background-color: #1e293b;
+      color: #f1f5f9;
+      height: 100vh;
+      padding: 16px;
+    }
+    .sidebar-menu {
+      margin-top: 24px;
+    }
+    .sidebar-item {
+      padding: 12px 8px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background-color 0.2s;
+    }
+    .sidebar-item.active {
+      background-color: #334155;
+      font-weight: 500;
+    }
+    .sidebar-item:hover:not(.active) {
+      background-color: #2d3748;
+    }
+    .card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      padding: 24px;
+    }
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      color: #4b5563;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .form-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus {
+      outline: none;
+      border-color: #22c55e;
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+    }
+    .upload-btn {
+      border: 2px dashed #d1d5db;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .upload-btn:hover {
+      border-color: #22c55e;
+    }
+    .upload-btn input {
+      display: none;
+    }
+    .upload-text {
+      color: #6b7280;
+      font-size: 14px;
+    }
+    .preview-img {
+      max-width: 150px;
+      max-height: 150px;
+      border-radius: 8px;
+      margin-top: 8px;
+      object-fit: contain;
+    }
+    .fee-section-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1e293b;
+      margin: 24px 0 16px 0;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .form-note {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 flex">
+  <!-- 側邊欄 -->
+  <div class="sidebar">
+    <div class="flex items-center gap-2 font-bold">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+      </svg>
+      <span>管理員後台</span>
+    </div>
+    <div class="text-xs text-gray-400 mt-2">主要功能</div>
+    <div class="sidebar-menu">
+      <div class="sidebar-item" onclick="window.location.href='index.html'">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
+        <span>返回首頁</span>
+      </div>
+      <div class="sidebar-item">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        <span>數據看板</span>
+      </div>
+      <div class="sidebar-item">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+        </svg>
+        <span>司機管理</span>
+      </div>
+      <div class="sidebar-item">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+        <span>訂單管理</span>
+      </div>
+      <div class="sidebar-item active">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+        <span>系統設置</span>
+      </div>
+      <div class="sidebar-item">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        <span>報表統計</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 主內容區 -->
+  <div class="flex-1 p-6">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold text-gray-800">系統設置</h1>
+      <div class="flex items-center gap-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <div class="relative">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          </svg>
+          <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">3</span>
+        </div>
+        <div class="w-8 h-8 rounded-full bg-gray-200 overflow-hidden cursor-pointer">
+          <img src="https://picsum.photos/200" alt="管理員頭像" class="w-full h-full object-cover">
+        </div>
+      </div>
+    </div>
+
+    <!-- 系統設置表單 -->
+    <div class="card max-w-2xl mx-auto">
+      <form id="systemSettingsForm">
+        <!-- 車隊名稱 -->
+        <div class="mb-8">
+          <label class="form-label">車隊名稱</label>
+          <input type="text" id="fleetName" class="form-input" placeholder="請輸入車隊名稱（例如：LINE多元化乘車）" value="LINE多元化乘車" required>
+          <p class="text-xs text-gray-500 mt-2">此名稱將顯示在乘客端、司機端所有頁面</p>
+        </div>
+
+        <!-- LOGO上傳 -->
+        <div class="mb-8">
+          <label class="form-label">車隊LOGO</label>
+          <div class="upload-btn" id="logoUploadBtn">
+            <input type="file" id="logoFile" accept="image/*" required>
+            <span class="upload-text">點擊上傳車隊LOGO（建議尺寸：200x200px）</span>
+          </div>
+          <!-- LOGO預覽 -->
+          <img id="logoPreview" src="https://picsum.photos/200/200" class="preview-img" alt="車隊LOGO預覽">
+        </div>
+
+        <!-- 電子支付收款碼 -->
+        <div class="mb-8">
+          <label class="form-label">電子支付收款碼</label>
+          <div class="upload-btn" id="qrCodeUploadBtn">
+            <input type="file" id="qrCodeFile" accept="image/*" required>
+            <span class="upload-text">點擊上傳收款碼圖片</span>
+          </div>
+          <!-- 收款碼預覽 -->
+          <img id="qrCodePreview" src="https://picsum.photos/200/200" class="preview-img" alt="收款碼預覽">
+        </div>
+
+        <!-- ========== 新增：費用配置區域 ========== -->
+        <div class="fee-section-title">費用配置</div>
+        
+        <!-- 起步價格 -->
+        <div class="mb-6">
+          <label class="form-label">起步價格（元）</label>
+          <input type="number" id="startPrice" class="form-input" placeholder="請輸入起步價格（例如：10）" min="0" step="0.01" required>
+          <p class="form-note">乘客上車即收取的基礎費用，不可為負數</p>
+        </div>
+
+        <!-- 距離費用 -->
+        <div class="mb-6">
+          <label class="form-label">距離費用（元/公里）</label>
+          <input type="number" id="distanceFee" class="form-input" placeholder="請輸入每公里費用（例如：2.5）" min="0" step="0.01" required>
+          <p class="form-note">超過起步距離後的每公里計費標準</p>
+        </div>
+
+        <!-- 跳表費用 -->
+        <div class="mb-6">
+          <label class="form-label">跳表費用（元/次）</label>
+          <input type="number" id="jumpFee" class="form-input" placeholder="請輸入每次跳表費用（例如：1.5）" min="0" step="0.01" required>
+          <p class="form-note">等待時間或低速行駛時的追加費用（如每3分鐘跳一次）</p>
+        </div>
+
+        <!-- 固定回給 -->
+        <div class="mb-8">
+          <label class="form-label">固定回給（元）</label>
+          <input type="number" id="fixedReturn" class="form-input" placeholder="請輸入固定回給金額（例如：5）" min="0" step="0.01" required>
+          <p class="form-note">每筆訂單固定返還給司機的金額</p>
+        </div>
+        <!-- ========== 費用配置區域結束 ========== -->
+
+        <!-- 儲存按鈕 -->
+        <button type="submit" class="w-full py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition shadow-md">
+          儲存設定
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // 上傳按鈕交互（預覽圖片）
+    document.querySelectorAll('.upload-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        btn.querySelector('input').click();
+      });
+      btn.querySelector('input').addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+          const file = e.target.files[0];
+          const previewId = e.target.id === 'logoFile' ? 'logoPreview' : 'qrCodePreview';
+          const uploadText = e.target.id === 'logoFile' ? 
+            `已選擇：${file.name}（建議尺寸：200x200px）` : 
+            `已選擇：${file.name}`;
+          
+          // 更新上傳文字
+          btn.querySelector('.upload-text').textContent = uploadText;
+          // 預覽圖片
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            document.getElementById(previewId).src = event.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    });
+
+    // 儲存設定邏輯（包含費用配置）
+    document.getElementById('systemSettingsForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      // 原有表單數據
+      const fleetName = document.getElementById('fleetName').value.trim();
+      const logoFile = document.getElementById('logoFile').files[0];
+      const qrCodeFile = document.getElementById('qrCodeFile').files[0];
+
+      // 新增費用配置數據
+      const startPrice = parseFloat(document.getElementById('startPrice').value.trim());
+      const distanceFee = parseFloat(document.getElementById('distanceFee').value.trim());
+      const jumpFee = parseFloat(document.getElementById('jumpFee').value.trim());
+      const fixedReturn = parseFloat(document.getElementById('fixedReturn').value.trim());
+
+      // 驗證邏輯：確保費用為有效非負數
+      if (!fleetName) {
+        alert('請輸入車隊名稱！');
+        return;
+      }
+      if (isNaN(startPrice) || startPrice < 0) {
+        alert('請輸入有效的起步價格（非負數）！');
+        return;
+      }
+      if (isNaN(distanceFee) || distanceFee < 0) {
+        alert('請輸入有效的距離費用（非負數）！');
+        return;
+      }
+      if (isNaN(jumpFee) || jumpFee < 0) {
+        alert('請輸入有效的跳表費用（非負數）！');
+        return;
+      }
+      if (isNaN(fixedReturn) || fixedReturn < 0) {
+        alert('請輸入有效的固定回給金額（非負數）！');
+        return;
+      }
+
+      // 打包表單數據（含費用配置）
+      const formData = new FormData();
+      formData.append('fleetName', fleetName);
+      if (logoFile) formData.append('logo', logoFile);
+      if (qrCodeFile) formData.append('qrCode', qrCodeFile);
+      formData.append('startPrice', startPrice);
+      formData.append('distanceFee', distanceFee);
+      formData.append('jumpFee', jumpFee);
+      formData.append('fixedReturn', fixedReturn);
+
+      try {
+        // 模擬提交後端接口
+        const response = await fetch('/api/admin/system/settings', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (response.ok) {
+          // 儲存到本地存儲（含費用配置）
+          localStorage.setItem('fleetName', fleetName);
+          if (logoFile) localStorage.setItem('fleetLogo', document.getElementById('logoPreview').src);
+          if (qrCodeFile) localStorage.setItem('paymentQrCode', document.getElementById('qrCodePreview').src);
+          
+          // 費用配置存為JSON字符串
+          const feeSettings = { startPrice, distanceFee, jumpFee, fixedReturn };
+          localStorage.setItem('feeSettings', JSON.stringify(feeSettings));
+
+          alert('系統設定與費用配置儲存成功！');
+          window.dispatchEvent(new Event('fleetSettingsUpdated'));
+        } else {
+          alert('設定儲存失敗，請稍後再試！');
+        }
+      } catch (error) {
+        alert('網絡異常，請檢查網絡連接後再試！');
+      }
+    });
+
+    // 頁面載入時讀取已儲存的設定（含費用配置）
+    window.onload = () => {
+      // 讀取原有設定
+      const savedFleetName = localStorage.getItem('fleetName');
+      const savedLogo = localStorage.getItem('fleetLogo');
+      const savedQrCode = localStorage.getItem('paymentQrCode');
+      
+      if (savedFleetName) document.getElementById('fleetName').value = savedFleetName;
+      if (savedLogo) document.getElementById('logoPreview').src = savedLogo;
+      if (savedQrCode) document.getElementById('qrCodePreview').src = savedQrCode;
+
+      // 讀取費用配置
+      const savedFeeSettings = localStorage.getItem('feeSettings');
+      if (savedFeeSettings) {
+        const feeSettings = JSON.parse(savedFeeSettings);
+        document.getElementById('startPrice').value = feeSettings.startPrice;
+        document.getElementById('distanceFee').value = feeSettings.distanceFee;
+        document.getElementById('jumpFee').value = feeSettings.jumpFee;
+        document.getElementById('fixedReturn').value = feeSettings.fixedReturn;
+      }
+    };
+  </script>
+</body>
+=======
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>管理員後台 - 系統設置</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .sidebar {
+      width: 220px;
+      background-color: #1e293b;
+      color: #f1f5f9;
+      height: 100vh;
+      padding: 16px;
+    }
+    .sidebar-menu {
+      margin-top: 24px;
+    }
+    .sidebar-item {
+      padding: 12px 8px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background-color 0.2s;
+    }
+    .sidebar-item.active {
+      background-color: #334155;
+      font-weight: 500;
+    }
+    .sidebar-item:hover:not(.active) {
+      background-color: #2d3748;
+    }
+    .card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      padding: 24px;
+    }
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      color: #4b5563;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .form-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus {
+      outline: none;
+      border-color: #22c55e;
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+    }
+    .upload-btn {
+      border: 2px dashed #d1d5db;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .upload-btn:hover {
+      border-color: #22c55e;
+    }
+    .upload-btn input {
+      display: none;
+    }
+    .upload-text {
+      color: #6b7280;
+      font-size: 14px;
+    }
+    .preview-img {
+      max-width: 150px;
+      max-height: 150px;
+      border-radius: 8px;
+      margin-top: 8px;
+      object-fit: contain;
+    }
+    .fee-section-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1e293b;
+      margin: 24px 0 16px 0;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .form-note {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 flex">
+  <!-- 側邊欄 -->
+  <div class="sidebar">
+    <div class="flex items-center gap-2 font-bold">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+      </svg>
+      <span>管理員後台</span>
+    </div>
+    <div class="text-xs text-gray-400 mt-2">主要功能</div>
+    <div class="sidebar-menu">
+      <div class="sidebar-item" onclick="window.location.href='index.html'">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
+        <span>返回首頁</span>
+      </div>
+      <div class="sidebar-item">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        <span>數據看板</span>
+      </div>
+      <div class="sidebar-item">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+        </svg>
+        <span>司機管理</span>
+      </div>
+      <div class="sidebar-item">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+        <span>訂單管理</span>
+      </div>
+      <div class="sidebar-item active">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+        <span>系統設置</span>
+      </div>
+      <div class="sidebar-item">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        <span>報表統計</span>
+    </div>
+  </div>
+
+  <!-- 主內容區 -->
+  <div class="flex-1 p-6">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold text-gray-800">系統設置</h1>
+      <div class="flex items-center gap-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <div class="relative">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          </svg>
+          <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">3</span>
+        </div>
+        <div class="w-8 h-8 rounded-full bg-gray-200 overflow-hidden cursor-pointer">
+          <img src="https://picsum.photos/200" alt="管理員頭像" class="w-full h-full object-cover">
+        </div>
+      </div>
+    </div>
+
+    <!-- 系統設置表單 -->
+    <div class="card max-w-2xl mx-auto">
+      <form id="systemSettingsForm">
+        <!-- 車隊名稱 -->
+        <div class="mb-8">
+          <label class="form-label">車隊名稱</label>
+          <input type="text" id="fleetName" class="form-input" placeholder="請輸入車隊名稱（例如：LINE多元化乘車）" value="LINE多元化乘車" required>
+          <p class="text-xs text-gray-500 mt-2">此名稱將顯示在乘客端、司機端所有頁面</p>
+        </div>
+
+        <!-- LOGO上傳 -->
+        <div class="mb-8">
+          <label class="form-label">車隊LOGO</label>
+          <div class="upload-btn" id="logoUploadBtn">
+            <input type="file" id="logoFile" accept="image/*" required>
+            <span class="upload-text">點擊上傳車隊LOGO（建議尺寸：200x200px）</span>
+          </div>
+          <!-- LOGO預覽 -->
+          <img id="logoPreview" src="https://picsum.photos/200/200" class="preview-img" alt="車隊LOGO預覽">
+        </div>
+
+        <!-- 電子支付收款碼 -->
+        <div class="mb-8">
+          <label class="form-label">電子支付收款碼</label>
+          <div class="upload-btn" id="qrCodeUploadBtn">
+            <input type="file" id="qrCodeFile" accept="image/*" required>
+            <span class="upload-text">點擊上傳收款碼圖片</span>
+          </div>
+          <!-- 收款碼預覽 -->
+          <img id="qrCodePreview" src="https://picsum.photos/200/200" class="preview-img" alt="收款碼預覽">
+        </div>
+
+        <!-- ========== 新增：費用配置區域 ========== -->
+        <div class="fee-section-title">費用配置</div>
+        
+        <!-- 起步價格 -->
+        <div class="mb-6">
+          <label class="form-label">起步價格（元）</label>
+          <input type="number" id="startPrice" class="form-input" placeholder="請輸入起步價格（例如：10）" min="0" step="0.01" required>
+          <p class="form-note">乘客上車即收取的基礎費用，不可為負數</p>
+        </div>
+
+        <!-- 距離費用 -->
+        <div class="mb-6">
+          <label class="form-label">距離費用（元/公里）</label>
+          <input type="number" id="distanceFee" class="form-input" placeholder="請輸入每公里費用（例如：2.5）" min="0" step="0.01" required>
+          <p class="form-note">超過起步距離後的每公里計費標準</p>
+        </div>
+
+        <!-- 跳表費用 -->
+        <div class="mb-6">
+          <label class="form-label">跳表費用（元/次）</label>
+          <input type="number" id="jumpFee" class="form-input" placeholder="請輸入每次跳表費用（例如：1.5）" min="0" step="0.01" required>
+          <p class="form-note">等待時間或低速行駛時的追加費用（如每3分鐘跳一次）</p>
+        </div>
+
+        <!-- 固定回給 -->
+        <div class="mb-8">
+          <label class="form-label">固定回給（元）</label>
+          <input type="number" id="fixedReturn" class="form-input" placeholder="請輸入固定回給金額（例如：5）" min="0" step="0.01" required>
+          <p class="form-note">每筆訂單固定返還給司機的金額</p>
+        </div>
+        <!-- ========== 費用配置區域結束 ========== -->
+
+        <!-- 儲存按鈕 -->
+        <button type="submit" class="w-full py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition shadow-md">
+          儲存設定
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // 上傳按鈕交互（預覽圖片）
+    document.querySelectorAll('.upload-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        btn.querySelector('input').click();
+      });
+      btn.querySelector('input').addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+          const file = e.target.files[0];
+          const previewId = e.target.id === 'logoFile' ? 'logoPreview' : 'qrCodePreview';
+          const uploadText = e.target.id === 'logoFile' ? 
+            `已選擇：${file.name}（建議尺寸：200x200px）` : 
+            `已選擇：${file.name}`;
+          
+          // 更新上傳文字
+          btn.querySelector('.upload-text').textContent = uploadText;
+          // 預覽圖片
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            document.getElementById(previewId).src = event.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    });
+
+    // 儲存設定邏輯（包含費用配置）
+    document.getElementById('systemSettingsForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      // 原有表單數據
+      const fleetName = document.getElementById('fleetName').value.trim();
+      const logoFile = document.getElementById('logoFile').files[0];
+      const qrCodeFile = document.getElementById('qrCodeFile').files[0];
+
+      // 新增費用配置數據
+      const startPrice = parseFloat(document.getElementById('startPrice').value.trim());
+      const distanceFee = parseFloat(document.getElementById('distanceFee').value.trim());
+      const jumpFee = parseFloat(document.getElementById('jumpFee').value.trim());
+      const fixedReturn = parseFloat(document.getElementById('fixedReturn').value.trim());
+
+      // 驗證邏輯：確保費用為有效非負數
+      if (!fleetName) {
+        alert('請輸入車隊名稱！');
+        return;
+      }
+      if (isNaN(startPrice) || startPrice < 0) {
+        alert('請輸入有效的起步價格（非負數）！');
+        return;
+      }
+      if (isNaN(distanceFee) || distanceFee < 0) {
+        alert('請輸入有效的距離費用（非負數）！');
+        return;
+      }
+      if (isNaN(jumpFee) || jumpFee < 0) {
+        alert('請輸入有效的跳表費用（非負數）！');
+        return;
+      }
+      if (isNaN(fixedReturn) || fixedReturn < 0) {
+        alert('請輸入有效的固定回給金額（非負數）！');
+        return;
+      }
+
+      // 打包表單數據（含費用配置）
+      const formData = new FormData();
+      formData.append('fleetName', fleetName);
+      if (logoFile) formData.append('logo', logoFile);
+      if (qrCodeFile) formData.append('qrCode', qrCodeFile);
+      formData.append('startPrice', startPrice);
+      formData.append('distanceFee', distanceFee);
+      formData.append('jumpFee', jumpFee);
+      formData.append('fixedReturn', fixedReturn);
+
+      try {
+        // 模擬提交後端接口
+        const response = await fetch('/api/admin/system/settings', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (response.ok) {
+          // 儲存到本地存儲（含費用配置）
+          localStorage.setItem('fleetName', fleetName);
+          if (logoFile) localStorage.setItem('fleetLogo', document.getElementById('logoPreview').src);
+          if (qrCodeFile) localStorage.setItem('paymentQrCode', document.getElementById('qrCodePreview').src);
+          
+          // 費用配置存為JSON字符串
+          const feeSettings = { startPrice, distanceFee, jumpFee, fixedReturn };
+          localStorage.setItem('feeSettings', JSON.stringify(feeSettings));
+
+          alert('系統設定與費用配置儲存成功！');
+          window.dispatchEvent(new Event('fleetSettingsUpdated'));
+        } else {
+          alert('設定儲存失敗，請稍後再試！');
+        }
+      } catch (error) {
+        alert('網絡異常，請檢查網絡連接後再試！');
+      }
+    });
+
+    // 頁面載入時讀取已儲存的設定（含費用配置）
+    window.onload = () => {
+      // 讀取原有設定
+      const savedFleetName = localStorage.getItem('fleetName');
+      const savedLogo = localStorage.getItem('fleetLogo');
+      const savedQrCode = localStorage.getItem('paymentQrCode');
+      
+      if (savedFleetName) document.getElementById('fleetName').value = savedFleetName;
+      if (savedLogo) document.getElementById('logoPreview').src = savedLogo;
+      if (savedQrCode) document.getElementById('qrCodePreview').src = savedQrCode;
+
+      // 讀取費用配置
+      const savedFeeSettings = localStorage.getItem('feeSettings');
+      if (savedFeeSettings) {
+        const feeSettings = JSON.parse(savedFeeSettings);
+        document.getElementById('startPrice').value = feeSettings.startPrice;
+        document.getElementById('distanceFee').value = feeSettings.distanceFee;
+        document.getElementById('jumpFee').value = feeSettings.jumpFee;
+        document.getElementById('fixedReturn').value = feeSettings.fixedReturn;
+      }
+    };
+  </script>
+</body>
+>>>>>>> 352392ca9f8cf542e966877407b0fdb95cd821aa
+</html>

@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>搭車自由 - LIFF 應用</title>
+  <!-- 引入 Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入 Font Awesome -->
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <!-- 自定義配置 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#00A86B', // 綠色主色
+            secondary: '#F5F5F5', // 淺灰色背景
+            dark: '#333333', // 深灰色文字
+          },
+          fontFamily: {
+            sans: ['Helvetica Neue', 'Arial', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .btn-primary {
+        @apply bg-primary text-white py-3 px-6 rounded-lg font-medium transition-all duration-300 hover:bg-primary/90 active:scale-95 shadow-md;
+      }
+      .btn-secondary {
+        @apply bg-white text-primary border border-primary py-3 px-6 rounded-lg font-medium transition-all duration-300 hover:bg-gray-50 active:scale-95;
+      }
+      .input-field {
+        @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all;
+      }
+      .card {
+        @apply bg-white rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg;
+      }
+      .file-upload {
+        @apply w-full border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer;
+      }
+      .radio-group {
+        @apply flex space-x-6;
+      }
+      .radio-label {
+        @apply flex items-center space-x-2 cursor-pointer;
+      }
+      .modal {
+        @apply fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden;
+      }
+      .modal-content {
+        @apply bg-white rounded-xl p-8 max-w-md w-full mx-4 text-center;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 font-sans text-dark min-h-screen">
+  <!-- 頂部導航欄 -->
+  <header class="bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <i class="fa fa-car text-primary text-2xl"></i>
+        <h1 class="text-xl font-bold">搭車自由</h1>
+      </div>
+      <nav class="hidden md:flex space-x-6">
+        <button id="nav-passenger" class="text-primary font-medium">乘客</button>
+        <button id="nav-driver" class="text-gray-600 hover:text-primary transition-colors">司機</button>
+        <button id="nav-admin" class="text-gray-600 hover:text-primary transition-colors">管理員</button>
+      </nav>
+      <button id="mobile-menu-btn" class="md:hidden text-dark">
+        <i class="fa fa-bars text-xl"></i>
+      </button>
+    </div>
+    <!-- 手機導航菜單 -->
+    <div id="mobile-menu" class="hidden md:hidden bg-white shadow-lg absolute w-full">
+      <div class="container mx-auto px-4 py-2 flex flex-col space-y-3">
+        <button id="mobile-passenger" class="text-primary font-medium py-2 border-b border-gray-100">乘客</button>
+        <button id="mobile-driver" class="text-gray-600 hover:text-primary transition-colors py-2 border-b border-gray-100">司機</button>
+        <button id="mobile-admin" class="text-gray-600 hover:text-primary transition-colors py-2">管理員</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主要內容區域 -->
+  <main class="container mx-auto px-4 pt-24 pb-16">
+    <!-- 乘客介面 -->
+    <section id="passenger-section" class="block">
+      <div class="max-w-md mx-auto">
+        <div class="card text-center">
+          <div class="mb-8">
+            <h2 class="text-2xl font-bold mb-2">乘客叫車</h2>
+            <p class="text-gray-600">無需登錄，立即叫車</p>
+          </div>
+          
+          <!-- 乘客叫車表單 - 提交至 passenger-order.html -->
+          <form id="passenger-order-form" action="passenger-order.html" method="GET">
+            <div class="space-y-4 mb-8">
+              <!-- 姓名欄位 -->
+              <div>
+                <label class="block text-left text-sm font-medium text-gray-700 mb-1">姓名</label>
+                <input type="text" class="input-field" name="passenger-name" placeholder="輸入您的姓名" required>
+              </div>
+              <!-- 電話欄位 -->
+              <div>
+                <label class="block text-left text-sm font-medium text-gray-700 mb-1">電話</label>
+                <input type="tel" class="input-field" name="passenger-phone" placeholder="輸入您的聯絡電話" required>
+              </div>
+              <div>
+                <label class="block text-left text-sm font-medium text-gray-700 mb-1">上車地點</label>
+                <input type="text" class="input-field" name="pickup-location" placeholder="輸入您的位置" required>
+              </div>
+              <div>
+                <label class="block text-left text-sm font-medium text-gray-700 mb-1">下車地點</label>
+                <input type="text" class="input-field" name="dropoff-location" placeholder="輸入目的地" required>
+              </div>
+              <div>
+                <label class="block text-left text-sm font-medium text-gray-700 mb-1">乘客人數</label>
+                <select class="input-field" name="passenger-count" required>
+                  <option value="1">1 人</option>
+                  <option value="2">2 人</option>
+                  <option value="3">3 人</option>
+                  <option value="4+">4 人以上</option>
+                </select>
+              </div>
+            </div>
+            
+            <!-- 乘客搭車入口按鈕 - 提交表單並跳轉 -->
+            <button type="submit" id="passenger-order" class="btn-primary w-full">
+              <span>我要叫車</span>
+            </button>
+          </form>
+        </div>
+        
+        <div class="mt-6 text-center text-gray-500 text-sm">
+          <p>透過 LINE 帳號快速使用，保護您的隱私安全</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 司機介面 -->
+    <section id="driver-section" class="hidden">
+      <div class="max-w-md mx-auto">
+        <div class="card">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold">司機入口</h2>
+            <div class="flex space-x-2">
+              <button id="driver-login-tab" class="text-primary font-medium border-b-2 border-primary pb-1">登錄</button>
+              <button id="driver-register-tab" class="text-gray-500 hover:text-primary transition-colors pb-1">註冊</button>
+            </div>
+          </div>
+          
+          <!-- 司機登錄表單 -->
+          <div id="driver-login-form">
+            <div class="space-y-4 mb-6">
+              <div>
+                <label class="block text-left text-sm font-medium text-gray-700 mb-1">帳號 (手機號碼)</label>
+                <input type="tel" class="input-field" placeholder="輸入手機號碼" required>
+              </div>
+              <div>
+                <label class="block text-left text-sm font-medium text-gray-700 mb-1">密碼</label>
+                <input type="password" class="input-field" placeholder="輸入密碼" required>
+              </div>
+              <div class="text-right">
+                <a href="#" class="text-primary text-sm hover:underline">忘記密碼？</a>
+              </div>
+            </div>
+            <button class="btn-primary w-full">登錄</button>
+          </div>
+          
+          <!-- 司機註冊表單 - 提交至管理員後台司機管理頁面 -->
+          <form id="driver-register-form" class="hidden" action="admin-driver.html" method="POST" enctype="multipart/form-data">
+            <div class="space-y-6 mb-6">
+              <!-- 基本資訊 -->
+              <div class="border-b border-gray-100 pb-4">
+                <h3 class="text-lg font-semibold mb-4 text-gray-800">基本資訊</h3>
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-left text-sm font-medium text-gray-700 mb-1">姓名</label>
+                    <input type="text" class="input-field" name="driver-name" placeholder="輸入真實姓名" required>
+                  </div>
+                  <div>
+                    <label class="block text-left text-sm font-medium text-gray-700 mb-1">手機號碼</label>
+                    <input type="tel" class="input-field" name="driver-phone" placeholder="輸入手機號碼" required>
+                  </div>
+                  <div>
+                    <label class="block text-left text-sm font-medium text-gray-700 mb-1">目前職業</label>
+                    <input type="text" class="input-field" name="driver-job" placeholder="輸入您的目前職業" required>
+                  </div>
+                  <!-- 新增車隊名稱欄位 -->
+                  <div>
+                    <label class="block text-left text-sm font-medium text-gray-700 mb-1">車隊名稱</label>
+                    <input type="text" class="input-field" name="fleet-name" placeholder="輸入所屬車隊名稱（無車隊可填寫「個人」）" required>
+                  </div>
+                  <div>
+                    <label class="block text-left text-sm font-medium text-gray-700 mb-1">車牌號碼</label>
+                    <input type="text" class="input-field" name="car-license" placeholder="輸入車牌號碼" required>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 駕駛經驗 -->
+              <div class="border-b border-gray-100 pb-4">
+                <h3 class="text-lg font-semibold mb-4 text-gray-800">駕駛經驗</h3>
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-left text-sm font-medium text-gray-700 mb-2">有無搭車服務經驗？</label>
+                    <div class="radio-group">
+                      <label class="radio-label">
+                        <input type="radio" name="driving-experience" value="yes" class="text-primary focus:ring-primary" required>
+                        <span>有</span>
+                      </label>
+                      <label class="radio-label">
+                        <input type="radio" name="driving-experience" value="no" class="text-primary focus:ring-primary">
+                        <span>無</span>
+                      </label>
+                    </div>
+                  </div>
+                  <div id="fleet-history-container" class="hidden">
+                    <label class="block text-left text-sm font-medium text-gray-700 mb-1">曾經服務的車隊</label>
+                    <textarea class="input-field h-24" name="fleet-history" placeholder="請列出曾經服務過的車隊名稱，多個請用逗號分隔"></textarea>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 背景調查 -->
+              <div class="border-b border-gray-100 pb-4">
+                <h3 class="text-lg font-semibold mb-4 text-gray-800">背景調查</h3>
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-left text-sm font-medium text-gray-700 mb-2">有無犯罪前科？</label>
+                    <div class="radio-group">
+                      <label class="radio-label">
+                        <input type="radio" name="criminal-record" value="yes" class="text-primary focus:ring-primary" required>
+                        <span>有</span>
+                      </label>
+                      <label class="radio-label">
+                        <input type="radio" name="criminal-record" value="no" class="text-primary focus:ring-primary">
+                        <span>無</span>
+                      </label>
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-left text-sm font-medium text-gray-700 mb-2">良民證上傳</label>
+                    <label class="file-upload">
+                      <input type="file" class="hidden" name="good-citizen-doc" accept="image/*" required>
+                      <div>
+                        <p class="text-gray-600 mb-1">點擊或拖動文件到這裡上傳</p>
+                        <p class="text-gray-400 text-xs">支援 JPG、PNG 格式，檔案大小不超過 5MB</p>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 車輛資訊 -->
+              <div class="border-b border-gray-100 pb-4">
+                <h3 class="text-lg font-semibold mb-4 text-gray-800">車輛資訊</h3>
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-left text-sm font-medium text-gray-700 mb-1">車款</label>
+                    <input type="text" class="input-field" name="car-model" placeholder="例如：豐田 Corolla" required>
+                  </div>
+                  <div>
+                    <label class="block text-left text-sm font-medium text-gray-700 mb-1">車型</label>
+                    <select class="input-field" name="car-type" required>
+                      <option value="">請選擇車型</option>
+                      <option value="sedan">轎車</option>
+                      <option value="hatchback">掀背車</option>
+                      <option value="suv">休旅車</option>
+                      <option value="mpv">MPV</option>
+                      <option value="other">其他</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-left text-sm font-medium text-gray-700 mb-1">出廠年份</label>
+                    <input type="number" class="input-field" name="car-year" placeholder="例如：2020" min="1990" max="2025" required>
+                  </div>
+                  <div>
+                    <label class="block text-left text-sm font-medium text-gray-700 mb-2">車輛外觀照片上傳</label>
+                    <label class="file-upload">
+                      <input type="file" class="hidden" name="car-photo" accept="image/*" required>
+                      <div>
+                        <p class="text-gray-600 mb-1">點擊或拖動文件到這裡上傳</p>
+                        <p class="text-gray-400 text-xs">請拍攝清晰的車輛外觀照片，支援 JPG、PNG 格式</p>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 保險與證件 -->
+              <div>
+                <h3 class="text-lg font-semibold mb-4 text-gray-800">保險與證件</h3>
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-left text-sm font-medium text-gray-700 mb-2">是否有購買產險？(至少要有乘客險)</label>
+                    <div class="radio-group">
+                      <label class="radio-label">
+                        <input type="radio" name="insurance" value="yes" class="text-primary focus:ring-primary" required>
+                        <span>有</span>
+                      </label>
+                      <label class="radio-label">
+                        <input type="radio" name="insurance" value="no" class="text-primary focus:ring-primary">
+                        <span>無</span>
+                      </label>
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-left text-sm font-medium text-gray-700 mb-2">駕照照片上傳</label>
+                    <label class="file-upload">
+                      <input type="file" class="hidden" name="driver-license" accept="image/*" required>
+                      <div>
+                        <p class="text-gray-600 mb-1">點擊或拖動文件到這裡上傳</p>
+                        <p class="text-gray-400 text-xs">請拍攝清晰的駕照正反面照片，支援 JPG、PNG 格式</p>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 密碼設置 -->
+              <div>
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-left text-sm font-medium text-gray-700 mb-1">設定密碼</label>
+                    <input type="password" class="input-field" name="driver-password" placeholder="設定密碼（至少8位）" minlength="8" required>
+                  </div>
+                  <div>
+                    <label class="block text-left text-sm font-medium text-gray-700 mb-1">確認密碼</label>
+                    <input type="password" class="input-field" name="driver-password-confirm" placeholder="再次輸入密碼" minlength="8" required>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="mb-4">
+              <label class="flex items-start space-x-2 text-sm text-gray-600">
+                <input type="checkbox" class="mt-1 text-primary focus:ring-primary" required>
+                <span>我已閱讀並同意<a href="#" class="text-primary hover:underline">服務條款</a>、<a href="#" class="text-primary hover:underline">隱私政策</a>及<a href="#" class="text-primary hover:underline">司機規章</a></span>
+              </label>
+            </div>
+            
+            <button type="submit" class="btn-primary w-full">提交註冊申請</button>
+          </form>
+        </div>
+        
+        <div class="mt-6 text-center">
+          <p class="text-gray-600">註冊申請提交後，我們將在3個工作天內進行審核</p>
+          <p class="text-gray-500 text-sm mt-2">審核通過後將以簡訊通知您，敬請耐心等候</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 管理員介面 -->
+    <section id="admin-section" class="hidden">
+      <div class="max-w-md mx-auto">
+        <div class="card">
+          <div class="text-center mb-6">
+            <h2 class="text-2xl font-bold">管理員登錄</h2>
+          </div>
+          
+          <!-- 管理員登錄表單 - 包含預設帳號密碼驗證 -->
+          <form id="admin-login-form" action="admin.html" method="POST">
+            <div class="space-y-4 mb-6">
+              <div>
+                <label class="block text-left text-sm font-medium text-gray-700 mb-1">管理員帳號</label>
+                <input type="text" class="input-field" name="admin-username" placeholder="輸入管理員帳號" required>
+              </div>
+              <div>
+                <label class="block text-left text-sm font-medium text-gray-700 mb-1">密碼</label>
+                <input type="password" class="input-field" name="admin-password" placeholder="輸入管理員密碼" required>
+              </div>
+            </div>
+            
+            <button type="submit" class="btn-primary w-full">
+              <span>登錄後台</span>
+            </button>
+          </form>
+          
+          <!-- 管理員後台快速連結 (僅供參考，實際使用時需在後台頁面顯示) -->
+          <div class="mt-8 pt-6 border-t border-gray-100">
+            <h3 class="text-sm font-semibold text-gray-500 mb-4 text-center">後台功能快速連結</h3>
+            <div class="grid grid-cols-2 gap-3">
+              <a href="admin-area.html" class="flex items-center justify-center p-3 border border-gray-200 rounded-lg hover:border-primary hover:bg-gray-50 transition-colors">
+                <span class="text-sm">區域管理</span>
+              </a>
+              <a href="admin-driver.html" class="flex items-center justify-center p-3 border border-gray-200 rounded-lg hover:border-primary hover:bg-gray-50 transition-colors">
+                <span class="text-sm">司機管理</span>
+              </a>
+              <a href="admin-order.html" class="flex items-center justify-center p-3 border border-gray-200 rounded-lg hover:border-primary hover:bg-gray-50 transition-colors">
+                <span class="text-sm">訂單管理</span>
+              </a>
+              <a href="admin-system.html" class="flex items-center justify-center p-3 border border-gray-200 rounded-lg hover:border-primary hover:bg-gray-50 transition-colors">
+                <span class="text-sm">系統設置</span>
+              </a>
+              <a href="admin-report.html" class="flex items-center justify-center p-3 border border-gray-200 rounded-lg hover:border-primary hover:bg-gray-50 transition-colors col-span-2">
+                <span class="text-sm">報表統計</span>
+              </a>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mt-6 text-center text-gray-500 text-sm">
+          <p>僅限授權管理員使用</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 審核中提示彈窗 -->
+  <div id="review-modal" class="modal">
+    <div class="modal-content">
+      <div class="mb-4">
+        <h3 class="text-xl font-bold mb-2">註冊申請已提交</h3>
+      </div>
+      <p class="text-gray-600 mb-6">您的司機註冊申請已順利提交，我們將在3個工作天內進行審核</p>
+      <p class="text-gray-500 text-sm mb-8">審核結果將透過簡訊通知您，敬請耐心等候</p>
+      <button id="close-modal" class="btn-primary w-full">返回首頁</button>
+    </div>
+  </div>
+
+  <!-- 頁腳 -->
+  <footer class="bg-white border-t border-gray-200 py-6">
+    <div class="container mx-auto px-4 text-center text-gray-500 text-sm">
+      <p>© 2025 搭車自由 LIFF 應用 | 透過 LINE Developer 平台提供服務</p>
+      <div class="mt-2 flex justify-center space-x-4">
+        <a href="#" class="hover:text-primary transition-colors">關於我們</a>
+        <a href="#" class="hover:text-primary transition-colors">服務條款</a>
+        <a href="#" class="hover:text-primary transition-colors">聯絡我們</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- JavaScript -->
+  <script>
+    // 移動菜單切換
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    
+    mobileMenuBtn.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+    });
+    
+    // 導航切換功能
+    const navButtons = [
+      { desktop: 'nav-passenger', mobile: 'mobile-passenger', section: 'passenger-section' },
+      { desktop: 'nav-driver', mobile: 'mobile-driver', section: 'driver-section' },
+      { desktop: 'nav-admin', mobile: 'mobile-admin', section: 'admin-section' }
+    ];
+    
+    const sections = ['passenger-section', 'driver-section', 'admin-section'];
+    const navItems = document.querySelectorAll('nav button, #mobile-menu button');
+    
+    function switchSection(targetSection) {
+      // 隱藏所有區域
+      sections.forEach(section => {
+        document.getElementById(section).classList.add('hidden');
+      });
+      
+      // 顯示目標區域
+      document.getElementById(targetSection).classList.remove('hidden');
+      
+      // 重置所有導航按鈕樣式
+      navItems.forEach(item => {
+        item.classList.remove('text-primary', 'font-medium', 'border-b-2', 'border-primary');
+        item.classList.add('text-gray-600');
+      });
+      
+      // 設置活躍導航按鈕樣式
+      navButtons.forEach(btn => {
+        if (btn.section === targetSection) {
+          const desktopBtn = document.getElementById(btn.desktop);
+          const mobileBtn = document.getElementById(btn.mobile);
+          
+          if (desktopBtn) {
+            desktopBtn.classList.remove('text-gray-600');
+            desktopBtn.classList.add('text-primary', 'font-medium');
+          }
+          
+          if (mobileBtn) {
+            mobileBtn.classList.remove('text-gray-600');
+            mobileBtn.classList.add('text-primary', 'font-medium');
+          }
+        }
+      });
+      
+      // 關閉移動菜單
+      mobileMenu.classList.add('hidden');
+    }
+    
+    // 為每個導航按鈕添加點擊事件
+    navButtons.forEach(btn => {
+      const desktopBtn = document.getElementById(btn.desktop);
+      const mobileBtn = document.getElementById(btn.mobile);
+      
+      if (desktopBtn) {
+        desktopBtn.addEventListener('click', () => switchSection(btn.section));
+      }
+      
+      if (mobileBtn) {
+        mobileBtn.addEventListener('click', () => switchSection(btn.section));
+      }
+    });
+    
+    // 司機登錄/註冊標籤切換
+    const loginTab = document.getElementById('driver-login-tab');
+    const registerTab = document.getElementById('driver-register-tab');
+    const loginForm = document.getElementById('driver-login-form');
+    const registerForm = document.getElementById('driver-register-form');
+    
+    loginTab.addEventListener('click', () => {
+      loginForm.classList.remove('hidden');
+      registerForm.classList.add('hidden');
+      
+      loginTab.classList.add('text-primary', 'font-medium', 'border-b-2', 'border-primary');
+      loginTab.classList.remove('text-gray-500');
+      
+      registerTab.classList.remove('text-primary', 'font-medium', 'border-b-2', 'border-primary');
+      registerTab.classList.add('text-gray-500');
+    });
+    
+    registerTab.addEventListener('click', () => {
+      loginForm.classList.add('hidden');
+      registerForm.classList.remove('hidden');
+      
+      registerTab.classList.add('text-primary', 'font-medium', 'border-b-2', 'border-primary');
+      registerTab.classList.remove('text-gray-500');
+      
+      loginTab.classList.remove('text-primary', 'font-medium', 'border-b-2', 'border-primary');
+      loginTab.classList.add('text-gray-500');
+    });
+    
+    // 司機註冊表單 - 經驗選擇邏輯
+    const experienceRadios = document.querySelectorAll('input[name="driving-experience"]');
+    const fleetHistoryContainer = document.getElementById('fleet-history-container');
+    
+    experienceRadios.forEach(radio => {
+      radio.addEventListener('change', () => {
+        if (radio.value === 'yes') {
+          fleetHistoryContainer.classList.remove('hidden');
+          fleetHistoryContainer.querySelector('textarea').required = true;
+        } else {
+          fleetHistoryContainer.classList.add('hidden');
+          fleetHistoryContainer.querySelector('textarea').required = false;
+        }
+      });
+    });
+    
+    // 文件上傳預覽功能
+    const fileInputs = document.querySelectorAll('input[type="file"]');
+    fileInputs.forEach(input => {
+      input.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+          const fileName = this.files[0].name;
+          const uploadLabel = this.closest('.file-upload');
+          if (uploadLabel) {
+            uploadLabel.classList.add('border-primary');
+          }
+        }
+      });
+    });
+    
+    // 司機註冊表單提交處理
+    const driverRegisterForm = document.getElementById('driver-register-form');
+    const reviewModal = document.getElementById('review-modal');
+    const closeModalBtn = document.getElementById('close-modal');
+    
+    if (driverRegisterForm) {
+      driverRegisterForm.addEventListener('submit', function(e) {
+        e.preventDefault(); // 阻止表單默認提交行為
+        
+        // 在這裡可以添加表單驗證逻辑
+        const password = this.querySelector('input[name="driver-password"]').value;
+        const passwordConfirm = this.querySelector('input[name="driver-password-confirm"]').value;
+        
+        if (password !== passwordConfirm) {
+          alert('兩次輸入的密碼不一致，請重新輸入');
+          return;
+        }
+        
+        // 模擬表單提交到管理員後台
+        console.log('司機註冊資料已提交至 admin-driver.html');
+        
+        // 顯示審核中彈窗
+        reviewModal.classList.remove('hidden');
+      });
+    }
+    
+    // 關閉彈窗並返回首頁（乘客介面）
+    closeModalBtn.addEventListener('click', () => {
+      reviewModal.classList.add('hidden');
+      switchSection('passenger-section');
+    });
+    
+    // 點擊彈窗外部關閉彈窗
+    reviewModal.addEventListener('click', (e) => {
+      if (e.target === reviewModal) {
+        reviewModal.classList.add('hidden');
+        switchSection('passenger-section');
+      }
+    });
+    
+    // 管理員登錄驗證 - 預設帳號：tester，密碼：123456
+    const adminLoginForm = document.getElementById('admin-login-form');
+    
+    if (adminLoginForm) {
+      adminLoginForm.addEventListener('submit', function(e) {
+        e.preventDefault(); // 阻止表單預設提交行為
+        
+        // 獲取使用者輸入的帳號密碼
+        const username = this.querySelector('input[name="admin-username"]').value.trim();
+        const password = this.querySelector('input[name="admin-password"]').value.trim();
+        
+        // 預設管理員帳號密碼（不顯示在頁面上）
+        const defaultUsername = 'tester';
+        const defaultPassword = '123456';
+        
+        // 驗證帳號密碼
+        if (username === defaultUsername && password === defaultPassword) {
+          // 驗證成功，跳轉到後台首頁
+          window.location.href = 'admin.html';
+        } else {
+          // 驗證失敗，顯示錯誤提示
+          alert('管理員帳號或密碼錯誤，請重新輸入');
+          
+          // 清空密碼輸入框
+          this.querySelector('input[name="admin-password"]').value = '';
+          
+          // 聚焦到密碼輸入框
+          this.querySelector('input[name="admin-password"]').focus();
+        }
+      });
+    }
+    
+    // 添加頁面加載動畫
+    window.addEventListener('load', () => {
+      document.body.classList.add('opacity-100');
+      document.body.classList.remove('opacity-0');
+    });
+  </script>
+</body>
+</html>

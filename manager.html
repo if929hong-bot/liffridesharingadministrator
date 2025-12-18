@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>車隊管理員後台</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* 全域樣式 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Microsoft JhengHei", sans-serif;
+      color: #333;
+    }
+    body {
+      background: #f0f2f5;
+      min-height: 100vh;
+    }
+
+    /* 響應式側邊欄（綠底白字，優化樣式） */
+    .sidebar-wrapper {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      z-index: 100;
+      transition: transform 0.3s ease;
+    }
+    .sidebar {
+      width: 180px;
+      background: #228B22; /* 綠色背景 */
+      padding: 1.5rem 0;
+      height: 100%;
+    }
+    .sidebar h2 {
+      color: #ffffff !important; /* 強制白字 */
+      text-align: center;
+      font-size: 1.1rem;
+      margin-bottom: 2rem;
+    }
+    .sidebar .menu {
+      list-style: none;
+    }
+    .sidebar .menu a {
+      display: block;
+      color: #ffffff !important; /* 強制白字 */
+      text-decoration: none;
+      padding: 0.8rem 1.5rem;
+      font-size: 0.95rem;
+      transition: background 0.2s;
+    }
+    .sidebar .menu a:hover, .sidebar .menu a.active {
+      background: #1E7D1E; /* 深色綠 hover/活躍效果 */
+    }
+    /* 刪除多餘icon，只保留文字 */
+    .sidebar .menu a span {
+      margin-left: 0;
+    }
+
+    /* 手機端側邊欄觸發按鈕（綠底白字） */
+    .sidebar-toggle {
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      background: #228B22;
+      color: #fff;
+      border: none;
+      border-radius: 0.2rem;
+      padding: 0.5rem 0.8rem;
+      cursor: pointer;
+      z-index: 101;
+      display: none;
+    }
+
+    /* 主內容區（響應式優化） */
+    .main-content {
+      max-width: 1200px;
+      padding: 2rem;
+      margin-left: 180px; /* 與側邊欄等寬 */
+      min-height: 100vh;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 0.3rem;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .card h3 {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    /* 表單樣式 */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 0.3rem;
+      font-weight: 500;
+    }
+    .input-field, .select-field {
+      width: 100%;
+      padding: 0.6rem;
+      border: 1px solid #ccc;
+      border-radius: 0.2rem;
+      font-size: 0.95rem;
+      background: #fff;
+    }
+    .upload-group {
+      border: 2px dashed #ccc;
+      border-radius: 0.2rem;
+      padding: 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .upload-group:hover {
+      border-color: #228B22;
+    }
+    .upload-group input {
+      display: none;
+    }
+    .upload-text {
+      color: #666;
+      font-size: 0.95rem;
+    }
+    .btn {
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 0.2rem;
+      cursor: pointer;
+      font-size: 0.95rem;
+      margin-right: 0.5rem;
+    }
+    .btn-primary {
+      background: #228B22;
+      color: #fff;
+    }
+    .btn-success {
+      background: #28a745;
+      color: #fff;
+    }
+    .btn-danger {
+      background: #dc3545;
+      color: #fff;
+    }
+    .btn-secondary {
+      background: #6c757d;
+      color: #fff;
+    }
+
+    /* 繳費區樣式 */
+    .payment-note {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 1rem;
+    }
+    .total-amount {
+      font-weight: bold;
+      font-size: 1.05rem;
+      margin: 0.5rem 0 1rem;
+    }
+    .bank-info {
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+
+    /* 列表樣式（響應式表格） */
+    .data-list {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      overflow-x: auto;
+      display: block;
+    }
+    .data-list th, .data-list td {
+      padding: 0.8rem;
+      border: 1px solid #e0e0e0;
+      text-align: left;
+    }
+    .data-list th {
+      background: #f8f9fa;
+    }
+
+    /* 隱藏面板 */
+    .panel {
+      display: none;
+    }
+    .panel.active {
+      display: block;
+    }
+
+    /* 響應式斷點：平板/手機 */
+    @media (max-width: 768px) {
+      .sidebar-wrapper {
+        transform: translateX(-100%);
+      }
+      .sidebar-wrapper.open {
+        transform: translateX(0);
+      }
+      .sidebar-toggle {
+        display: block;
+      }
+      .main-content {
+        margin-left: 0;
+        padding: 1.5rem 1rem;
+        margin-top: 3rem;
+      }
+      .btn {
+        display: block;
+        width: 100%;
+        margin: 0.3rem 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- 手機端側邊欄觸發按鈕 -->
+  <button class="sidebar-toggle" id="sidebarToggle">
+    <i class="fa fa-bars"></i>
+  </button>
+
+  <!-- 左側菜單（綠底白字） -->
+  <div class="sidebar-wrapper" id="sidebarWrapper">
+    <aside class="sidebar">
+      <h2>車隊管理員</h2>
+      <ul class="menu">
+        <li><a href="#fleet-info" data-panel="fleet-info" class="active">
+          <span>車隊資料</span>
+        </a></li>
+        <li><a href="#data-library" data-panel="data-library">
+          <span>資料圖庫</span>
+        </a></li>
+        <li><a href="#rent-payment" data-panel="rent-payment">
+          <span>租金繳費</span>
+        </a></li>
+        <li><a href="#payment-history" data-panel="payment-history">
+          <span>繳費紀錄</span>
+        </a></li>
+        <li><a href="#driver-register" data-panel="driver-register">
+          <span>司機註冊管理</span>
+        </a></li>
+      </ul>
+    </aside>
+  </div>
+
+  <!-- 主內容區 -->
+  <main class="main-content">
+    <!-- 1. 車隊資料面板 -->
+    <section id="fleet-info" class="panel active card">
+      <h3>車隊資料</h3>
+      <!-- 資料顯示區（預設可見） -->
+      <div id="fleet-view-mode">
+        <p>車隊名稱：<span id="view-fleet-name">滴滴代打車隊</span></p>
+        <p>負責人：<span id="view-fleet-manager">王小明</span></p>
+        <p>聯繫電話：<span id="view-fleet-phone">0912345678</span></p>
+        <p>LINE ID：<span id="view-fleet-lineid">dididaida-001</span></p>
+        <button class="btn btn-secondary" id="edit-fleet-btn">更改資料</button>
+      </div>
+      <!-- 資料編輯區（預設隱藏） -->
+      <div id="fleet-edit-mode" style="display: none;">
+        <div class="form-group">
+          <label>車隊名稱</label>
+          <input type="text" id="edit-fleet-name" class="input-field" value="滴滴代打車隊">
+        </div>
+        <div class="form-group">
+          <label>負責人</label>
+          <input type="text" id="edit-fleet-manager" class="input-field" value="王小明">
+        </div>
+        <div class="form-group">
+          <label>聯繫電話</label>
+          <input type="tel" id="edit-fleet-phone" class="input-field" value="0912345678" maxlength="10">
+        </div>
+        <div class="form-group">
+          <label>LINE ID</label>
+          <input type="text" id="edit-fleet-lineid" class="input-field" value="dididaida-001">
+        </div>
+        <button class="btn btn-success" id="save-fleet-btn">儲存</button>
+        <button class="btn btn-secondary" id="cancel-edit-btn">取消</button>
+      </div>
+    </section>
+
+    <!-- 2. 資料圖庫面板 -->
+    <section id="data-library" class="panel card">
+      <h3>資料圖庫</h3>
+      <p>暫無圖庫資料</p>
+    </section>
+
+    <!-- 3. 租金繳費面板 -->
+    <section id="rent-payment" class="panel card">
+      <h3>租金繳費</h3>
+      <p class="payment-note">請選擇繳費週期，金額為超級管理員統一定價的標準價格</p>
+      
+      <!-- 繳費週期選擇 -->
+      <div class="form-group">
+        <label>選擇繳費週期</label>
+        <select id="payment-period" class="select-field">
+          <option value="monthly">月繳（每月單價：NT$ <span id="monthly-unit">9500</span>）</option>
+          <option value="quarterly">季繳（每月單價：NT$ <span id="quarterly-unit">9000</span>）</option>
+          <option value="halfyear">半年繳（每月單價：NT$ <span id="halfyear-unit">9500</span>）</option>
+          <option value="yearly">年繳（每月單價：NT$ <span id="yearly-unit">8500</span>）</option>
+        </select>
+      </div>
+      
+      <!-- 應繳金額 -->
+      <div class="form-group">
+        <label>應繳總金額</label>
+        <div class="total-amount" id="total-amount">NT$ 9500</div>
+      </div>
+      
+      <!-- 收款銀行帳戶 -->
+      <div class="form-group">
+        <label>收款銀行帳戶</label>
+        <div class="bank-info">
+          <p>銀行：<span id="bank-name">-</span></p>
+          <p>分行：<span id="bank-branch">-</span></p>
+          <p>帳戶名稱：<span id="bank-account-name">-</span></p>
+          <p>帳號：<span id="bank-account-number">-</span></p>
+        </div>
+      </div>
+      
+      <!-- 繳費後五碼 -->
+      <div class="form-group">
+        <label>繳費後五碼</label>
+        <input type="text" id="payment-last5" class="input-field" placeholder="請輸入匯款帳號後五碼" maxlength="5" required>
+      </div>
+      
+      <!-- 上傳繳費截圖 -->
+      <div class="form-group">
+        <label>上傳繳費截圖</label>
+        <div class="upload-group">
+          <input type="file" id="payment-screenshot" accept="image/*" required>
+          <span class="upload-text">點擊上傳繳費截圖（支援JPG/PNG格式）</span>
+        </div>
+      </div>
+      
+      <button class="btn btn-primary" id="confirm-payment">確認繳費</button>
+    </section>
+
+    <!-- 4. 繳費紀錄面板 -->
+    <section id="payment-history" class="panel card">
+      <h3>繳費紀錄</h3>
+      <div class="data-list">
+        <table style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr>
+              <th>繳費週期</th>
+              <th>單價（NT$）</th>
+              <th>總金額（NT$）</th>
+              <th>繳費時間</th>
+            </tr>
+          </thead>
+          <tbody id="my-payment-records">
+            <tr><td colspan="4" style="text-align:center; padding:0.8rem; border:1px solid #e0e0e0;">無繳費紀錄</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 5. 司機註冊管理面板 -->
+    <section id="driver-register" class="panel card">
+      <h3>司機註冊管理</h3>
+      <p>以下是司機註冊申請資料，請審核是否通過：</p>
+      
+      <div class="data-list">
+        <table style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr>
+              <th>司機姓名</th>
+              <th>聯繫電話</th>
+              <th>車輛號碼</th>
+              <th>目前職業</th>
+              <th>註冊時間</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="driver-application-list">
+            <tr><td colspan="6" style="text-align:center; padding:0.8rem; border:1px solid #e0e0e0;">目前無司機註冊申請</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // 儲存鍵名定義
+    const PRICE_KEY = 'carRentalPrice';
+    const BANK_KEY = 'carRentalBank';
+    const PAYMENT_KEY = 'carRentalPayment';
+    const DRIVER_APPLY_KEY = 'driverRegisterApplication';
+    const DRIVER_PASS_KEY = 'driverPassedList';
+    const FLEET_DATA_KEY = 'fleetData';
+
+    // 初始化車隊資料
+    function initFleetData() {
+      const savedFleet = JSON.parse(localStorage.getItem(FLEET_DATA_KEY) || 'null');
+      if (savedFleet) {
+        document.getElementById('view-fleet-name').textContent = savedFleet.name;
+        document.getElementById('view-fleet-manager').textContent = savedFleet.manager;
+        document.getElementById('view-fleet-phone').textContent = savedFleet.phone;
+        document.getElementById('view-fleet-lineid').textContent = savedFleet.lineid;
+        document.getElementById('edit-fleet-name').value = savedFleet.name;
+        document.getElementById('edit-fleet-manager').value = savedFleet.manager;
+        document.getElementById('edit-fleet-phone').value = savedFleet.phone;
+        document.getElementById('edit-fleet-lineid').value = savedFleet.lineid;
+      } else {
+        const defaultFleet = {
+          name: '滴滴代打車隊',
+          manager: '王小明',
+          phone: '0912345678',
+          lineid: 'dididaida-001'
+        };
+        localStorage.setItem(FLEET_DATA_KEY, JSON.stringify(defaultFleet));
+      }
+    }
+
+    // 1. 車隊資料編輯/儲存功能
+    document.getElementById('edit-fleet-btn').addEventListener('click', () => {
+      document.getElementById('fleet-view-mode').style.display = 'none';
+      document.getElementById('fleet-edit-mode').style.display = 'block';
+    });
+
+    document.getElementById('cancel-edit-btn').addEventListener('click', () => {
+      document.getElementById('fleet-edit-mode').style.display = 'none';
+      document.getElementById('fleet-view-mode').style.display = 'block';
+    });
+
+    document.getElementById('save-fleet-btn').addEventListener('click', () => {
+      const newName = document.getElementById('edit-fleet-name').value.trim();
+      const newManager = document.getElementById('edit-fleet-manager').value.trim();
+      const newPhone = document.getElementById('edit-fleet-phone').value.trim();
+      const newLineid = document.getElementById('edit-fleet-lineid').value.trim();
+      
+      if (!newName || !newManager || !newPhone || !newLineid) {
+        alert('請填寫完整所有欄位！');
+        return;
+      }
+      if (!/^09\d{8}$/.test(newPhone)) {
+        alert('請輸入正確的手機號碼（09開頭10位數）！');
+        return;
+      }
+
+      document.getElementById('view-fleet-name').textContent = newName;
+      document.getElementById('view-fleet-manager').textContent = newManager;
+      document.getElementById('view-fleet-phone').textContent = newPhone;
+      document.getElementById('view-fleet-lineid').textContent = newLineid;
+      
+      const updatedFleet = {
+        name: newName,
+        manager: newManager,
+        phone: newPhone,
+        lineid: newLineid
+      };
+      localStorage.setItem(FLEET_DATA_KEY, JSON.stringify(updatedFleet));
+      
+      document.getElementById('fleet-edit-mode').style.display = 'none';
+      document.getElementById('fleet-view-mode').style.display = 'block';
+      alert('車隊資料已更新！');
+    });
+
+    // 2. 側邊欄收合功能（手機端）
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebarWrapper = document.getElementById('sidebarWrapper');
+    sidebarToggle.addEventListener('click', () => {
+      sidebarWrapper.classList.toggle('open');
+    });
+
+    // 3. 左側菜單切換面板
+    document.querySelectorAll('.menu a').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (window.innerWidth <= 768) {
+          sidebarWrapper.classList.remove('open');
+        }
+        document.querySelectorAll('.menu a').forEach(a => a.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(panel => panel.classList.remove('active'));
+        link.classList.add('active');
+        const panelId = link.getAttribute('data-panel');
+        document.getElementById(panelId).classList.add('active');
+        if (panelId === 'payment-history') loadMyPaymentRecords();
+        if (panelId === 'driver-register') loadDriverApplications();
+      });
+    });
+
+    // 4. 同步超管設定的租金單價
+    function loadRentalPrice() {
+      const savedPrice = JSON.parse(localStorage.getItem(PRICE_KEY) || '{}');
+      document.getElementById('monthly-unit').textContent = savedPrice.monthly || 9500;
+      document.getElementById('quarterly-unit').textContent = savedPrice.quarterly || 9000;
+      document.getElementById('halfyear-unit').textContent = savedPrice.halfyear || 9500;
+      document.getElementById('yearly-unit').textContent = savedPrice.yearly || 8500;
+      calculateTotalAmount();
+    }
+
+    // 5. 計算應繳總金額
+    function calculateTotalAmount() {
+      const period = document.getElementById('payment-period').value;
+      let unitPrice = 0;
+      let months = 0;
+      switch(period) {
+        case 'monthly':
+          unitPrice = Number(document.getElementById('monthly-unit').textContent);
+          months = 1;
+          break;
+        case 'quarterly':
+          unitPrice = Number(document.getElementById('quarterly-unit').textContent);
+          months = 3;
+          break;
+        case 'halfyear':
+          unitPrice = Number(document.getElementById('halfyear-unit').textContent);
+          months = 6;
+          break;
+        case 'yearly':
+          unitPrice = Number(document.getElementById('yearly-unit').textContent);
+          months = 12;
+          break;
+      }
+      const total = unitPrice * months;
+      document.getElementById('total-amount').textContent = `NT$ ${total.toLocaleString()}`;
+      window.currentPaymentData = { period, unitPrice, totalAmount: total };
+    }
+
+    // 6. 同步超管設定的銀行資訊
+    function loadBankInfo() {
+      const savedBank = JSON.parse(localStorage.getItem(BANK_KEY) || '{}');
+      document.getElementById('bank-name').textContent = savedBank.bankName || '未設定';
+      document.getElementById('bank-branch').textContent = savedBank.bankBranch || '未設定';
+      document.getElementById('bank-account-name').textContent = savedBank.accountName || '未設定';
+      document.getElementById('bank-account-number').textContent = savedBank.accountNumber || '未設定';
+    }
+
+    // 7. 確認繳費
+    const confirmPaymentBtn = document.getElementById('confirm-payment');
+    confirmPaymentBtn.addEventListener('click', () => {
+      const last5 = document.getElementById('payment-last5').value.trim();
+      const screenshot = document.getElementById('payment-screenshot').files[0];
+      
+      if (!window.currentPaymentData) {
+        alert('請選擇繳費週期！');
+        return;
+      }
+      if (last5.length !== 5) {
+        alert('請輸入正確的繳費後五碼！');
+        return;
+      }
+      if (!screenshot) {
+        alert('請上傳繳費截圖！');
+        return;
+      }
+
+      const paymentRecord = {
+        fleetName: document.getElementById('view-fleet-name').textContent,
+        period: window.currentPaymentData.period,
+        unitPrice: window.currentPaymentData.unitPrice,
+        totalAmount: window.currentPaymentData.totalAmount,
+        last5: last5,
+        payTime: new Date().toLocaleString('zh-TW'),
+        id: Date.now().toString()
+      };
+      const existingPayments = JSON.parse(localStorage.getItem(PAYMENT_KEY) || '[]');
+      existingPayments.push(paymentRecord);
+      localStorage.setItem(PAYMENT_KEY, JSON.stringify(existingPayments));
+      
+      alert('繳費資料已提交，請等待超管確認！');
+      loadMyPaymentRecords();
+      document.getElementById('payment-last5').value = '';
+      document.getElementById('payment-screenshot').value = '';
+    });
+
+    // 8. 加載個人繳費紀錄
+    function loadMyPaymentRecords() {
+      const existingPayments = JSON.parse(localStorage.getItem(PAYMENT_KEY) || '[]');
+      const myPayments = existingPayments.filter(item => item.fleetName === document.getElementById('view-fleet-name').textContent);
+      const listEl = document.getElementById('my-payment-records');
+      listEl.innerHTML = '';
+      if (myPayments.length === 0) {
+        listEl.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:0.8rem; border:1px solid #e0e0e0;">無繳費紀錄</td></tr>';
+        return;
+      }
+      myPayments.forEach(item => {
+        listEl.innerHTML += `
+          <tr>
+            <td>${item.period}</td>
+            <td>${item.unitPrice.toLocaleString()}</td>
+            <td>${item.totalAmount.toLocaleString()}</td>
+            <td>${item.payTime}</td>
+          </tr>
+        `;
+      });
+    }
+
+    // 9. 加載司機註冊申請
+    function loadDriverApplications() {
+      const driverApplications = JSON.parse(localStorage.getItem(DRIVER_APPLY_KEY) || '[]');
+      const listEl = document.getElementById('driver-application-list');
+      listEl.innerHTML = '';
+      if (driverApplications.length === 0) {
+        listEl.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:0.8rem; border:1px solid #e0e0e0;">目前無司機註冊申請</td></tr>';
+        return;
+      }
+      driverApplications.forEach(app => {
+        listEl.innerHTML += `
+          <tr data-id="${app.id}">
+            <td>${app.name}</td>
+            <td>${app.phone}</td>
+            <td>${app.carNumber}</td>
+            <td>${app.job}</td>
+            <td>${app.regTime}</td>
+            <td>
+              <button class="btn btn-success approve-driver" data-id="${app.id}">通過</button>
+              <button class="btn btn-danger reject-driver" data-id="${app.id}">拒絕</button>
+            </td>
+          </tr>
+        `;
+      });
+      bindDriverAuditEvents();
+    }
+
+    // 10. 司機註冊審核事件
+    function bindDriverAuditEvents() {
+      document.querySelectorAll('.approve-driver').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const appId = e.target.dataset.id;
+          const driverApplications = JSON.parse(localStorage.getItem(DRIVER_APPLY_KEY) || '[]');
+          const approvedDriver = driverApplications.find(app => app.id === appId);
+          if (approvedDriver) {
+            const passedDrivers = JSON.parse(localStorage.getItem(DRIVER_PASS_KEY) || '[]');
+            passedDrivers.push({...approvedDriver, auditTime: new Date().toLocaleString('zh-TW'), fleetName: document.getElementById('view-fleet-name').textContent});
+            localStorage.setItem(DRIVER_PASS_KEY, JSON.stringify(passedDrivers));
+            const remainingApps = driverApplications.filter(app => app.id !== appId);
+            localStorage.setItem(DRIVER_APPLY_KEY, JSON.stringify(remainingApps));
+            alert(`已通過司機「${approvedDriver.name}」的註冊申請`);
+            loadDriverApplications();
+          }
+        });
+      });
+      document.querySelectorAll('.reject-driver').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const appId = e.target.dataset.id;
+          const driverApplications = JSON.parse(localStorage.getItem(DRIVER_APPLY_KEY) || '[]');
+          const rejectedDriver = driverApplications.find(app => app.id === appId);
+          if (rejectedDriver) {
+            const remainingApps = driverApplications.filter(app => app.id !== appId);
+            localStorage.setItem(DRIVER_APPLY_KEY, JSON.stringify(remainingApps));
+            alert(`已拒絕司機「${rejectedDriver.name}」的註冊申請`);
+            loadDriverApplications();
+          }
+        });
+      });
+    }
+
+    // 初始化
+    window.addEventListener('load', () => {
+      initFleetData();
+      loadRentalPrice();
+      loadBankInfo();
+      document.getElementById('payment-period').addEventListener('change', calculateTotalAmount);
+    });
+  </script>
+</body>
+</html>

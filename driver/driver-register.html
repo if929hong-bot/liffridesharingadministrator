@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>司機註冊</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .register-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 32px;
+      width: 100%;
+      max-width: 500px;
+    }
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      color: #6b7280;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .form-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus {
+      outline: none;
+      border-color: #22c55e;
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .upload-btn {
+      border: 2px dashed #d1d5db;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .upload-btn:hover {
+      border-color: #22c55e;
+    }
+    .upload-btn input {
+      display: none;
+    }
+    .upload-text {
+      color: #6b7280;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen py-8 px-4">
+  <div class="register-card mx-auto">
+    <div class="text-center mb-8">
+      <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        </svg>
+      </div>
+      <h1 class="text-2xl font-bold text-gray-900">司機帳號註冊</h1>
+      <p class="text-gray-600 mt-2">填寫以下資訊完成註冊</p>
+    </div>
+
+    <form id="driverRegisterForm">
+      <!-- 保留的核心註冊欄位區塊 -->
+      <div class="form-group">
+        <label class="form-label">目前職業</label>
+        <input type="text" id="registerJob" class="form-input" placeholder="請輸入您的目前職業" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">有無前科</label>
+        <input type="text" id="registerCriminal" class="form-input" placeholder="請填寫有什麼前科，若無填「無」" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">良民證圖片</label>
+        <div class="upload-btn">
+          <input type="file" id="registerGoodCitizenImg" accept="image/*" required>
+          <span class="upload-text">點擊上傳良民證圖片</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">有無產險？</label>
+        <input type="text" id="registerInsurance" class="form-input" placeholder="請填寫「有」或「無」（至少要有乘客險）" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">車子外觀照片</label>
+        <div class="upload-btn">
+          <input type="file" id="registerCarImg" accept="image/*" required>
+          <span class="upload-text">點擊上傳車子外觀照片</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">駕照</label>
+        <div class="upload-btn">
+          <input type="file" id="registerLicenseImg" accept="image/*" required>
+          <span class="upload-text">點擊上傳駕照圖片</span>
+        </div>
+      </div>
+
+      <!-- 完成註冊按鈕 -->
+      <button type="submit" class="w-full py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition shadow-md mb-4">
+        完成註冊
+      </button>
+
+      <!-- 已有帳號？登入入口 -->
+      <div class="text-center">
+        <span class="text-gray-600 text-sm">已擁有司機帳號？</span>
+        <a href="driver-login.html" class="text-green-600 text-sm hover:underline ml-1">
+          立即登入
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    // 簡化後的表單驗證邏輯
+    document.getElementById('driverRegisterForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // 取得保留欄位的數據
+      const job = document.getElementById('registerJob').value.trim();
+      const criminal = document.getElementById('registerCriminal').value.trim();
+      const insurance = document.getElementById('registerInsurance').value.trim();
+      const goodCitizenImg = document.getElementById('registerGoodCitizenImg').files[0];
+      const carImg = document.getElementById('registerCarImg').files[0];
+      const licenseImg = document.getElementById('registerLicenseImg').files[0];
+
+      // 驗證必填項
+      if (!job || !criminal || !insurance) {
+        alert('請填寫完整所有必填欄位！');
+        return;
+      }
+      if (!goodCitizenImg || !carImg || !licenseImg) {
+        alert('請上傳所有必要圖片！');
+        return;
+      }
+
+      // 模擬提交成功
+      alert('註冊資料已提交，請等待審核！');
+      window.location.href = 'driver-audit.html';
+    });
+
+    // 上傳按鈕交互（保留）
+    document.querySelectorAll('.upload-btn').forEach(btn => {
+      btn.addEventListener('click', () => btn.querySelector('input').click());
+      btn.querySelector('input').addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+          btn.querySelector('.upload-text').textContent = `已選擇：${e.target.files[0].name}`;
+        }
+      });
+    });
+  </script>
+</body>
+</html>

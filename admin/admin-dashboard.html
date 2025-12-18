@@ -1,0 +1,796 @@
+<<<<<<< HEAD
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理員後台 - LINE多元化搭車</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#00C300',
+                        secondary: '#00A600',
+                        accent: '#008700',
+                        'text-dark': '#333333',
+                        'text-light': '#666666',
+                        'card-bg': '#F8F9FA'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 側邊欄固定 */
+        .sidebar {
+            height: calc(100vh - 60px);
+            position: sticky;
+            top: 60px;
+        }
+        /* 菜單活躍狀態 */
+        .menu-active {
+            background-color: #00C300 !important;
+            color: white !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- 頁首（標題支援後續修改） -->
+    <header class="bg-white shadow-sm py-3 px-4 fixed top-0 w-full z-10">
+        <div class="flex justify-between items-center">
+            <h1 class="text-xl font-bold text-text-dark" id="systemTitle">LINE多元化搭車管理員登入系統</h1>
+            <div class="flex items-center space-x-4">
+                <button class="text-text-light hover:text-primary">
+                    <i class="fa fa-bell text-lg"></i>
+                </button>
+                <div class="flex items-center space-x-2">
+                    <img src="https://via.placeholder.com/32" alt="管理員頭像" class="w-8 h-8 rounded-full">
+                    <span class="text-text-dark">管理員</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主容器 -->
+    <div class="pt-16 flex">
+        <!-- 側邊菜單 -->
+        <aside class="sidebar w-56 bg-white shadow-sm p-4">
+            <nav class="space-y-1">
+                <a href="admin-dashboard.html" class="block py-2 px-3 rounded-md menu-active font-medium">
+                    <i class="fa fa-home mr-2"></i>首頁
+                </a>
+                <a href="#" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
+                    <i class="fa fa-map-marker mr-2"></i>區域管理
+                </a>
+                <a href="#" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
+                    <i class="fa fa-car mr-2"></i>司機管理
+                </a>
+                <a href="#" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
+                    <i class="fa fa-users mr-2"></i>訂單管理
+                </a>
+                <a href="#" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
+                    <i class="fa fa-money mr-2"></i>財務管理
+                </a>
+                <a href="#" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
+                    <i class="fa fa-cog mr-2"></i>系統設置
+                </a>
+                <a href="index.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all mt-4">
+                    <i class="fa fa-sign-out mr-2"></i>退出登入
+                </a>
+            </nav>
+        </aside>
+
+        <!-- 主內容區 -->
+        <main class="flex-1 p-6">
+            <!-- 數據統計卡片 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="card-bg rounded-lg p-4 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-2">
+                        <p class="text-text-light text-sm">線上司機人數</p>
+                        <i class="fa fa-car text-primary text-xl"></i>
+                    </div>
+                    <p class="text-2xl font-bold text-text-dark" id="onlineDriverCount">12人</p>
+                </div>
+                <div class="card-bg rounded-lg p-4 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-2">
+                        <p class="text-text-light text-sm">今日訂單</p>
+                        <i class="fa fa-shopping-cart text-primary text-xl"></i>
+                    </div>
+                    <p class="text-2xl font-bold text-text-dark" id="todayOrderCount">36單</p>
+                </div>
+                <div class="card-bg rounded-lg p-4 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-2">
+                        <p class="text-text-light text-sm">今日收入</p>
+                        <i class="fa fa-yen-sign text-primary text-xl"></i>
+                    </div>
+                    <p class="text-2xl font-bold text-text-dark" id="todayIncome">8,560元</p>
+                </div>
+            </div>
+
+            <!-- 圖表區域 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <!-- 趨勢圖 -->
+                <div class="card-bg rounded-lg p-4 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-3">
+                        <p class="font-medium text-text-dark">訂單趨勢（今日）</p>
+                        <select class="text-sm border border-gray-200 rounded px-2 py-1" id="trendTimeRange">
+                            <option value="today">今日</option>
+                            <option value="week">本周</option>
+                            <option value="month">本月</option>
+                        </select>
+                    </div>
+                    <div class="h-48">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- 收入圖 -->
+                <div class="card-bg rounded-lg p-4 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-3">
+                        <p class="font-medium text-text-dark">收入統計（本周）</p>
+                        <select class="text-sm border border-gray-200 rounded px-2 py-1" id="incomeTimeRange">
+                            <option value="week">本周</option>
+                            <option value="month">本月</option>
+                            <option value="quarter">本季度</option>
+                        </select>
+                    </div>
+                    <div class="h-48">
+                        <canvas id="incomeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 訂單列表 -->
+            <div class="card-bg rounded-lg p-4 shadow-sm border border-gray-100">
+                <div class="flex justify-between items-center mb-4">
+                    <p class="font-medium text-text-dark">今日訂單列表</p>
+                    <div class="flex items-center space-x-2">
+                        <input type="text" placeholder="搜索訂單號" class="text-sm border border-gray-200 rounded px-3 py-1 w-40">
+                        <a href="#" class="text-primary text-sm">查看全部</a>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr class="border-b border-gray-200 bg-gray-50">
+                                <th class="text-left py-2 px-3 text-sm text-text-light">訂單編號</th>
+                                <th class="text-left py-2 px-3 text-sm text-text-light">司機</th>
+                                <th class="text-left py-2 px-3 text-sm text-text-light">乘客</th>
+                                <th class="text-left py-2 px-3 text-sm text-text-light">金額</th>
+                                <th class="text-left py-2 px-3 text-sm text-text-light">狀態</th>
+                                <th class="text-left py-2 px-3 text-sm text-text-light">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                <td class="py-2 px-3 text-sm">ORD2025001</td>
+                                <td class="py-2 px-3 text-sm">張司機</td>
+                                <td class="py-2 px-3 text-sm">李先生</td>
+                                <td class="py-2 px-3 text-sm font-medium">236元</td>
+                                <td class="py-2 px-3 text-sm">
+                                    <span class="px-2 py-1 bg-green-100 text-green-600 rounded-full text-xs">已完成</span>
+                                </td>
+                                <td class="py-2 px-3 text-sm">
+                                    <a href="#" class="text-primary hover:underline">查看</a>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                <td class="py-2 px-3 text-sm">ORD2025002</td>
+                                <td class="py-2 px-3 text-sm">王司機</td>
+                                <td class="py-2 px-3 text-sm">陳女士</td>
+                                <td class="py-2 px-3 text-sm font-medium">185元</td>
+                                <td class="py-2 px-3 text-sm">
+                                    <span class="px-2 py-1 bg-blue-100 text-blue-600 rounded-full text-xs">行駛中</span>
+                                </td>
+                                <td class="py-2 px-3 text-sm">
+                                    <a href="#" class="text-primary hover:underline">查看</a>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                <td class="py-2 px-3 text-sm">ORD2025003</td>
+                                <td class="py-2 px-3 text-sm">李司機</td>
+                                <td class="py-2 px-3 text-sm">黃先生</td>
+                                <td class="py-2 px-3 text-sm font-medium">320元</td>
+                                <td class="py-2 px-3 text-sm">
+                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-600 rounded-full text-xs">待接單</span>
+                                </td>
+                                <td class="py-2 px-3 text-sm">
+                                    <a href="#" class="text-primary hover:underline">查看</a>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                <td class="py-2 px-3 text-sm">ORD2025004</td>
+                                <td class="py-2 px-3 text-sm">趙司機</td>
+                                <td class="py-2 px-3 text-sm">鄭女士</td>
+                                <td class="py-2 px-3 text-sm font-medium">158元</td>
+                                <td class="py-2 px-3 text-sm">
+                                    <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">已取消</span>
+                                </td>
+                                <td class="py-2 px-3 text-sm">
+                                    <a href="#" class="text-primary hover:underline">查看</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="flex justify-between items-center mt-4 text-sm">
+                    <p class="text-text-light">顯示 1-4 條，共 36 條</p>
+                    <div class="flex space-x-1">
+                        <button class="px-2 py-1 border border-gray-200 rounded text-text-light disabled:opacity-50" disabled>上一頁</button>
+                        <button class="px-2 py-1 border border-primary bg-primary text-white rounded">1</button>
+                        <button class="px-2 py-1 border border-gray-200 rounded text-text-dark hover:bg-gray-50">2</button>
+                        <button class="px-2 py-1 border border-gray-200 rounded text-text-dark hover:bg-gray-50">3</button>
+                        <button class="px-2 py-1 border border-gray-200 rounded text-text-dark hover:bg-gray-50">下一頁</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // 1. 動態加載系統標題（支援後續修改）
+        function loadSystemTitle() {
+            // 優先讀取系統設置的標題，無則使用默認
+            const savedTitle = localStorage.getItem('systemTitle') || 'LINE多元化搭車管理員登入系統';
+            document.getElementById('systemTitle').textContent = savedTitle;
+            
+            // 監聽storage變化，實時更新標題
+            window.addEventListener('storage', (e) => {
+                if (e.key === 'systemTitle') {
+                    document.getElementById('systemTitle').textContent = e.newValue || 'LINE多元化搭車管理員登入系統';
+                }
+            });
+        }
+
+        // 2. 初始化圖表
+        function initCharts() {
+            // 訂單趨勢圖
+            const trendCtx = document.getElementById('trendChart').getContext('2d');
+            const trendChart = new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: ['08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00'],
+                    datasets: [{
+                        label: '訂單數',
+                        data: [5, 12, 18, 15, 22, 28, 16],
+                        borderColor: '#00C300',
+                        backgroundColor: 'rgba(0, 195, 0, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#00C300',
+                        pointRadius: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 收入統計圖
+            const incomeCtx = document.getElementById('incomeChart').getContext('2d');
+            const incomeChart = new Chart(incomeCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+                    datasets: [{
+                        label: '收入（元）',
+                        data: [1200, 1800, 1500, 2100, 2500, 3200, 2800],
+                        backgroundColor: '#00C300',
+                        borderRadius: 4,
+                        barPercentage: 0.6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 圖表時間範圍切換
+            document.getElementById('trendTimeRange').addEventListener('change', (e) => {
+                const value = e.target.value;
+                let labels, data;
+                switch(value) {
+                    case 'today':
+                        labels = ['08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00'];
+                        data = [5, 12, 18, 15, 22, 28, 16];
+                        break;
+                    case 'week':
+                        labels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+                        data = [35, 48, 42, 55, 68, 82, 65];
+                        break;
+                    case 'month':
+                        labels = ['1日', '5日', '10日', '15日', '20日', '25日', '30日'];
+                        data = [120, 180, 150, 220, 280, 320, 350];
+                        break;
+                }
+                trendChart.data.labels = labels;
+                trendChart.data.datasets[0].data = data;
+                trendChart.update();
+            });
+
+            document.getElementById('incomeTimeRange').addEventListener('change', (e) => {
+                const value = e.target.value;
+                let labels, data;
+                switch(value) {
+                    case 'week':
+                        labels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+                        data = [1200, 1800, 1500, 2100, 2500, 3200, 2800];
+                        break;
+                    case 'month':
+                        labels = ['1周', '2周', '3周', '4周'];
+                        data = [8500, 9200, 10500, 12800];
+                        break;
+                    case 'quarter':
+                        labels = ['1月', '2月', '3月'];
+                        data = [35000, 38000, 42000];
+                        break;
+                }
+                incomeChart.data.labels = labels;
+                incomeChart.data.datasets[0].data = data;
+                incomeChart.update();
+            });
+        }
+
+        // 3. 模擬實時數據更新
+        function simulateRealTimeData() {
+            // 每5分鐘隨機更新數據（模擬真實場景）
+            setInterval(() => {
+                const onlineDrivers = Math.floor(Math.random() * 10) + 8;
+                const todayOrders = Math.floor(Math.random() * 5) + 36;
+                const todayIncome = Math.floor(Math.random() * 1000) + 8000;
+                
+                document.getElementById('onlineDriverCount').textContent = `${onlineDrivers}人`;
+                document.getElementById('todayOrderCount').textContent = `${todayOrders}單`;
+                document.getElementById('todayIncome').textContent = `${todayIncome.toLocaleString()}元`;
+            }, 300000); // 5分鐘 = 300000毫秒
+        }
+
+        // 4. 頁面加載初始化
+        window.onload = () => {
+            loadSystemTitle();
+            initCharts();
+            simulateRealTimeData();
+        };
+    </script>
+</body>
+=======
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理員後台 - LINE多元化搭車</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#00C300',
+                        secondary: '#00A600',
+                        accent: '#008700',
+                        'text-dark': '#333333',
+                        'text-light': '#666666',
+                        'card-bg': '#F8F9FA'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 側邊欄固定 */
+        .sidebar {
+            height: calc(100vh - 60px);
+            position: sticky;
+            top: 60px;
+        }
+        /* 菜單活躍狀態 */
+        .menu-active {
+            background-color: #00C300 !important;
+            color: white !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- 頁首（標題支援後續修改） -->
+    <header class="bg-white shadow-sm py-3 px-4 fixed top-0 w-full z-10">
+        <div class="flex justify-between items-center">
+            <h1 class="text-xl font-bold text-text-dark" id="systemTitle">LINE多元化搭車管理員登入系統</h1>
+            <div class="flex items-center space-x-4">
+                <button class="text-text-light hover:text-primary">
+                    <i class="fa fa-bell text-lg"></i>
+                </button>
+                <div class="flex items-center space-x-2">
+                    <img src="https://via.placeholder.com/32" alt="管理員頭像" class="w-8 h-8 rounded-full">
+                    <span class="text-text-dark">管理員</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主容器 -->
+    <div class="pt-16 flex">
+        <!-- 側邊菜單 -->
+        <aside class="sidebar w-56 bg-white shadow-sm p-4">
+            <nav class="space-y-1">
+                <a href="admin-dashboard.html" class="block py-2 px-3 rounded-md menu-active font-medium">
+                    <i class="fa fa-home mr-2"></i>首頁
+                </a>
+                <a href="#" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
+                    <i class="fa fa-map-marker mr-2"></i>區域管理
+                </a>
+                <a href="#" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
+                    <i class="fa fa-car mr-2"></i>司機管理
+                </a>
+                <a href="#" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
+                    <i class="fa fa-users mr-2"></i>訂單管理
+                </a>
+                <a href="#" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
+                    <i class="fa fa-money mr-2"></i>財務管理
+                </a>
+                <a href="#" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
+                    <i class="fa fa-cog mr-2"></i>系統設置
+                </a>
+                <a href="index.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all mt-4">
+                    <i class="fa fa-sign-out mr-2"></i>退出登入
+                </a>
+            </nav>
+        </aside>
+
+        <!-- 主內容區 -->
+        <main class="flex-1 p-6">
+            <!-- 數據統計卡片 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="card-bg rounded-lg p-4 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-2">
+                        <p class="text-text-light text-sm">線上司機人數</p>
+                        <i class="fa fa-car text-primary text-xl"></i>
+                    </div>
+                    <p class="text-2xl font-bold text-text-dark" id="onlineDriverCount">12人</p>
+                </div>
+                <div class="card-bg rounded-lg p-4 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-2">
+                        <p class="text-text-light text-sm">今日訂單</p>
+                        <i class="fa fa-shopping-cart text-primary text-xl"></i>
+                    </div>
+                    <p class="text-2xl font-bold text-text-dark" id="todayOrderCount">36單</p>
+                </div>
+                <div class="card-bg rounded-lg p-4 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-2">
+                        <p class="text-text-light text-sm">今日收入</p>
+                        <i class="fa fa-yen-sign text-primary text-xl"></i>
+                    </div>
+                    <p class="text-2xl font-bold text-text-dark" id="todayIncome">8,560元</p>
+                </div>
+            </div>
+
+            <!-- 圖表區域 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <!-- 趨勢圖 -->
+                <div class="card-bg rounded-lg p-4 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-3">
+                        <p class="font-medium text-text-dark">訂單趨勢（今日）</p>
+                        <select class="text-sm border border-gray-200 rounded px-2 py-1" id="trendTimeRange">
+                            <option value="today">今日</option>
+                            <option value="week">本周</option>
+                            <option value="month">本月</option>
+                        </select>
+                    </div>
+                    <div class="h-48">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- 收入圖 -->
+                <div class="card-bg rounded-lg p-4 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-3">
+                        <p class="font-medium text-text-dark">收入統計（本周）</p>
+                        <select class="text-sm border border-gray-200 rounded px-2 py-1" id="incomeTimeRange">
+                            <option value="week">本周</option>
+                            <option value="month">本月</option>
+                            <option value="quarter">本季度</option>
+                        </select>
+                    </div>
+                    <div class="h-48">
+                        <canvas id="incomeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 訂單列表 -->
+            <div class="card-bg rounded-lg p-4 shadow-sm border border-gray-100">
+                <div class="flex justify-between items-center mb-4">
+                    <p class="font-medium text-text-dark">今日訂單列表</p>
+                    <div class="flex items-center space-x-2">
+                        <input type="text" placeholder="搜索訂單號" class="text-sm border border-gray-200 rounded px-3 py-1 w-40">
+                        <a href="#" class="text-primary text-sm">查看全部</a>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr class="border-b border-gray-200 bg-gray-50">
+                                <th class="text-left py-2 px-3 text-sm text-text-light">訂單編號</th>
+                                <th class="text-left py-2 px-3 text-sm text-text-light">司機</th>
+                                <th class="text-left py-2 px-3 text-sm text-text-light">乘客</th>
+                                <th class="text-left py-2 px-3 text-sm text-text-light">金額</th>
+                                <th class="text-left py-2 px-3 text-sm text-text-light">狀態</th>
+                                <th class="text-left py-2 px-3 text-sm text-text-light">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                <td class="py-2 px-3 text-sm">ORD2025001</td>
+                                <td class="py-2 px-3 text-sm">張司機</td>
+                                <td class="py-2 px-3 text-sm">李先生</td>
+                                <td class="py-2 px-3 text-sm font-medium">236元</td>
+                                <td class="py-2 px-3 text-sm">
+                                    <span class="px-2 py-1 bg-green-100 text-green-600 rounded-full text-xs">已完成</span>
+                                </td>
+                                <td class="py-2 px-3 text-sm">
+                                    <a href="#" class="text-primary hover:underline">查看</a>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                <td class="py-2 px-3 text-sm">ORD2025002</td>
+                                <td class="py-2 px-3 text-sm">王司機</td>
+                                <td class="py-2 px-3 text-sm">陳女士</td>
+                                <td class="py-2 px-3 text-sm font-medium">185元</td>
+                                <td class="py-2 px-3 text-sm">
+                                    <span class="px-2 py-1 bg-blue-100 text-blue-600 rounded-full text-xs">行駛中</span>
+                                </td>
+                                <td class="py-2 px-3 text-sm">
+                                    <a href="#" class="text-primary hover:underline">查看</a>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                <td class="py-2 px-3 text-sm">ORD2025003</td>
+                                <td class="py-2 px-3 text-sm">李司機</td>
+                                <td class="py-2 px-3 text-sm">黃先生</td>
+                                <td class="py-2 px-3 text-sm font-medium">320元</td>
+                                <td class="py-2 px-3 text-sm">
+                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-600 rounded-full text-xs">待接單</span>
+                                </td>
+                                <td class="py-2 px-3 text-sm">
+                                    <a href="#" class="text-primary hover:underline">查看</a>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                <td class="py-2 px-3 text-sm">ORD2025004</td>
+                                <td class="py-2 px-3 text-sm">趙司機</td>
+                                <td class="py-2 px-3 text-sm">鄭女士</td>
+                                <td class="py-2 px-3 text-sm font-medium">158元</td>
+                                <td class="py-2 px-3 text-sm">
+                                    <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">已取消</span>
+                                </td>
+                                <td class="py-2 px-3 text-sm">
+                                    <a href="#" class="text-primary hover:underline">查看</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="flex justify-between items-center mt-4 text-sm">
+                    <p class="text-text-light">顯示 1-4 條，共 36 條</p>
+                    <div class="flex space-x-1">
+                        <button class="px-2 py-1 border border-gray-200 rounded text-text-light disabled:opacity-50" disabled>上一頁</button>
+                        <button class="px-2 py-1 border border-primary bg-primary text-white rounded">1</button>
+                        <button class="px-2 py-1 border border-gray-200 rounded text-text-dark hover:bg-gray-50">2</button>
+                        <button class="px-2 py-1 border border-gray-200 rounded text-text-dark hover:bg-gray-50">3</button>
+                        <button class="px-2 py-1 border border-gray-200 rounded text-text-dark hover:bg-gray-50">下一頁</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // 1. 動態加載系統標題（支援後續修改）
+        function loadSystemTitle() {
+            // 優先讀取系統設置的標題，無則使用默認
+            const savedTitle = localStorage.getItem('systemTitle') || 'LINE多元化搭車管理員登入系統';
+            document.getElementById('systemTitle').textContent = savedTitle;
+            
+            // 監聽storage變化，實時更新標題
+            window.addEventListener('storage', (e) => {
+                if (e.key === 'systemTitle') {
+                    document.getElementById('systemTitle').textContent = e.newValue || 'LINE多元化搭車管理員登入系統';
+                }
+            });
+        }
+
+        // 2. 初始化圖表
+        function initCharts() {
+            // 訂單趨勢圖
+            const trendCtx = document.getElementById('trendChart').getContext('2d');
+            const trendChart = new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: ['08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00'],
+                    datasets: [{
+                        label: '訂單數',
+                        data: [5, 12, 18, 15, 22, 28, 16],
+                        borderColor: '#00C300',
+                        backgroundColor: 'rgba(0, 195, 0, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#00C300',
+                        pointRadius: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 收入統計圖
+            const incomeCtx = document.getElementById('incomeChart').getContext('2d');
+            const incomeChart = new Chart(incomeCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+                    datasets: [{
+                        label: '收入（元）',
+                        data: [1200, 1800, 1500, 2100, 2500, 3200, 2800],
+                        backgroundColor: '#00C300',
+                        borderRadius: 4,
+                        barPercentage: 0.6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 圖表時間範圍切換
+            document.getElementById('trendTimeRange').addEventListener('change', (e) => {
+                const value = e.target.value;
+                let labels, data;
+                switch(value) {
+                    case 'today':
+                        labels = ['08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00'];
+                        data = [5, 12, 18, 15, 22, 28, 16];
+                        break;
+                    case 'week':
+                        labels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+                        data = [35, 48, 42, 55, 68, 82, 65];
+                        break;
+                    case 'month':
+                        labels = ['1日', '5日', '10日', '15日', '20日', '25日', '30日'];
+                        data = [120, 180, 150, 220, 280, 320, 350];
+                        break;
+                }
+                trendChart.data.labels = labels;
+                trendChart.data.datasets[0].data = data;
+                trendChart.update();
+            });
+
+            document.getElementById('incomeTimeRange').addEventListener('change', (e) => {
+                const value = e.target.value;
+                let labels, data;
+                switch(value) {
+                    case 'week':
+                        labels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+                        data = [1200, 1800, 1500, 2100, 2500, 3200, 2800];
+                        break;
+                    case 'month':
+                        labels = ['1周', '2周', '3周', '4周'];
+                        data = [8500, 9200, 10500, 12800];
+                        break;
+                    case 'quarter':
+                        labels = ['1月', '2月', '3月'];
+                        data = [35000, 38000, 42000];
+                        break;
+                }
+                incomeChart.data.labels = labels;
+                incomeChart.data.datasets[0].data = data;
+                incomeChart.update();
+            });
+        }
+
+        // 3. 模擬實時數據更新
+        function simulateRealTimeData() {
+            // 每5分鐘隨機更新數據（模擬真實場景）
+            setInterval(() => {
+                const onlineDrivers = Math.floor(Math.random() * 10) + 8;
+                const todayOrders = Math.floor(Math.random() * 5) + 36;
+                const todayIncome = Math.floor(Math.random() * 1000) + 8000;
+                
+                document.getElementById('onlineDriverCount').textContent = `${onlineDrivers}人`;
+                document.getElementById('todayOrderCount').textContent = `${todayOrders}單`;
+                document.getElementById('todayIncome').textContent = `${todayIncome.toLocaleString()}元`;
+            }, 300000); // 5分鐘 = 300000毫秒
+        }
+
+        // 4. 頁面加載初始化
+        window.onload = () => {
+            loadSystemTitle();
+            initCharts();
+            simulateRealTimeData();
+        };
+    </script>
+</body>
+>>>>>>> 352392ca9f8cf542e966877407b0fdb95cd821aa
+</html>

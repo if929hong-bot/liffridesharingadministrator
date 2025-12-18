@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>搭車自由 - 乘客入口</title>
+  <!-- 引入 Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入 Font Awesome -->
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <!-- 自定義配置 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#00A86B', // 綠色主色
+            secondary: '#F5F5F5', // 淺灰色背景
+            dark: '#333333', // 深灰色文字
+          },
+          fontFamily: {
+            sans: ['Helvetica Neue', 'Arial', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .btn-primary {
+        @apply bg-primary text-white py-3 px-6 rounded-lg font-medium transition-all duration-300 hover:bg-primary/90 active:scale-95 shadow-md;
+      }
+      .btn-secondary {
+        @apply bg-white text-primary border border-primary py-3 px-6 rounded-lg font-medium transition-all duration-300 hover:bg-gray-50 active:scale-95;
+      }
+      .input-field {
+        @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all;
+      }
+      .card {
+        @apply bg-white rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg;
+      }
+      .file-upload {
+        @apply w-full border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer;
+      }
+      .radio-group {
+        @apply flex space-x-6;
+      }
+      .radio-label {
+        @apply flex items-center space-x-2 cursor-pointer;
+      }
+      .modal {
+        @apply fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden;
+      }
+      .modal-content {
+        @apply bg-white rounded-xl p-8 max-w-md w-full mx-4 text-center;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 font-sans text-dark min-h-screen">
+  <!-- 頂部導航欄 -->
+  <header class="bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <i class="fa fa-car text-primary text-2xl"></i>
+        <h1 class="text-xl font-bold">搭車自由</h1>
+      </div>
+      <nav class="hidden md:flex space-x-6">
+        <button class="text-primary font-medium">乘客</button>
+        <a href="driver.html" class="text-gray-600 hover:text-primary transition-colors">司機</a>
+        <a href="admin.html" class="text-gray-600 hover:text-primary transition-colors">管理員</a>
+      </nav>
+      <button id="mobile-menu-btn" class="md:hidden text-dark">
+        <i class="fa fa-bars text-xl"></i>
+      </button>
+    </div>
+    <!-- 手機導航菜單 -->
+    <div id="mobile-menu" class="hidden md:hidden bg-white shadow-lg absolute w-full">
+      <div class="container mx-auto px-4 py-2 flex flex-col space-y-3">
+        <button class="text-primary font-medium py-2 border-b border-gray-100">乘客</button>
+        <a href="driver.html" class="text-gray-600 hover:text-primary transition-colors py-2 border-b border-gray-100">司機</a>
+        <a href="admin.html" class="text-gray-600 hover:text-primary transition-colors py-2">管理員</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主要內容區域 -->
+  <main class="container mx-auto px-4 pt-24 pb-16">
+    <!-- 乘客介面 -->
+    <section class="block">
+      <div class="max-w-md mx-auto">
+        <div class="card text-center">
+          <div class="mb-8">
+            <h2 class="text-2xl font-bold mb-2">乘客叫車</h2>
+            <p class="text-gray-600">無需登錄，立即叫車</p>
+          </div>
+          
+          <!-- 乘客叫車表單 - 提交至 passenger-order.html -->
+          <form id="passenger-order-form" action="passenger-order.html" method="GET">
+            <div class="space-y-4 mb-8">
+              <!-- 姓名欄位 -->
+              <div>
+                <label class="block text-left text-sm font-medium text-gray-700 mb-1">姓名</label>
+                <input type="text" class="input-field" name="passenger-name" placeholder="輸入您的姓名" required>
+              </div>
+              <!-- 電話欄位 -->
+              <div>
+                <label class="block text-left text-sm font-medium text-gray-700 mb-1">電話</label>
+                <input type="tel" class="input-field" name="passenger-phone" placeholder="輸入您的聯絡電話" required>
+              </div>
+              <div>
+                <label class="block text-left text-sm font-medium text-gray-700 mb-1">上車地點</label>
+                <input type="text" class="input-field" name="pickup-location" placeholder="輸入您的位置" required>
+              </div>
+              <div>
+                <label class="block text-left text-sm font-medium text-gray-700 mb-1">下車地點</label>
+                <input type="text" class="input-field" name="dropoff-location" placeholder="輸入目的地" required>
+              </div>
+              <div>
+                <label class="block text-left text-sm font-medium text-gray-700 mb-1">乘客人數</label>
+                <select class="input-field" name="passenger-count" required>
+                  <option value="1">1 人</option>
+                  <option value="2">2 人</option>
+                  <option value="3">3 人</option>
+                  <option value="4+">4 人以上</option>
+                </select>
+              </div>
+            </div>
+            
+            <!-- 乘客搭車入口按鈕 - 提交表單並跳轉 -->
+            <button type="submit" id="passenger-order" class="btn-primary w-full">
+              <span>我要叫車</span>
+            </button>
+          </form>
+        </div>
+        
+        <div class="mt-6 text-center text-gray-500 text-sm">
+          <p>透過 LINE 帳號快速使用，保護您的隱私安全</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 頁腳 -->
+  <footer class="bg-white border-t border-gray-200 py-6">
+    <div class="container mx-auto px-4 text-center text-gray-500 text-sm">
+      <p>© 2025 搭車自由 LIFF 應用 | 透過 LINE Developer 平台提供服務</p>
+      <div class="mt-2 flex justify-center space-x-4">
+        <a href="#" class="hover:text-primary transition-colors">關於我們</a>
+        <a href="#" class="hover:text-primary transition-colors">服務條款</a>
+        <a href="#" class="hover:text-primary transition-colors">聯絡我們</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- JavaScript -->
+  <script>
+    // 移動菜單切換
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    
+    mobileMenuBtn.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+    });
+
+    // 添加頁面加載動畫
+    window.addEventListener('load', () => {
+      document.body.classList.add('opacity-100');
+      document.body.classList.remove('opacity-0');
+    });
+  </script>
+</body>
+</html>

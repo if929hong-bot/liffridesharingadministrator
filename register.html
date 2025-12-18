@@ -1,0 +1,84 @@
+<!-- register.html（車隊管理員註冊頁） -->
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>註冊 - 多元化乘車管理系統</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+</head>
+<body class="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+  <div class="w-full max-w-md bg-white rounded-xl shadow-md p-8">
+    <div class="text-center mb-8">
+      <<i class="fa fa-car text-green-600 text-4xl mb-3"></</i>
+      <h1 class="text-xl font-bold text-gray-800">車隊管理員註冊</h1>
+    </div>
+
+    <form id="register-form" class="space-y-4">
+      <!-- 車隊名稱 -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">車隊名稱</label>
+        <input type="text" id="fleet-name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="請輸入車隊名稱" required>
+      </div>
+
+      <!-- 姓名 -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">姓名</label>
+        <input type="text" id="name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="請輸入姓名" required>
+      </div>
+
+      <!-- 帳號 -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">帳號</label>
+        <input type="text" id="username" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="請設定帳號" required>
+      </div>
+
+      <!-- 密碼 -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">密碼</label>
+        <input type="password" id="password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="請設定密碼（至少6位）" minlength="6" required>
+      </div>
+
+      <!-- 電話 -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">電話</label>
+        <input type="tel" id="phone" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="請輸入電話號碼" required>
+      </div>
+
+      <!-- LINE ID -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">LINE ID</label>
+        <input type="text" id="line-id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="請輸入LINE ID" required>
+      </div>
+
+      <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors mt-4">
+        提交註冊申請
+      </button>
+    </form>
+
+    <div class="text-center mt-6 text-sm text-gray-500">
+      <p>已有帳號？<a href="index.html" class="text-green-600 hover:underline">立即登入</a></p>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('register-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      // 模擬註冊提交（實際需後端儲存）
+      const fleetName = document.getElementById('fleet-name').value;
+      const name = document.getElementById('name').value;
+      const username = document.getElementById('username').value;
+      const phone = document.getElementById('phone').value;
+      const lineId = document.getElementById('line-id').value;
+
+      // 模擬提交成功提示
+      alert(`註冊申請已提交！\n車隊：${fleetName}\n姓名：${name}\n請等待超級管理員審核`);
+      
+      // 跳轉回登入頁
+      window.location.href = 'index.html';
+    });
+  </script>
+</body>
+</html>

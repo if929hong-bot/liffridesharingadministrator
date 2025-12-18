@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>超級管理員後台</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* 全域樣式 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Microsoft JhengHei", sans-serif;
+      color: #333;
+    }
+    body {
+      background: #f0f2f5;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* 左側菜單（優化間距，綠底白字與車隊管理員一致） */
+    .sidebar {
+      width: 220px; /* 加寬側邊欄避免文字擠壓 */
+      background: #228B22;
+      padding: 1.5rem 0;
+    }
+    .sidebar h2 {
+      color: #fff;
+      text-align: center;
+      font-size: 1.2rem;
+      margin-bottom: 2.5rem; /* 增加標題下方間距 */
+      padding: 0 1rem;
+    }
+    .sidebar .menu {
+      list-style: none;
+    }
+    .sidebar .menu > li {
+      margin-bottom: 0.3rem; /* 菜單項之間增加間距 */
+    }
+    .sidebar .menu > li > a {
+      display: block;
+      color: #fff;
+      text-decoration: none;
+      padding: 1rem 1.8rem; /* 增加內邊距 */
+      font-size: 1rem;
+      transition: background 0.2s;
+    }
+    .sidebar .menu > li > a:hover, 
+    .sidebar .menu > li > a.active {
+      background: #1E7D1E;
+    }
+    .sidebar .menu i {
+      color: #fff;
+      margin-right: 0.8rem; /* 圖標與文字間距加大 */
+      width: 18px; /* 圖標固定寬度，對齊更整齊 */
+      text-align: center;
+    }
+    /* 子菜單（優化分層） */
+    .submenu {
+      list-style: none;
+      background: #006400;
+    }
+    .submenu li a {
+      display: block;
+      color: #fff;
+      text-decoration: none;
+      padding: 0.8rem 2.5rem; /* 子菜單內邊距加大 */
+      font-size: 0.95rem;
+    }
+    .submenu li a:hover {
+      background: #004d00;
+    }
+
+    /* 主內容（增加留白） */
+    .main-content {
+      flex: 1;
+      padding: 2.5rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 0.5rem;
+      padding: 2rem; /* 加大卡片內邊距 */
+      margin-bottom: 2rem; /* 卡片間距加大 */
+      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    }
+    .card h3 {
+      font-size: 1.25rem;
+      margin-bottom: 1.5rem; /* 標題下方間距加大 */
+      padding-bottom: 0.8rem;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    /* 表單與搜尋樣式（優化間距） */
+    .search-group {
+      margin-bottom: 1.5rem;
+      display: flex;
+      gap: 1rem; /* 搜尋框與按鈕間距加大 */
+    }
+    .search-input {
+      padding: 0.8rem; /* 輸入框內邊距加大 */
+      border: 1px solid #ccc;
+      border-radius: 0.3rem;
+      font-size: 1rem;
+      flex: 1;
+    }
+    .search-btn {
+      padding: 0.8rem 1.5rem; /* 按鈕內邊距加大 */
+      background: #008000;
+      color: #fff;
+      border: none;
+      border-radius: 0.3rem;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    /* 列表樣式（優化排版） */
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1.5rem;
+    }
+    .table th, .table td {
+      padding: 1rem; /* 表格單元格內邊距加大 */
+      border: 1px solid #e0e0e0;
+      text-align: left;
+      font-size: 0.95rem;
+    }
+    .table th {
+      background: #f8f8f8;
+      font-weight: 600;
+    }
+    .empty-tip {
+      text-align: center;
+      color: #666;
+      padding: 2rem; /* 空提示內邊距加大 */
+      font-size: 1rem;
+    }
+
+    /* 隱藏面板 */
+    .panel {
+      display: none;
+    }
+    .panel.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <!-- 左側菜單 -->
+  <aside class="sidebar">
+    <h2>超級管理員</h2>
+    <ul class="menu">
+      <li>
+        <a href="#price-setting" data-panel="price-setting">租金價格設定</a>
+      </li>
+      <li>
+        <a href="#bank-setting" data-panel="bank-setting">銀行帳戶設定</a>
+      </li>
+      <li>
+        <a href="#payment-records" data-panel="payment-records">繳費紀錄查看</a>
+      </li>
+      <li>
+        <a href="#fleet-manager" class="active" data-panel="fleet-manager">車隊管理員列表管理</a>
+      </li>
+      <li>
+        <a href="#data-library" data-panel="data-library">資料圖庫</a>
+      </li>
+    </ul>
+  </aside>
+
+  <!-- 主內容區 -->
+  <main class="main-content">
+    <!-- 1. 租金價格設定面板 -->
+    <section id="price-setting" class="panel card">
+      <h3>租金價格設定</h3>
+      <div class="form-group" style="margin-bottom:1.5rem;">
+        <label style="display:block; margin-bottom:0.5rem; font-size:1rem;">月繳單價（NT$）</label>
+        <input type="number" id="monthly-price" class="search-input" placeholder="請輸入月繳單價" min="1" required>
+      </div>
+      <div class="form-group" style="margin-bottom:1.5rem;">
+        <label style="display:block; margin-bottom:0.5rem; font-size:1rem;">季繳單價（NT$）</label>
+        <input type="number" id="quarterly-price" class="search-input" placeholder="請輸入季繳單價" min="1" required>
+      </div>
+      <div class="form-group" style="margin-bottom:1.5rem;">
+        <label style="display:block; margin-bottom:0.5rem; font-size:1rem;">半年繳單價（NT$）</label>
+        <input type="number" id="halfyear-price" class="search-input" placeholder="請輸入半年繳單價" min="1" required>
+      </div>
+      <div class="form-group" style="margin-bottom:1.5rem;">
+        <label style="display:block; margin-bottom:0.5rem; font-size:1rem;">年繳單價（NT$）</label>
+        <input type="number" id="yearly-price" class="search-input" placeholder="請輸入年繳單價" min="1" required>
+      </div>
+      <button class="search-btn" id="save-price">儲存價格設定</button>
+    </section>
+
+    <!-- 2. 銀行帳戶設定面板 -->
+    <section id="bank-setting" class="panel card">
+      <h3>銀行帳戶設定</h3>
+      <div class="form-group" style="margin-bottom:1.5rem;">
+        <label style="display:block; margin-bottom:0.5rem; font-size:1rem;">銀行名稱 <span style="color:red">*</span></label>
+        <input type="text" id="bank-name" class="search-input" placeholder="請輸入銀行名稱" required>
+      </div>
+      <div class="form-group" style="margin-bottom:1.5rem;">
+        <label style="display:block; margin-bottom:0.5rem; font-size:1rem;">戶名 <span style="color:red">*</span></label>
+        <input type="text" id="bank-account-name" class="search-input" placeholder="請輸入戶名" required>
+      </div>
+      <div class="form-group" style="margin-bottom:1.5rem;">
+        <label style="display:block; margin-bottom:0.5rem; font-size:1rem;">銀行帳號 <span style="color:red">*</span></label>
+        <input type="text" id="bank-account-number" class="search-input" placeholder="請輸入銀行帳號" required>
+      </div>
+      <button class="search-btn" id="save-bank">儲存銀行帳戶</button>
+    </section>
+
+    <!-- 3. 繳費紀錄查看面板 -->
+    <section id="payment-records" class="panel card">
+      <h3>繳費紀錄查看</h3>
+      <div class="search-group">
+        <input type="text" id="search-payment" class="search-input" placeholder="搜尋車隊/金額">
+        <button class="search-btn" id="search-payment-btn">搜尋</button>
+      </div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>車隊名稱</th>
+            <th>繳費週期</th>
+            <th>總金額（NT$）</th>
+          </tr>
+        </thead>
+        <tbody id="payment-records-list">
+          <tr><td colspan="3" class="empty-tip">無繳費紀錄</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 4. 車隊管理員列表管理面板 -->
+    <section id="fleet-manager" class="panel active card">
+      <h3>車隊管理員列表管理</h3>
+      <div class="search-group">
+        <input type="text" id="search-fleet-manager" class="search-input" placeholder="搜尋車隊名稱／管理員／電話">
+        <select id="filter-fleet-status" class="search-input" style="max-width:200px;">
+          <option value="all">全部狀態</option>
+          <option value="active">正常</option>
+          <option value="suspended">停權</option>
+        </select>
+      </div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>車隊名稱</th>
+            <th>管理員姓名</th>
+            <th>聯繫電話</th>
+            <th>狀態</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="fleet-manager-list">
+          <tr><td colspan="5" class="empty-tip">目前沒有任何車隊管理員資料</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 5. 資料圖庫面板 -->
+    <section id="data-library" class="panel card">
+      <h3>資料圖庫</h3>
+      <div class="search-group">
+        <input type="text" class="search-input" placeholder="搜尋繳費紀錄">
+        <button class="search-btn">搜尋</button>
+      </div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>車隊名稱</th>
+            <th>繳費紀錄檔案</th>
+            <th>上傳時間</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="4" class="empty-tip">無上傳的繳費紀錄</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    // 儲存鍵名定義
+    const PRICE_KEY = 'carRentalPrice';
+    const BANK_KEY = 'carRentalBank';
+    const PAYMENT_KEY = 'carRentalPayment';
+
+    // 1. 左側菜單切換主面板
+    document.querySelectorAll('.menu > li > a').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        // 移除所有主面板active
+        document.querySelectorAll('.menu > li > a').forEach(a => a.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(panel => panel.classList.remove('active'));
+        // 新增當前主面板active
+        link.classList.add('active');
+        const panelId = link.getAttribute('data-panel');
+        document.getElementById(panelId).classList.add('active');
+      });
+    });
+
+    // 2. 租金價格設定
+    document.getElementById('save-price').addEventListener('click', () => {
+      const priceData = {
+        monthly: Number(document.getElementById('monthly-price').value),
+        quarterly: Number(document.getElementById('quarterly-price').value),
+        halfyear: Number(document.getElementById('halfyear-price').value),
+        yearly: Number(document.getElementById('yearly-price').value)
+      };
+      localStorage.setItem(PRICE_KEY, JSON.stringify(priceData));
+      alert('租金價格已儲存！');
+    });
+
+    // 4. 銀行帳戶設定
+    document.getElementById('save-bank').addEventListener('click', () => {
+      const bankName = document.getElementById('bank-name').value.trim();
+      const accountName = document.getElementById('bank-account-name').value.trim();
+      const accountNumber = document.getElementById('bank-account-number').value.trim();
+      if (!bankName || !accountName || !accountNumber) {
+        alert('請完整填寫銀行名稱、戶名與銀行帳號！');
+        return;
+      }
+      const bankData = { bankName, accountName, accountNumber };
+      localStorage.setItem(BANK_KEY, JSON.stringify(bankData));
+      alert('銀行帳戶已儲存！');
+    });
+
+    // 5. 車隊管理員列表管理
+    const FLEET_ADMIN_KEY = 'fleetAdminList';
+
+    function loadFleetAdmins() {
+      let list = JSON.parse(localStorage.getItem(FLEET_ADMIN_KEY) || '[]');
+      if (list.length === 0) {
+        list = [
+          {
+            id: 'fleet-001',
+            fleetName: '滴滴代打車隊',
+            managerName: '王小明',
+            phone: '0912345678',
+            status: 'active'
+          }
+        ];
+        localStorage.setItem(FLEET_ADMIN_KEY, JSON.stringify(list));
+      }
+      renderFleetAdmins(list);
+    }
+
+    function renderFleetAdmins(sourceList) {
+      const keyword = document.getElementById('search-fleet-manager').value.trim();
+      const statusFilter = document.getElementById('filter-fleet-status').value;
+      const tbody = document.getElementById('fleet-manager-list');
+      let list = sourceList;
+      if (keyword) {
+        list = list.filter(item =>
+          item.fleetName.includes(keyword) ||
+          item.managerName.includes(keyword) ||
+          item.phone.includes(keyword)
+        );
+      }
+      if (statusFilter !== 'all') {
+        list = list.filter(item => item.status === statusFilter);
+      }
+      tbody.innerHTML = '';
+      if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan=\"5\" class=\"empty-tip\">沒有符合條件的車隊管理員</td></tr>';
+        return;
+      }
+      list.forEach(item => {
+        const statusText = item.status === 'suspended' ? '停權' : '正常';
+        const actionText = item.status === 'suspended' ? '復權' : '停權';
+        const nextStatus = item.status === 'suspended' ? 'active' : 'suspended';
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${item.fleetName}</td>
+          <td>${item.managerName}</td>
+          <td>${item.phone}</td>
+          <td>${statusText}</td>
+          <td>
+            <button class=\"search-btn\" data-id=\"${item.id}\" data-next-status=\"${nextStatus}\">${actionText}</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    document.getElementById('search-fleet-manager').addEventListener('input', () => {
+      const list = JSON.parse(localStorage.getItem(FLEET_ADMIN_KEY) || '[]');
+      renderFleetAdmins(list);
+    });
+
+    document.getElementById('filter-fleet-status').addEventListener('change', () => {
+      const list = JSON.parse(localStorage.getItem(FLEET_ADMIN_KEY) || '[]');
+      renderFleetAdmins(list);
+    });
+
+    document.getElementById('fleet-manager-list').addEventListener('click', (e) => {
+      const target = e.target;
+      if (target.tagName.toLowerCase() !== 'button') return;
+      const id = target.getAttribute('data-id');
+      const nextStatus = target.getAttribute('data-next-status');
+      const list = JSON.parse(localStorage.getItem(FLEET_ADMIN_KEY) || '[]');
+      const updated = list.map(item => item.id === id ? { ...item, status: nextStatus } : item);
+      localStorage.setItem(FLEET_ADMIN_KEY, JSON.stringify(updated));
+      renderFleetAdmins(updated);
+    });
+
+    // 6. 載入既有設定
+    window.addEventListener('load', () => {
+      const storedPrice = JSON.parse(localStorage.getItem(PRICE_KEY) || '{}');
+      document.getElementById('monthly-price').value = storedPrice.monthly || 9500;
+      document.getElementById('quarterly-price').value = storedPrice.quarterly || 9000;
+      document.getElementById('halfyear-price').value = storedPrice.halfyear || 9500;
+      document.getElementById('yearly-price').value = storedPrice.yearly || 8500;
+
+      const storedBank = JSON.parse(localStorage.getItem(BANK_KEY) || '{}');
+      document.getElementById('bank-name').value = storedBank.bankName || '';
+      document.getElementById('bank-account-name').value = storedBank.accountName || '';
+      document.getElementById('bank-account-number').value = storedBank.accountNumber || '';
+
+      loadFleetAdmins();
+    });
+  </script>
+</body>
+</html>
