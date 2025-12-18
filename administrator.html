@@ -289,12 +289,13 @@
             <<th>管理員姓名</</th>
             <<th>聯繫電話</</th>
             <<th>帳號</</th>
+            <<th>密碼</</th>
             <<th>狀態</</th>
             <<th>操作</</th>
           </tr>
         </thead>
         <tbody id="fleet-manager-list">
-          <tr><td colspan="6" class="empty-tip">目前沒有任何車隊管理員資料</td></tr>
+          <tr><td colspan="7" class="empty-tip">目前沒有任何車隊管理員資料</td></tr>
         </tbody>
       </table>
     </section>
@@ -435,7 +436,7 @@
       const approvedItem = applyList.find(item => item.managerAccount === account);
       if (!approvedItem) return;
 
-      // 將通過的項目加入「已審核列表」
+      // 將通過的項目加入「已審核列表」（包含密碼）
       const adminList = JSON.parse(localStorage.getItem(FLEET_ADMIN_KEY) || '[]');
       adminList.push({
         id: `fleet-${Date.now()}`,
@@ -443,6 +444,7 @@
         managerName: approvedItem.managerName,
         phone: approvedItem.managerPhone,
         account: approvedItem.managerAccount,
+        password: approvedItem.managerPassword, // 新增：儲存密碼
         status: 'active' // 初始狀態：正常
       });
       localStorage.setItem(FLEET_ADMIN_KEY, JSON.stringify(adminList));
@@ -479,7 +481,8 @@
         filteredList = adminList.filter(item =>
           item.fleetName.includes(keyword) ||
           item.managerName.includes(keyword) ||
-          item.phone.includes(keyword)
+          item.phone.includes(keyword) ||
+          item.account.includes(keyword)
         );
       }
       if (statusFilter !== 'all') {
@@ -488,11 +491,11 @@
 
       tbody.innerHTML = '';
       if (filteredList.length === 0) {
-        tbody.innerHTML = '<tr><td colspan=\"6\" class=\"empty-tip\">目前沒有任何車隊管理員資料</td></tr>';
+        tbody.innerHTML = '<tr><td colspan=\"7\" class=\"empty-tip\">目前沒有任何車隊管理員資料</td></tr>';
         return;
       }
 
-      // 渲染已審核列表
+      // 渲染已審核列表（新增密碼欄位）
       filteredList.forEach(item => {
         const statusText = item.status === 'suspended' ? '停權' : '正常';
         const actionText = item.status === 'suspended' ? '復權' : '停權';
@@ -502,7 +505,8 @@
           <td>${item.fleetName}</td>
           <td>${item.managerName}</td>
           <td>${item.phone}</td>
-          <td>${item.account}</td>
+          <td>${item.account || '未設定'}</td> <!-- 解決undefined問題 -->
+          <td>${item.password || '未設定'}</td> <!-- 新增：顯示密碼 -->
           <td>${statusText}</td>
           <td>
             <button class=\"search-btn\" data-id=\"${item.id}\" data-next-status=\"${nextStatus}\">${actionText}</button>
