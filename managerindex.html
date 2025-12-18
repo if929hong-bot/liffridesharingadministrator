@@ -171,7 +171,7 @@
             const inputUsername = usernameInput.value.trim();
             const inputPassword = passwordInput.value.trim();
 
-            // 驗證超級管理員帳號密碼
+            // 驗證超級管理員帳號密碼 - 跳轉到 administrator.html
             if (inputUsername === ADMIN_USERNAME && inputPassword === ADMIN_PASSWORD) {
                 try {
                     // 設置超級管理員登錄狀態（用於後台頁面驗證）
@@ -180,14 +180,14 @@
                     
                     // 延遲一小段時間確保跳轉生效
                     setTimeout(() => {
-                        window.location.assign('login.html'); // 修正：跳轉到實際存在的 login.html
+                        window.location.assign('administrator.html'); // 修改：跳轉到 administrator.html
                     }, 100);
                 } catch (error) {
                     // 異常處理：直接強制跳轉
-                    window.location.href = 'login.html';
+                    window.location.href = 'administrator.html';
                 }
             }
-            // 驗證測試車隊管理員帳號密碼（需超級管理員審核通過後才可使用）
+            // 驗證測試車隊管理員帳號密碼 - 也跳轉到 administrator.html
             else if (inputUsername === TEST_MANAGER_USERNAME && inputPassword === TEST_MANAGER_PASSWORD) {
                 try {
                     // 設置車隊管理員登錄狀態
@@ -197,11 +197,11 @@
                     
                     // 延遲一小段時間確保跳轉生效
                     setTimeout(() => {
-                        window.location.assign('manager.html');
+                        window.location.assign('administrator.html'); // 修改：跳轉到 administrator.html
                     }, 100);
                 } catch (error) {
                     // 異常處理：直接強制跳轉
-                    window.location.href = 'manager.html';
+                    window.location.href = 'administrator.html';
                 }
             }
             else {
