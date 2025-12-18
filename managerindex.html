@@ -180,11 +180,11 @@
                     
                     // 延遲一小段時間確保跳轉生效
                     setTimeout(() => {
-                        window.location.assign('administrator.html');
+                        window.location.assign('login.html'); // 修正：跳轉到實際存在的 login.html
                     }, 100);
                 } catch (error) {
                     // 異常處理：直接強制跳轉
-                    window.location.href = 'administrator.html';
+                    window.location.href = 'login.html';
                 }
             }
             // 驗證測試車隊管理員帳號密碼（需超級管理員審核通過後才可使用）
@@ -205,8 +205,8 @@
                 }
             }
             else {
-                // 帳號密碼錯誤提示
-                alert('帳號或密碼錯誤，請重新輸入！\n\n超級管理員測試帳號：0975521219 / fffishau\n車隊管理員測試帳號（需審核）：test1111 / 123456');
+                // 帳號密碼錯誤提示（移除超管帳密暴露）
+                alert('帳號或密碼錯誤，請重新輸入！\n\n若為車隊管理員，請先完成註冊並等待超管審核');
                 passwordInput.value = ''; // 清空密碼輸入框
                 passwordInput.focus(); // 聚焦到密碼輸入框
             }

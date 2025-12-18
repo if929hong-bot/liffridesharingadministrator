@@ -11,7 +11,7 @@
 <body class="min-h-screen flex items-center justify-center bg-gray-50 p-4">
   <div class="w-full max-w-md bg-white rounded-xl shadow-md p-8">
     <div class="text-center mb-8">
-      <<i class="fa fa-car text-green-600 text-4xl mb-3"></</i>
+      <i class="fa fa-car text-green-600 text-4xl mb-3"></i> <!-- 修正語法錯誤：多餘的 < 和 / -->
       <h1 class="text-xl font-bold text-gray-800">車隊管理員註冊</h1>
     </div>
 
@@ -58,7 +58,7 @@
     </form>
 
     <div class="text-center mt-6 text-sm text-gray-500">
-      <p>已有帳號？<a href="index.html" class="text-green-600 hover:underline">立即登入</a></p>
+      <p>已有帳號？<a href="managerindex.html" class="text-green-600 hover:underline">立即登入</a></p> <!-- 修正：跳轉到正確的登入頁 managerindex.html -->
     </div>
   </div>
 
@@ -73,11 +73,18 @@
       const phone = document.getElementById('phone').value;
       const lineId = document.getElementById('line-id').value;
 
+      // 驗證手機格式（09開頭10位數）
+      const phoneRegex = /^09\d{8}$/;
+      if (!phoneRegex.test(phone)) {
+        alert('請輸入正確的手機號碼（09開頭10位數）！');
+        return;
+      }
+
       // 模擬提交成功提示
       alert(`註冊申請已提交！\n車隊：${fleetName}\n姓名：${name}\n請等待超級管理員審核`);
       
-      // 跳轉回登入頁
-      window.location.href = 'index.html';
+      // 跳轉回正確的登入頁
+      window.location.href = 'managerindex.html';
     });
   </script>
 </body>
