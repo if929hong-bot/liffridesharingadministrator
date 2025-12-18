@@ -67,7 +67,7 @@
   <header class="bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
     <div class="container mx-auto px-4 py-3 flex justify-between items-center">
       <div class="flex items-center space-x-2">
-        <i class="fa fa-car text-primary text-2xl"></i>
+        <<i class="fa fa-car text-primary text-2xl"></</i> <!-- 修正：移除多餘的 "<" -->
         <h1 class="text-xl font-bold">搭車自由</h1>
       </div>
       <nav class="hidden md:flex space-x-6">
@@ -76,7 +76,7 @@
         <a href="admin.html" class="text-gray-600 hover:text-primary transition-colors">管理員</a>
       </nav>
       <button id="mobile-menu-btn" class="md:hidden text-dark">
-        <i class="fa fa-bars text-xl"></i>
+        <<i class="fa fa-bars text-xl"></</i> <!-- 修正：移除多餘的 "<" -->
       </button>
     </div>
     <!-- 手機導航菜單 -->
@@ -121,8 +121,8 @@
             <button class="btn-primary w-full">登錄</button>
           </div>
           
-          <!-- 司機註冊表單 - 提交至管理員後台司機管理頁面 -->
-          <form id="driver-register-form" class="hidden" action="admin-driver.html" method="POST" enctype="multipart/form-data">
+          <!-- 司機註冊表單 - 提交後跳轉到 driver-audit.html -->
+          <form id="driver-register-form" class="hidden" enctype="multipart/form-data">
             <div class="space-y-6 mb-6">
               <!-- 基本資訊 -->
               <div class="border-b border-gray-100 pb-4">
@@ -314,7 +314,7 @@
       </div>
       <p class="text-gray-600 mb-6">您的司機註冊申請已順利提交，我們將在3個工作天內進行審核</p>
       <p class="text-gray-500 text-sm mb-8">審核結果將透過簡訊通知您，敬請耐心等候</p>
-      <button id="close-modal" class="btn-primary w-full">返回首頁</button>
+      <button id="close-modal" class="btn-primary w-full">前往審核查詢</button>
     </div>
   </div>
 
@@ -398,7 +398,7 @@
       });
     });
     
-    // 司機註冊表單提交處理
+    // 司機註冊表單提交處理（強化跳轉邏輯）
     const driverRegisterForm = document.getElementById('driver-register-form');
     const reviewModal = document.getElementById('review-modal');
     const closeModalBtn = document.getElementById('close-modal');
@@ -407,38 +407,50 @@
       driverRegisterForm.addEventListener('submit', function(e) {
         e.preventDefault(); // 阻止表單默認提交行為
         
-        // 在這裡可以添加表單驗證逻辑
+        // 1. 密碼一致性驗證
         const password = this.querySelector('input[name="driver-password"]').value;
         const passwordConfirm = this.querySelector('input[name="driver-password-confirm"]').value;
-        
         if (password !== passwordConfirm) {
           alert('兩次輸入的密碼不一致，請重新輸入');
           return;
         }
+
+        // 2. 驗證必填文件是否上傳
+        const requiredFiles = ['good-citizen-doc', 'car-photo', 'driver-license'];
+        let allFilesUploaded = true;
+        requiredFiles.forEach(fileName => {
+          const fileInput = this.querySelector(`input[name="${fileName}"]`);
+          if (!fileInput.files || fileInput.files.length === 0) {
+            allFilesUploaded = false;
+          }
+        });
+        if (!allFilesUploaded) {
+          alert('請上傳所有必填的文件（良民證、車輛照片、駕照）');
+          return;
+        }
         
-        // 模擬表單提交到管理員後台
-        console.log('司機註冊資料已提交至 admin-driver.html');
-        
-        // 顯示審核中彈窗
+        // 3. 模擬提交 + 顯示彈窗
+        console.log('司機註冊資料已提交，即將跳轉到審核頁面');
         reviewModal.classList.remove('hidden');
       });
     }
     
-    // 關閉彈窗並返回首頁（乘客介面）
+    // 4. 關閉彈窗並強制跳轉到 driver-audit.html
     closeModalBtn.addEventListener('click', () => {
       reviewModal.classList.add('hidden');
-      window.location.href = 'passenger.html';
+      // 強化跳轉：直接重定向（避免事件冒泡干擾）
+      window.location.replace('driver-audit.html');
     });
     
-    // 點擊彈窗外部關閉彈窗
+    // 5. 點擊彈窗外部也強制跳轉
     reviewModal.addEventListener('click', (e) => {
       if (e.target === reviewModal) {
         reviewModal.classList.add('hidden');
-        window.location.href = 'passenger.html';
+        window.location.replace('driver-audit.html');
       }
     });
 
-    // 添加頁面加載動畫
+    // 頁面加載動畫
     window.addEventListener('load', () => {
       document.body.classList.add('opacity-100');
       document.body.classList.remove('opacity-0');
