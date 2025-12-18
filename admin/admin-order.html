@@ -2,175 +2,340 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <title>管理員後台 - 訂單管理</title>
+  <title>LINE多元化搭車管理員 - 訂單管理</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
   <style>
+    /* 全局重置 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background-color: #f5f5f5;
+      font-family: "Microsoft JhengHei", "PingFang SC", sans-serif;
+      color: #333;
+    }
+    /* 布局容器 */
+    .app-container {
+      display: flex;
+      min-height: 100vh;
+    }
+    /* 側邊欄 */
     .sidebar {
-      width: 220px;
-      background-color: #1e293b;
-      color: #f1f5f9;
-      height: 100vh;
-      padding: 16px;
+      width: 200px;
+      background: #fff;
+      border-right: 1px solid #e6e6e6;
+      padding: 20px 0;
     }
-    .sidebar-menu {
-      margin-top: 24px;
-    }
-    .sidebar-item {
-      padding: 12px 8px;
-      border-radius: 6px;
-      margin-bottom: 8px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: background-color 0.2s;
-    }
-    .sidebar-item.active {
-      background-color: #334155;
-      font-weight: 500;
-    }
-    .sidebar-item:hover:not(.active) {
-      background-color: #2d3748;
-    }
-    .card {
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-      padding: 24px;
-    }
-    .filter-bar {
-      display: flex;
-      gap: 16px;
-      align-items: center;
+    .sidebar-logo {
+      padding: 0 20px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
       margin-bottom: 24px;
     }
-    .status-tag {
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 13px;
-      font-weight: 500;
+    .sidebar-menu {
+      list-style: none;
     }
-    .order-table {
+    .sidebar-menu li {
+      margin-bottom: 4px;
+    }
+    .sidebar-menu a {
+      display: flex;
+      align-items: center;
+      padding: 12px 20px;
+      color: #666;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .sidebar-menu a:hover {
+      background: #f8f8f8;
+    }
+    .sidebar-menu a.active {
+      background: #00C300;
+      color: #fff;
+    }
+    .sidebar-menu a i {
+      margin-right: 10px;
+      font-size: 14px;
+      width: 16px;
+      text-align: center;
+    }
+    /* 主內容區 */
+    .main-content {
+      flex: 1;
+      padding: 24px;
+    }
+    /* 卡片組件 */
+    .card {
+      background: #fff;
+      border-radius: 6px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: #333;
+    }
+    /* 過濾欄 */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .filter-item label {
+      font-size: 14px;
+      color: #666;
+      margin-right: 8px;
+    }
+    .filter-item select,
+    .filter-item input {
+      height: 32px;
+      padding: 0 10px;
+      border: 1px solid #e6e6e6;
+      border-radius: 4px;
+      font-size: 14px;
+      color: #333;
+    }
+    /* 按鈕樣式 */
+    .btn {
+      height: 32px;
+      padding: 0 16px;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-primary {
+      background: #00C300;
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: #00B000;
+    }
+    .btn-default {
+      background: #f5f5f5;
+      color: #666;
+      border: 1px solid #e6e6e6;
+      padding: 0 12px;
+      height: 28px;
+      font-size: 13px;
+    }
+    .btn-default:hover {
+      background: #f0f0f0;
+    }
+    .btn-danger {
+      background: #ff4d4f;
+      color: #fff;
+      padding: 0 12px;
+      height: 28px;
+      font-size: 13px;
+    }
+    .btn-danger:hover {
+      background: #ff3838;
+    }
+    /* 表格樣式 */
+    .data-table {
       width: 100%;
       border-collapse: collapse;
-    }
-    .order-table th, .order-table td {
-      padding: 12px 8px;
-      text-align: left;
-      border-bottom: 1px solid #e5e7eb;
-    }
-    .order-table th {
-      background-color: #f9fafb;
-      color: #4b5563;
-      font-size: 13px;
-    }
-    .order-table td {
       font-size: 14px;
     }
-    .btn-sm {
-      padding: 4px 8px;
+    .data-table th {
+      background: #fafafa;
+      color: #666;
+      padding: 12px 10px;
+      text-align: left;
+      border-bottom: 1px solid #e6e6e6;
+      font-weight: 600;
+    }
+    .data-table td {
+      padding: 12px 10px;
+      border-bottom: 1px solid #f0f0f0;
+      color: #333;
+    }
+    /* 狀態標籤 */
+    .status-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
       font-size: 12px;
+      font-weight: 500;
+    }
+    .status-success {
+      background: #f0f9ff;
+      color: #52c41a;
+    }
+    .status-processing {
+      background: #e6f7ff;
+      color: #1890ff;
+    }
+    .status-pending {
+      background: #fffbe6;
+      color: #faad14;
+    }
+    .status-cancel {
+      background: #fff2f0;
+      color: #ff4d4f;
+    }
+    /* 彈窗樣式 */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      display: none;
+    }
+    .modal-content {
+      background: #fff;
+      border-radius: 6px;
+      width: 90%;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 20px;
+      color: #999;
+      cursor: pointer;
+      width: 32px;
+      height: 32px;
+      line-height: 32px;
+      text-align: center;
+    }
+    .modal-close:hover {
+      color: #666;
+    }
+    .modal-body {
+      padding: 20px;
+    }
+    .modal-footer {
+      padding: 16px 20px;
+      border-top: 1px solid #f0f0f0;
+      text-align: right;
+    }
+    /* 詳情頁樣式 */
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .detail-item {
+      font-size: 14px;
+    }
+    .detail-label {
+      color: #666;
+      margin-bottom: 4px;
+      font-size: 13px;
+    }
+    .detail-value {
+      color: #333;
+      font-weight: 500;
+    }
+    .detail-section {
+      margin-bottom: 24px;
+    }
+    .detail-section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #666;
+      margin-bottom: 12px;
+    }
+    .detail-card {
+      border: 1px solid #f0f0f0;
       border-radius: 4px;
+      padding: 16px;
+    }
+    .fee-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 14px;
+    }
+    .fee-item:last-child {
+      border-bottom: none;
+      font-weight: 600;
+    }
+    .fee-label {
+      color: #666;
+    }
+    .fee-value {
+      color: #333;
     }
   </style>
 </head>
-<body class="bg-gray-50 flex">
-  <!-- 側邊欄 -->
-  <div class="sidebar">
-    <div class="flex items-center gap-2 font-bold">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-      </svg>
-      <span>管理員後台</span>
-    </div>
-    <div class="text-xs text-gray-400 mt-2">主要功能</div>
-    <div class="sidebar-menu">
-      <div class="sidebar-item" onclick="window.location.href='index.html'">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-        </svg>
-        <span>返回首頁</span>
-      </div>
-      <div class="sidebar-item">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-        </svg>
-        <span>數據看板</span>
-      </div>
-      <div class="sidebar-item">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-        </svg>
-        <span>司機管理</span>
-      </div>
-      <div class="sidebar-item active">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-        </svg>
-        <span>訂單管理</span>
-      </div>
-      <div class="sidebar-item">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
-        <span>系統設置</span>
-      </div>
-      <div class="sidebar-item">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-        </svg>
-        <span>報表統計</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- 主內容區 -->
-  <div class="flex-1 p-6">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold text-gray-800">訂單管理</h1>
-      <div class="flex items-center gap-4">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-        <div class="relative">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-          </svg>
-          <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">3</span>
-        </div>
-        <div class="w-8 h-8 rounded-full bg-gray-200 overflow-hidden cursor-pointer">
-          <img src="https://picsum.photos/200" alt="管理員頭像" class="w-full h-full object-cover">
-        </div>
-      </div>
+<body>
+  <div class="app-container">
+    <!-- 側邊欄 -->
+    <div class="sidebar">
+      <div class="sidebar-logo">LINE多元化搭車管理員</div>
+      <ul class="sidebar-menu">
+        <li><a href="index.html"><i class="fa fa-home"></i>首頁</a></li>
+        <li><a href="area-management.html"><i class="fa fa-map-marker"></i>區域管理</a></li>
+        <li><a href="admin-driver.html"><i class="fa fa-car"></i>司機管理</a></li>
+        <li><a href="admin-order.html" class="active"><i class="fa fa-list"></i>訂單管理</a></li>
+        <li><a href="finance-management.html"><i class="fa fa-money"></i>財務管理</a></li>
+        <li><a href="../managerindex.html"><i class="fa fa-sign-out"></i>退出登入</a></li>
+      </ul>
     </div>
 
-    <!-- 過濾欄 -->
-    <div class="card mb-6">
-      <div class="filter-bar">
-        <div>
-          <label class="text-sm text-gray-600 mr-2">訂單狀態：</label>
-          <select class="border border-gray-300 rounded px-3 py-1 text-sm">
-            <option value="all">全部狀態</option>
-            <option value="pending">待接單</option>
-            <option value="ongoing">行駛中</option>
-            <option value="completed">已完成</option>
-            <option value="cancelled">已取消</option>
-          </select>
+    <!-- 主內容區 -->
+    <div class="main-content">
+      <div class="card">
+        <div class="card-title">訂單管理</div>
+        
+        <!-- 過濾欄 -->
+        <div class="filter-bar">
+          <div class="filter-item">
+            <label>訂單狀態：</label>
+            <select>
+              <option value="all">全部狀態</option>
+              <option value="pending">待接單</option>
+              <option value="ongoing">行駛中</option>
+              <option value="completed">已完成</option>
+              <option value="cancelled">已取消</option>
+            </select>
+          </div>
+          <div class="filter-item">
+            <label>時間範圍：</label>
+            <input type="date">
+            <span style="color: #999; margin: 0 8px;">至</span>
+            <input type="date">
+          </div>
+          <button class="btn btn-primary ml-auto">查詢</button>
         </div>
-        <div>
-          <label class="text-sm text-gray-600 mr-2">時間範圍：</label>
-          <input type="date" class="border border-gray-300 rounded px-3 py-1 text-sm mr-2">
-          <span class="text-sm text-gray-500">至</span>
-          <input type="date" class="border border-gray-300 rounded px-3 py-1 text-sm ml-2">
-        </div>
-        <button class="ml-auto px-4 py-1 bg-green-600 text-white rounded text-sm">查詢</button>
-      </div>
-    </div>
 
-    <!-- 訂單列表 -->
-    <div class="card">
-      <div class="overflow-x-auto">
-        <table class="order-table">
+        <!-- 訂單列表 -->
+        <table class="data-table">
           <thead>
             <tr>
               <th>訂單編號</th>
@@ -192,10 +357,10 @@
               <td>台北市信義區</td>
               <td>台北市中正區</td>
               <td>NT$220</td>
-              <td><span class="status-tag bg-green-100 text-green-700">已完成</span></td>
+              <td><span class="status-tag status-success">已完成</span></td>
               <td>2025-12-12 10:30</td>
               <td>
-                <button class="btn-sm border border-gray-300 text-gray-600 hover:bg-gray-50" onclick="viewOrderDetail(this)">查看詳情</button>
+                <button class="btn btn-default" onclick="viewOrderDetail(this)">查看詳情</button>
               </td>
             </tr>
             <tr>
@@ -205,10 +370,10 @@
               <td>新北市板橋區</td>
               <td>台北市松山區</td>
               <td>NT$180</td>
-              <td><span class="status-tag bg-blue-100 text-blue-700">行駛中</span></td>
+              <td><span class="status-tag status-processing">行駛中</span></td>
               <td>2025-12-12 09:15</td>
               <td>
-                <button class="btn-sm border border-gray-300 text-gray-600 hover:bg-gray-50" onclick="viewOrderDetail(this)">查看詳情</button>
+                <button class="btn btn-default" onclick="viewOrderDetail(this)">查看詳情</button>
               </td>
             </tr>
             <tr>
@@ -218,11 +383,11 @@
               <td>桃園市中壢區</td>
               <td>台北市士林區</td>
               <td>NT$350</td>
-              <td><span class="status-tag bg-amber-100 text-amber-700">待接單</span></td>
+              <td><span class="status-tag status-pending">待接單</span></td>
               <td>2025-12-12 08:45</td>
               <td>
-                <button class="btn-sm border border-gray-300 text-gray-600 hover:bg-gray-50" onclick="viewOrderDetail(this)">查看詳情</button>
-                <button class="btn-sm bg-red-500 text-white hover:bg-red-600 ml-2" onclick="cancelOrder(this)">取消訂單</button>
+                <button class="btn btn-default" onclick="viewOrderDetail(this)">查看詳情</button>
+                <button class="btn btn-danger ml-2" onclick="cancelOrder(this)">取消訂單</button>
               </td>
             </tr>
             <tr>
@@ -232,10 +397,10 @@
               <td>台中市西屯區</td>
               <td>台中市北區</td>
               <td>NT$250</td>
-              <td><span class="status-tag bg-red-100 text-red-700">已取消</span></td>
+              <td><span class="status-tag status-cancel">已取消</span></td>
               <td>2025-12-11 16:20</td>
               <td>
-                <button class="btn-sm border border-gray-300 text-gray-600 hover:bg-gray-50" onclick="viewOrderDetail(this)">查看詳情</button>
+                <button class="btn btn-default" onclick="viewOrderDetail(this)">查看詳情</button>
               </td>
             </tr>
           </tbody>
@@ -244,71 +409,69 @@
     </div>
   </div>
 
-  <!-- 訂單詳情彈窗（預設隱藏） -->
-  <div id="orderDetailModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
-    <div class="bg-white rounded-lg w-full max-w-2xl max-h-[80vh] overflow-y-auto">
-      <div class="p-4 border-b flex justify-between items-center">
-        <h3 class="font-bold text-lg">訂單詳情</h3>
-        <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
+  <!-- 訂單詳情彈窗 -->
+  <div id="orderDetailModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">訂單詳情</div>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
       </div>
-      <div class="p-6">
-        <div class="grid grid-cols-2 gap-6 mb-6">
-          <div>
-            <p class="text-sm text-gray-500">訂單編號</p>
-            <p class="font-medium" id="detailOrderId">#ORD20251212001</p>
+      <div class="modal-body">
+        <div class="detail-grid">
+          <div class="detail-item">
+            <div class="detail-label">訂單編號</div>
+            <div class="detail-value" id="detailOrderId">#ORD20251212001</div>
           </div>
-          <div>
-            <p class="text-sm text-gray-500">訂單狀態</p>
-            <p class="font-medium" id="detailStatus">已完成</p>
+          <div class="detail-item">
+            <div class="detail-label">訂單狀態</div>
+            <div class="detail-value" id="detailStatus">已完成</div>
           </div>
-          <div>
-            <p class="text-sm text-gray-500">乘客姓名</p>
-            <p class="font-medium" id="detailPassenger">陳XX</p>
+          <div class="detail-item">
+            <div class="detail-label">乘客姓名</div>
+            <div class="detail-value" id="detailPassenger">陳XX</div>
           </div>
-          <div>
-            <p class="text-sm text-gray-500">乘客電話</p>
-            <p class="font-medium" id="detailPassengerPhone">0912-345-678</p>
+          <div class="detail-item">
+            <div class="detail-label">乘客電話</div>
+            <div class="detail-value" id="detailPassengerPhone">0912-345-678</div>
           </div>
-          <div>
-            <p class="text-sm text-gray-500">司機姓名</p>
-            <p class="font-medium" id="detailDriver">李師傅</p>
+          <div class="detail-item">
+            <div class="detail-label">司機姓名</div>
+            <div class="detail-value" id="detailDriver">李師傅</div>
           </div>
-          <div>
-            <p class="text-sm text-gray-500">司機車牌</p>
-            <p class="font-medium" id="detailLicense">ABC-1234</p>
-          </div>
-        </div>
-        <div class="mb-6">
-          <p class="text-sm text-gray-500 mb-2">行程路線</p>
-          <div class="border border-gray-200 rounded p-3">
-            <p class="font-medium mb-1">出發地：<span id="detailStart">台北市信義區科技園區88号</span></p>
-            <p class="font-medium mb-1">目的地：<span id="detailEnd">台北市中正區王府井大街</span></p>
+          <div class="detail-item">
+            <div class="detail-label">司機車牌</div>
+            <div class="detail-value" id="detailLicense">ABC-1234</div>
           </div>
         </div>
-        <div class="mb-6">
-          <p class="text-sm text-gray-500 mb-2">費用明細</p>
-          <div class="border border-gray-200 rounded p-3">
-            <div class="flex justify-between mb-1">
-              <span>基本費用</span>
-              <span>NT$100</span>
+
+        <div class="detail-section">
+          <div class="detail-section-title">行程路線</div>
+          <div class="detail-card">
+            <p style="margin-bottom: 8px;"><strong>出發地：</strong><span id="detailStart">台北市信義區科技園區88号</span></p>
+            <p><strong>目的地：</strong><span id="detailEnd">台北市中正區王府井大街</span></p>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <div class="detail-section-title">費用明細</div>
+          <div class="detail-card">
+            <div class="fee-item">
+              <div class="fee-label">基本費用</div>
+              <div class="fee-value">NT$100</div>
             </div>
-            <div class="flex justify-between mb-1">
-              <span>里程費用</span>
-              <span>NT$120</span>
+            <div class="fee-item">
+              <div class="fee-label">里程費用</div>
+              <div class="fee-value">NT$120</div>
             </div>
-            <div class="flex justify-between font-bold pt-2 border-t border-gray-200">
-              <span>總金額</span>
-              <span>NT$220</span>
+            <div class="fee-item">
+              <div class="fee-label">總金額</div>
+              <div class="fee-value">NT$220</div>
             </div>
           </div>
         </div>
-        <div class="flex justify-end gap-2">
-          <button onclick="closeModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50">關閉</button>
-        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-default" onclick="closeModal()">關閉</button>
       </div>
     </div>
   </div>
@@ -317,7 +480,7 @@
     // 查看訂單詳情
     function viewOrderDetail(btn) {
       const tr = btn.closest('tr');
-      // 填充詳情彈窗數據
+      // 填充詳情數據
       document.getElementById('detailOrderId').textContent = tr.querySelector('td:first-child').textContent;
       document.getElementById('detailStatus').textContent = tr.querySelector('.status-tag').textContent;
       document.getElementById('detailPassenger').textContent = tr.querySelector('td:nth-child(2)').textContent;
@@ -325,7 +488,7 @@
       document.getElementById('detailStart').textContent = tr.querySelector('td:nth-child(4)').textContent;
       document.getElementById('detailEnd').textContent = tr.querySelector('td:nth-child(5)').textContent;
       // 顯示彈窗
-      document.getElementById('orderDetailModal').classList.remove('hidden');
+      document.getElementById('orderDetailModal').style.display = 'flex';
     }
 
     // 取消訂單
@@ -333,15 +496,24 @@
       const tr = btn.closest('tr');
       const orderId = tr.querySelector('td:first-child').textContent;
       if (confirm(`確定要取消訂單「${orderId}」嗎？`)) {
-        tr.querySelector('.status-tag').className = 'status-tag bg-red-100 text-red-700';
-        tr.querySelector('.status-tag').textContent = '已取消';
+        const statusTag = tr.querySelector('.status-tag');
+        statusTag.className = 'status-tag status-cancel';
+        statusTag.textContent = '已取消';
         btn.remove();
       }
     }
 
     // 關閉彈窗
     function closeModal() {
-      document.getElementById('orderDetailModal').classList.add('hidden');
+      document.getElementById('orderDetailModal').style.display = 'none';
+    }
+
+    // 點擊彈窗外層關閉
+    window.onclick = function(event) {
+      const modal = document.getElementById('orderDetailModal');
+      if (event.target === modal) {
+        closeModal();
+      }
     }
   </script>
 </body>

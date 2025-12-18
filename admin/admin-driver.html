@@ -2,273 +2,329 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <title>管理員後台 - 司機管理</title>
+  <title>LINE多元化搭車管理員 - 司機管理</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
   <style>
+    /* 全局重置 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background-color: #f5f5f5;
+      font-family: "Microsoft JhengHei", "PingFang SC", sans-serif;
+      color: #333;
+    }
+    /* 布局容器 */
+    .app-container {
+      display: flex;
+      min-height: 100vh;
+    }
+    /* 側邊欄 */
     .sidebar {
-      width: 220px;
-      background-color: #1e293b;
-      color: #f1f5f9;
-      height: 100vh;
-      padding: 16px;
+      width: 200px;
+      background: #fff;
+      border-right: 1px solid #e6e6e6;
+      padding: 20px 0;
+    }
+    .sidebar-logo {
+      padding: 0 20px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 24px;
     }
     .sidebar-menu {
-      margin-top: 24px;
+      list-style: none;
     }
-    .sidebar-item {
-      padding: 12px 8px;
-      border-radius: 6px;
-      margin-bottom: 8px;
-      cursor: pointer;
+    .sidebar-menu li {
+      margin-bottom: 4px;
+    }
+    .sidebar-menu a {
       display: flex;
       align-items: center;
-      gap: 8px;
-      transition: background-color 0.2s;
+      padding: 12px 20px;
+      color: #666;
+      text-decoration: none;
+      transition: all 0.2s ease;
     }
-    .sidebar-item.active {
-      background-color: #334155;
-      font-weight: 500;
+    .sidebar-menu a:hover {
+      background: #f8f8f8;
     }
-    .sidebar-item:hover:not(.active) {
-      background-color: #2d3748;
+    .sidebar-menu a.active {
+      background: #00C300;
+      color: #fff;
     }
-    .card {
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    .sidebar-menu a i {
+      margin-right: 10px;
+      font-size: 14px;
+      width: 16px;
+      text-align: center;
+    }
+    /* 主內容區 */
+    .main-content {
+      flex: 1;
       padding: 24px;
+    }
+    /* 卡片組件 */
+    .card {
+      background: #fff;
+      border-radius: 6px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: #333;
+    }
+    /* 分頁標籤 */
+    .tab-group {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
     }
     .tab-btn {
       padding: 8px 16px;
-      border-radius: 6px;
+      border-radius: 4px;
       cursor: pointer;
+      font-size: 14px;
       transition: all 0.2s;
+      background: #f5f5f5;
+      color: #666;
+      border: 1px solid #e6e6e6;
     }
     .tab-btn.active {
-      background-color: #22c55e;
-      color: white;
+      background: #00C300;
+      color: #fff;
+      border-color: #00C300;
     }
-    .audit-table {
+    /* 表格樣式 */
+    .data-table {
       width: 100%;
       border-collapse: collapse;
-    }
-    .audit-table th, .audit-table td {
-      padding: 12px 8px;
-      text-align: left;
-      border-bottom: 1px solid #e5e7eb;
-    }
-    .audit-table th {
-      background-color: #f9fafb;
-      color: #4b5563;
-      font-size: 13px;
-    }
-    .audit-table td {
       font-size: 14px;
     }
-    .btn-sm {
-      padding: 4px 8px;
-      font-size: 12px;
+    .data-table th {
+      background: #fafafa;
+      color: #666;
+      padding: 12px 10px;
+      text-align: left;
+      border-bottom: 1px solid #e6e6e6;
+      font-weight: 600;
+    }
+    .data-table td {
+      padding: 12px 10px;
+      border-bottom: 1px solid #f0f0f0;
+      color: #333;
+    }
+    /* 按鈕樣式 */
+    .btn {
+      height: 28px;
+      padding: 0 12px;
+      border: none;
       border-radius: 4px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-success {
+      background: #52c41a;
+      color: #fff;
+    }
+    .btn-success:hover {
+      background: #47a819;
+    }
+    .btn-danger {
+      background: #fff;
+      color: #ff4d4f;
+      border: 1px solid #ff4d4f;
+    }
+    .btn-danger:hover {
+      background: #fff2f0;
+    }
+    .btn-default {
+      background: #f5f5f5;
+      color: #666;
+      border: 1px solid #e6e6e6;
+    }
+    .btn-default:hover {
+      background: #f0f0f0;
+    }
+    .btn-warning {
+      background: #fff;
+      color: #faad14;
+      border: 1px solid #faad14;
+    }
+    .btn-warning:hover {
+      background: #fffbe6;
+    }
+    .btn-primary {
+      background: #1890ff;
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: #096dd9;
+    }
+    /* 隱藏類 */
+    .hidden {
+      display: none !important;
     }
   </style>
 </head>
-<body class="bg-gray-50 flex">
-  <!-- 側邊欄 -->
-  <div class="sidebar">
-    <div class="flex items-center gap-2 font-bold">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-      </svg>
-      <span>管理員後台</span>
+<body>
+  <div class="app-container">
+    <!-- 側邊欄 (刪除系統設置，與order頁風格統一) -->
+    <div class="sidebar">
+      <div class="sidebar-logo">LINE多元化搭車管理員</div>
+      <ul class="sidebar-menu">
+        <li><a href="index.html"><i class="fa fa-home"></i>首頁</a></li>
+        <li><a href="area-management.html"><i class="fa fa-map-marker"></i>區域管理</a></li>
+        <li><a href="admin-driver.html" class="active"><i class="fa fa-car"></i>司機管理</a></li>
+        <li><a href="admin-order.html"><i class="fa fa-list"></i>訂單管理</a></li>
+        <li><a href="finance-management.html"><i class="fa fa-money"></i>財務管理</a></li>
+        <li><a href="../managerindex.html"><i class="fa fa-sign-out"></i>退出登入</a></li>
+      </ul>
     </div>
-    <div class="text-xs text-gray-400 mt-2">主要功能</div>
-    <div class="sidebar-menu">
-      <div class="sidebar-item" onclick="window.location.href='index.html'">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-        </svg>
-        <span>返回首頁</span>
-      </div>
-      <div class="sidebar-item">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-        </svg>
-        <span>數據看板</span>
-      </div>
-      <div class="sidebar-item active">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-        </svg>
-        <span>司機管理</span>
-      </div>
-      <div class="sidebar-item">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-        </svg>
-        <span>訂單管理</span>
-      </div>
-      <div class="sidebar-item">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
-        <span>系統設置</span>
-      </div>
-      <div class="sidebar-item">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-        </svg>
-        <span>報表統計</span>
-      </div>
-    </div>
-  </div>
 
-  <!-- 主內容區 -->
-  <div class="flex-1 p-6">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold text-gray-800">司機管理</h1>
-      <div class="flex items-center gap-4">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-        <div class="relative">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-          </svg>
-          <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">3</span>
+    <!-- 主內容區 (與order頁版面完全一致) -->
+    <div class="main-content">
+      <div class="card">
+        <div class="card-title">司機管理</div>
+        
+        <!-- 分頁標籤 -->
+        <div class="tab-group">
+          <div class="tab-btn active" onclick="switchTab('pending')">待審核司機 (5)</div>
+          <div class="tab-btn" onclick="switchTab('approved')">已通過司機 (32)</div>
+          <div class="tab-btn" onclick="switchTab('rejected')">已拒絕司機 (8)</div>
         </div>
-        <div class="w-8 h-8 rounded-full bg-gray-200 overflow-hidden cursor-pointer">
-          <img src="https://picsum.photos/200" alt="管理員頭像" class="w-full h-full object-cover">
+
+        <!-- 待審核司機列表 -->
+        <div id="pendingTab">
+          <div class="overflow-x-auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>申請人</th>
+                  <th>帳號</th>
+                  <th>車牌號碼</th>
+                  <th>車型</th>
+                  <th>申請時間</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>陳XX</td>
+                  <td>chen_driver</td>
+                  <td>ABC-1234</td>
+                  <td>Toyota Corolla</td>
+                  <td>2025-12-12 10:23</td>
+                  <td>
+                    <button class="btn btn-success mr-2" onclick="approveDriver(this)">通過</button>
+                    <button class="btn btn-danger" onclick="rejectDriver(this)">拒絕</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>李XX</td>
+                  <td>li_driver</td>
+                  <td>XYZ-5678</td>
+                  <td>Honda Civic</td>
+                  <td>2025-12-12 09:15</td>
+                  <td>
+                    <button class="btn btn-success mr-2" onclick="approveDriver(this)">通過</button>
+                    <button class="btn btn-danger" onclick="rejectDriver(this)">拒絕</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>王XX</td>
+                  <td>wang_driver</td>
+                  <td>123-ABC</td>
+                  <td>Nissan Tiida</td>
+                  <td>2025-12-11 16:48</td>
+                  <td>
+                    <button class="btn btn-success mr-2" onclick="approveDriver(this)">通過</button>
+                    <button class="btn btn-danger" onclick="rejectDriver(this)">拒絕</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
-    </div>
 
-    <!-- 分頁標籤 -->
-    <div class="flex gap-2 mb-6">
-      <div class="tab-btn active" onclick="switchTab('pending')">待審核司機 (5)</div>
-      <div class="tab-btn" onclick="switchTab('approved')">已通過司機 (32)</div>
-      <div class="tab-btn" onclick="switchTab('rejected')">已拒絕司機 (8)</div>
-    </div>
+        <!-- 已通過司機列表（預設隱藏） -->
+        <div id="approvedTab" class="hidden">
+          <div class="overflow-x-auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>司機姓名</th>
+                  <th>帳號</th>
+                  <th>車牌號碼</th>
+                  <th>車型</th>
+                  <th>通過時間</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>張XX</td>
+                  <td>zhang_driver</td>
+                  <td>DEF-4321</td>
+                  <td>Mazda 3</td>
+                  <td>2025-12-11 14:30</td>
+                  <td>
+                    <button class="btn btn-default mr-2">查看詳情</button>
+                    <button class="btn btn-warning">停權</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>黃XX</td>
+                  <td>huang_driver</td>
+                  <td>GHI-8765</td>
+                  <td>Volkswagen Golf</td>
+                  <td>2025-12-11 11:20</td>
+                  <td>
+                    <button class="btn btn-default mr-2">查看詳情</button>
+                    <button class="btn btn-warning">停權</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
 
-    <!-- 待審核司機列表 -->
-    <div id="pendingTab" class="card mb-6">
-      <div class="overflow-x-auto">
-        <table class="audit-table">
-          <thead>
-            <tr>
-              <th>申請人</th>
-              <th>帳號</th>
-              <th>車牌號碼</th>
-              <th>車型</th>
-              <th>申請時間</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>陳XX</td>
-              <td>chen_driver</td>
-              <td>ABC-1234</td>
-              <td>Toyota Corolla</td>
-              <td>2025-12-12 10:23</td>
-              <td>
-                <button class="btn-sm bg-green-500 text-white hover:bg-green-600 mr-2" onclick="approveDriver(this)">通過</button>
-                <button class="btn-sm border border-red-300 text-red-600 hover:bg-red-50" onclick="rejectDriver(this)">拒絕</button>
-              </td>
-            </tr>
-            <tr>
-              <td>李XX</td>
-              <td>li_driver</td>
-              <td>XYZ-5678</td>
-              <td>Honda Civic</td>
-              <td>2025-12-12 09:15</td>
-              <td>
-                <button class="btn-sm bg-green-500 text-white hover:bg-green-600 mr-2" onclick="approveDriver(this)">通過</button>
-                <button class="btn-sm border border-red-300 text-red-600 hover:bg-red-50" onclick="rejectDriver(this)">拒絕</button>
-              </td>
-            </tr>
-            <tr>
-              <td>王XX</td>
-              <td>wang_driver</td>
-              <td>123-ABC</td>
-              <td>Nissan Tiida</td>
-              <td>2025-12-11 16:48</td>
-              <td>
-                <button class="btn-sm bg-green-500 text-white hover:bg-green-600 mr-2" onclick="approveDriver(this)">通過</button>
-                <button class="btn-sm border border-red-300 text-red-600 hover:bg-red-50" onclick="rejectDriver(this)">拒絕</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- 已通過司機列表（預設隱藏） -->
-    <div id="approvedTab" class="card mb-6 hidden">
-      <div class="overflow-x-auto">
-        <table class="audit-table">
-          <thead>
-            <tr>
-              <th>司機姓名</th>
-              <th>帳號</th>
-              <th>車牌號碼</th>
-              <th>車型</th>
-              <th>通過時間</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>張XX</td>
-              <td>zhang_driver</td>
-              <td>DEF-4321</td>
-              <td>Mazda 3</td>
-              <td>2025-12-11 14:30</td>
-              <td>
-                <button class="btn-sm border border-gray-300 text-gray-600 hover:bg-gray-50 mr-2">查看詳情</button>
-                <button class="btn-sm border border-amber-300 text-amber-600 hover:bg-amber-50">停權</button>
-              </td>
-            </tr>
-            <tr>
-              <td>黃XX</td>
-              <td>huang_driver</td>
-              <td>GHI-8765</td>
-              <td>Volkswagen Golf</td>
-              <td>2025-12-11 11:20</td>
-              <td>
-                <button class="btn-sm border border-gray-300 text-gray-600 hover:bg-gray-50 mr-2">查看詳情</button>
-                <button class="btn-sm border border-amber-300 text-amber-600 hover:bg-amber-50">停權</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- 已拒絕司機列表（預設隱藏） -->
-    <div id="rejectedTab" class="card mb-6 hidden">
-      <div class="overflow-x-auto">
-        <table class="audit-table">
-          <thead>
-            <tr>
-              <th>申請人</th>
-              <th>帳號</th>
-              <th>車牌號碼</th>
-              <th>拒絕時間</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>劉XX</td>
-              <td>liu_driver</td>
-              <td>JKL-9012</td>
-              <td>2025-12-10 09:45</td>
-              <td>
-                <button class="btn-sm border border-green-300 text-green-600 hover:bg-green-50">重新審核</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <!-- 已拒絕司機列表（預設隱藏） -->
+        <div id="rejectedTab" class="hidden">
+          <div class="overflow-x-auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>申請人</th>
+                  <th>帳號</th>
+                  <th>車牌號碼</th>
+                  <th>拒絕時間</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>劉XX</td>
+                  <td>liu_driver</td>
+                  <td>JKL-9012</td>
+                  <td>2025-12-10 09:45</td>
+                  <td>
+                    <button class="btn btn-primary">重新審核</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -303,10 +359,10 @@
             <td>${tr.querySelector('td:nth-child(2)').textContent}</td>
             <td>${tr.querySelector('td:nth-child(3)').textContent}</td>
             <td>${tr.querySelector('td:nth-child(4)').textContent}</td>
-            <td>${new Date().toLocaleDateString('zh-TW') + ' ' + new Date().toLocaleTimeString('zh-TW')}</td>
+            <td>${new Date().toLocaleDateString('zh-TW') + ' ' + new Date().toLocaleTimeString('zh-TW').slice(0, 8)}</td>
             <td>
-              <button class="btn-sm border border-gray-300 text-gray-600 hover:bg-gray-50 mr-2">查看詳情</button>
-              <button class="btn-sm border border-amber-300 text-amber-600 hover:bg-amber-50">停權</button>
+              <button class="btn btn-default mr-2">查看詳情</button>
+              <button class="btn btn-warning">停權</button>
             </td>
           </tr>
         `;
@@ -326,9 +382,9 @@
             <td>${name}</td>
             <td>${tr.querySelector('td:nth-child(2)').textContent}</td>
             <td>${tr.querySelector('td:nth-child(3)').textContent}</td>
-            <td>${new Date().toLocaleDateString('zh-TW') + ' ' + new Date().toLocaleTimeString('zh-TW')}</td>
+            <td>${new Date().toLocaleDateString('zh-TW') + ' ' + new Date().toLocaleTimeString('zh-TW').slice(0, 8)}</td>
             <td>
-              <button class="btn-sm border border-green-300 text-green-600 hover:bg-green-50">重新審核</button>
+              <button class="btn btn-primary">重新審核</button>
             </td>
           </tr>
         `;
