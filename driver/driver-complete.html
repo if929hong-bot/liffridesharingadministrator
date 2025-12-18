@@ -12,8 +12,6 @@
                 extend: {
                     colors: {
                         primary: '#00C300',
-                        secondary: '#00A600',
-                        accent: '#008700',
                         'text-dark': '#333333',
                         'text-light': '#666666'
                     }
@@ -22,40 +20,40 @@
         }
     </script>
 </head>
-<body class="bg-gray-50 font-sans">
+<body class="bg-white font-sans">
     <!-- 頁首 -->
-    <header class="bg-white shadow-sm py-3 px-4">
+    <header class="py-4 px-4">
         <h1 class="text-xl font-bold text-text-dark text-center">LINE多元化搭車</h1>
     </header>
 
     <!-- 主內容 -->
-    <main class="max-w-md mx-auto my-5 px-4">
-        <div class="bg-white rounded-lg shadow-md p-5">
+    <main class="max-w-xs mx-auto my-8 px-4">
+        <div class="bg-white rounded-lg shadow-md p-5 border border-gray-200">
             <!-- 行程狀態 -->
-            <div class="text-center mb-4">
-                <p class="text-lg font-medium text-text-dark">已到達目的地</p>
-                <p class="text-2xl font-bold text-primary mt-1" id="finalAmount">000元</p>
+            <div class="text-center mb-5">
+                <p class="text-base font-medium text-text-dark">已到達目的地</p>
+                <p class="text-2xl font-bold text-primary mt-2" id="finalAmount">000元</p>
             </div>
 
             <!-- 操作按鈕 -->
             <div class="space-y-3">
                 <!-- 1. 乘客已支付金額（選擇支付方式） -->
-                <button id="paymentBtn" class="w-full py-3 bg-primary text-white font-medium rounded-md">
+                <button id="paymentBtn" class="w-full py-3 bg-primary text-white font-medium rounded-none">
                     乘客已支付金額
                 </button>
                 
                 <!-- 2. 乘客已下車（上傳截圖） -->
-                <button id="passengerOffBtn" class="w-full py-3 bg-primary text-white font-medium rounded-md">
+                <button id="passengerOffBtn" class="w-full py-3 bg-primary text-white font-medium rounded-none">
                     乘客已下車
                 </button>
                 
                 <!-- 3. 我要接單（連結driver-order.html） -->
-                <button id="takeOrderBtn" class="w-full py-3 bg-primary text-white font-medium rounded-md">
+                <button id="takeOrderBtn" class="w-full py-3 bg-primary text-white font-medium rounded-none">
                     我要接單 (回到接單頁面)
                 </button>
                 
                 <!-- 4. 我要下班（連結driver-login.html） -->
-                <button id="offWorkBtn" class="w-full py-3 bg-primary text-white font-medium rounded-md">
+                <button id="offWorkBtn" class="w-full py-3 bg-primary text-white font-medium rounded-none">
                     我要下班 (登出頁面)
                 </button>
             </div>
@@ -73,11 +71,11 @@
             <h3 class="text-lg font-bold text-text-dark mb-4 text-center">選擇支付方式</h3>
             <div class="space-y-3">
                 <button class="w-full py-2 border border-gray-200 rounded-md flex items-center justify-center gap-2" onclick="setPayment('現金')">
-                    <<i class="fa fa-money"></</i>
+                    <i class="fa fa-money"></i>
                     <span>現金支付</span>
                 </button>
                 <button class="w-full py-2 border border-gray-200 rounded-md flex items-center justify-center gap-2" onclick="setPayment('電子支付')">
-                    <<i class="fa fa-credit-card"></</i>
+                    <i class="fa fa-credit-card"></i>
                     <span>電子支付</span>
                 </button>
                 <button class="w-full py-2 bg-gray-200 rounded-md" onclick="closeModal()">
@@ -94,7 +92,7 @@
             <div class="border-2 border-dashed border-gray-300 rounded-md p-4 text-center mb-3">
                 <input type="file" id="screenshotFile" accept="image/*" class="hidden">
                 <button class="text-primary" onclick="document.getElementById('screenshotFile').click()">
-                    <<i class="fa fa-upload text-2xl"></</i>
+                    <i class="fa fa-upload text-2xl"></i>
                     <p>點擊選擇截圖</p>
                 </button>
                 <p id="fileInfo" class="text-xs text-text-light mt-2">未選擇文件</p>
