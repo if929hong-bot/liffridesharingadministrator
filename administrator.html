@@ -20,9 +20,9 @@
       min-height: 100vh;
     }
 
-    /* 左側菜單（優化間距，綠底白字與車隊管理員一致） */
+    /* 左側菜單 */
     .sidebar {
-      width: 220px; /* 加寬側邊欄避免文字擠壓 */
+      width: 220px;
       background: #228B22;
       padding: 1.5rem 0;
     }
@@ -30,20 +30,20 @@
       color: #fff;
       text-align: center;
       font-size: 1.2rem;
-      margin-bottom: 2.5rem; /* 增加標題下方間距 */
+      margin-bottom: 2.5rem;
       padding: 0 1rem;
     }
     .sidebar .menu {
       list-style: none;
     }
     .sidebar .menu > li {
-      margin-bottom: 0.3rem; /* 菜單項之間增加間距 */
+      margin-bottom: 0.3rem;
     }
     .sidebar .menu > li > a {
       display: block;
       color: #fff;
       text-decoration: none;
-      padding: 1rem 1.8rem; /* 增加內邊距 */
+      padding: 1rem 1.8rem;
       font-size: 1rem;
       transition: background 0.2s;
     }
@@ -53,11 +53,10 @@
     }
     .sidebar .menu i {
       color: #fff;
-      margin-right: 0.8rem; /* 圖標與文字間距加大 */
-      width: 18px; /* 圖標固定寬度，對齊更整齊 */
+      margin-right: 0.8rem;
+      width: 18px;
       text-align: center;
     }
-    /* 子菜單（優化分層） */
     .submenu {
       list-style: none;
       background: #006400;
@@ -66,14 +65,14 @@
       display: block;
       color: #fff;
       text-decoration: none;
-      padding: 0.8rem 2.5rem; /* 子菜單內邊距加大 */
+      padding: 0.8rem 2.5rem;
       font-size: 0.95rem;
     }
     .submenu li a:hover {
       background: #004d00;
     }
 
-    /* 主內容（增加留白） */
+    /* 主內容 */
     .main-content {
       flex: 1;
       padding: 2.5rem;
@@ -84,32 +83,32 @@
       background: #fff;
       border: 1px solid #e0e0e0;
       border-radius: 0.5rem;
-      padding: 2rem; /* 加大卡片內邊距 */
-      margin-bottom: 2rem; /* 卡片間距加大 */
+      padding: 2rem;
+      margin-bottom: 2rem;
       box-shadow: 0 2px 4px rgba(0,0,0,0.08);
     }
     .card h3 {
       font-size: 1.25rem;
-      margin-bottom: 1.5rem; /* 標題下方間距加大 */
+      margin-bottom: 1.5rem;
       padding-bottom: 0.8rem;
       border-bottom: 1px solid #e0e0e0;
     }
 
-    /* 表單與搜尋樣式（優化間距） */
+    /* 表單與搜尋樣式 */
     .search-group {
       margin-bottom: 1.5rem;
       display: flex;
-      gap: 1rem; /* 搜尋框與按鈕間距加大 */
+      gap: 1rem;
     }
     .search-input {
-      padding: 0.8rem; /* 輸入框內邊距加大 */
+      padding: 0.8rem;
       border: 1px solid #ccc;
       border-radius: 0.3rem;
       font-size: 1rem;
       flex: 1;
     }
     .search-btn {
-      padding: 0.8rem 1.5rem; /* 按鈕內邊距加大 */
+      padding: 0.8rem 1.5rem;
       background: #008000;
       color: #fff;
       border: none;
@@ -127,15 +126,25 @@
       font-size: 1rem;
       margin-left: 0.5rem;
     }
+    .delete-btn {
+      padding: 0.8rem 1.5rem;
+      background: #ff6347;
+      color: #fff;
+      border: none;
+      border-radius: 0.3rem;
+      cursor: pointer;
+      font-size: 1rem;
+      margin-left: 0.5rem;
+    }
 
-    /* 列表樣式（優化排版） */
+    /* 列表樣式 */
     .table {
       width: 100%;
       border-collapse: collapse;
       margin-bottom: 1.5rem;
     }
     .table th, .table td {
-      padding: 1rem; /* 表格單元格內邊距加大 */
+      padding: 1rem;
       border: 1px solid #e0e0e0;
       text-align: left;
       font-size: 0.95rem;
@@ -147,7 +156,7 @@
     .empty-tip {
       text-align: center;
       color: #666;
-      padding: 2rem; /* 空提示內邊距加大 */
+      padding: 2rem;
       font-size: 1rem;
     }
 
@@ -238,9 +247,9 @@
       <table class="table">
         <thead>
           <tr>
-            <<th>車隊名稱</</th>
-            <<th>繳費週期</</th>
-            <<th>總金額（NT$）</</th>
+            <<<th>車隊名稱</</</th>
+            <<<th>繳費週期</</</th>
+            <<<th>總金額（NT$）</</</th>
           </tr>
         </thead>
         <tbody id="payment-records-list">
@@ -249,7 +258,7 @@
       </table>
     </section>
 
-    <!-- 新增：4. 車隊管理員註冊申請面板 -->
+    <!-- 4. 車隊管理員註冊申請面板 -->
     <section id="fleet-register-apply" class="panel card">
       <h3>車隊管理員註冊申請</h3>
       <div class="search-group">
@@ -258,15 +267,16 @@
       <table class="table">
         <thead>
           <tr>
-            <<th>車隊名稱</</th>
-            <<th>管理員姓名</</th>
-            <<th>聯繫電話</</th>
-            <<th>帳號</</th>
-            <<th>操作</</th>
+            <<<th>車隊名稱</</</th>
+            <<<th>管理員姓名</</</th>
+            <<<th>聯繫電話</</</th>
+            <<<th>信箱</</</th>
+            <<<th>帳號</</</th>
+            <<<th>操作</</</th>
           </tr>
         </thead>
         <tbody id="register-apply-list">
-          <tr><td colspan="5" class="empty-tip">目前沒有待審核的註冊申請</td></tr>
+          <tr><td colspan="6" class="empty-tip">目前沒有待審核的註冊申請</td></tr>
         </tbody>
       </table>
     </section>
@@ -285,17 +295,18 @@
       <table class="table">
         <thead>
           <tr>
-            <<th>車隊名稱</</th>
-            <<th>管理員姓名</</th>
-            <<th>聯繫電話</</th>
-            <<th>帳號</</th>
-            <<th>密碼</</th>
-            <<th>狀態</</th>
-            <<th>操作</</th>
+            <<<th>車隊名稱</</</th>
+            <<<th>管理員姓名</</</th>
+            <<<th>聯繫電話</</</th>
+            <<<th>信箱</</</th>
+            <<<th>帳號</</</th>
+            <<<th>密碼</</</th>
+            <<<th>狀態</</</th>
+            <<<th>操作</</</th>
           </tr>
         </thead>
         <tbody id="fleet-manager-list">
-          <tr><td colspan="7" class="empty-tip">目前沒有任何車隊管理員資料</td></tr>
+          <tr><td colspan="8" class="empty-tip">目前沒有任何車隊管理員資料</td></tr>
         </tbody>
       </table>
     </section>
@@ -310,10 +321,10 @@
       <table class="table">
         <thead>
           <tr>
-            <<th>車隊名稱</</th>
-            <<th>繳費紀錄檔案</</th>
-            <<th>上傳時間</</th>
-            <<th>操作</</th>
+            <<<th>車隊名稱</</</th>
+            <<<th>繳費紀錄檔案</</</th>
+            <<<th>上傳時間</</</th>
+            <<<th>操作</</</th>
           </tr>
         </thead>
         <tbody>
@@ -328,23 +339,19 @@
     const PRICE_KEY = 'carRentalPrice';
     const BANK_KEY = 'carRentalBank';
     const PAYMENT_KEY = 'carRentalPayment';
-    const FLEET_REGISTER_KEY = 'fleetManagers'; // 對應register.html的儲存鍵
-    const FLEET_ADMIN_KEY = 'fleetAdminList';    // 已審核的車隊管理員列表
+    const FLEET_REGISTER_KEY = 'fleetManagers'; 
+    const FLEET_ADMIN_KEY = 'fleetAdminList';    
 
     // 1. 左側菜單切換主面板
     document.querySelectorAll('.menu > li > a').forEach(link => {
       link.addEventListener('click', (e) => {
         e.preventDefault();
-        // 移除所有主面板active
         document.querySelectorAll('.menu > li > a').forEach(a => a.classList.remove('active'));
         document.querySelectorAll('.panel').forEach(panel => panel.classList.remove('active'));
-        // 新增當前主面板active
         link.classList.add('active');
         const panelId = link.getAttribute('data-panel');
         document.getElementById(panelId).classList.add('active');
-        // 切換到申請面板時重新載入申請數據
         if (panelId === 'fleet-register-apply') loadRegisterApply();
-        // 切換到列表面板時重新載入已審核數據
         if (panelId === 'fleet-manager') loadFleetAdmins();
       });
     });
@@ -375,13 +382,12 @@
       alert('銀行帳戶已儲存！');
     });
 
-    // 新增：4. 載入車隊管理員註冊申請（待審核）
+    // 4. 載入車隊管理員註冊申請（待審核）
     function loadRegisterApply() {
       const applyList = JSON.parse(localStorage.getItem(FLEET_REGISTER_KEY) || '[]');
       const keyword = document.getElementById('search-register-apply').value.trim();
       const tbody = document.getElementById('register-apply-list');
       
-      // 搜尋過濾
       let filteredList = applyList;
       if (keyword) {
         filteredList = applyList.filter(item =>
@@ -393,17 +399,17 @@
 
       tbody.innerHTML = '';
       if (filteredList.length === 0) {
-        tbody.innerHTML = '<tr><td colspan=\"5\" class=\"empty-tip\">目前沒有待審核的註冊申請</td></tr>';
+        tbody.innerHTML = '<tr><td colspan=\"6\" class=\"empty-tip\">目前沒有待審核的註冊申請</td></tr>';
         return;
       }
 
-      // 渲染待審核列表
       filteredList.forEach(item => {
         const row = document.createElement('tr');
         row.innerHTML = `
           <td>${item.fleetName}</td>
           <td>${item.managerName}</td>
           <td>${item.managerPhone}</td>
+          <td>${item.managerEmail}</td>
           <td>${item.managerAccount}</td>
           <td>
             <button class="search-btn approve-apply" data-id="${item.managerAccount}">通過</button>
@@ -413,7 +419,6 @@
         tbody.appendChild(row);
       });
 
-      // 綁定「通過」按鈕事件
       document.querySelectorAll('.approve-apply').forEach(btn => {
         btn.addEventListener('click', function() {
           const account = this.getAttribute('data-id');
@@ -421,7 +426,6 @@
         });
       });
 
-      // 綁定「駁回」按鈕事件
       document.querySelectorAll('.reject-apply').forEach(btn => {
         btn.addEventListener('click', function() {
           const account = this.getAttribute('data-id');
@@ -430,36 +434,34 @@
       });
     }
 
-    // 新增：5. 通過註冊申請（移動到已審核列表）
+    // 5. 通過註冊申請（包含信箱、密碼）
     function approveRegister(account) {
       const applyList = JSON.parse(localStorage.getItem(FLEET_REGISTER_KEY) || '[]');
       const approvedItem = applyList.find(item => item.managerAccount === account);
       if (!approvedItem) return;
 
-      // 將通過的項目加入「已審核列表」（包含密碼）
       const adminList = JSON.parse(localStorage.getItem(FLEET_ADMIN_KEY) || '[]');
       adminList.push({
         id: `fleet-${Date.now()}`,
         fleetName: approvedItem.fleetName,
         managerName: approvedItem.managerName,
         phone: approvedItem.managerPhone,
+        email: approvedItem.managerEmail,
         account: approvedItem.managerAccount,
-        password: approvedItem.managerPassword, // 新增：儲存密碼
-        status: 'active' // 初始狀態：正常
+        password: approvedItem.managerPassword,
+        status: 'active'
       });
       localStorage.setItem(FLEET_ADMIN_KEY, JSON.stringify(adminList));
 
-      // 從「待審核列表」移除該項目
       const updatedApplyList = applyList.filter(item => item.managerAccount !== account);
       localStorage.setItem(FLEET_REGISTER_KEY, JSON.stringify(updatedApplyList));
 
-      // 重新載入申請列表與管理員列表
       loadRegisterApply();
       loadFleetAdmins();
       alert('已通過該車隊管理員的註冊申請！');
     }
 
-    // 新增：6. 駁回註冊申請
+    // 6. 駁回註冊申請
     function rejectRegister(account) {
       const applyList = JSON.parse(localStorage.getItem(FLEET_REGISTER_KEY) || '[]');
       const updatedApplyList = applyList.filter(item => item.managerAccount !== account);
@@ -468,14 +470,22 @@
       alert('已駁回該車隊管理員的註冊申請！');
     }
 
-    // 7. 載入已審核的車隊管理員列表
+    // 7. 刪除車隊管理員
+    function deleteFleetAdmin(id) {
+      const adminList = JSON.parse(localStorage.getItem(FLEET_ADMIN_KEY) || '[]');
+      const updatedList = adminList.filter(item => item.id !== id);
+      localStorage.setItem(FLEET_ADMIN_KEY, JSON.stringify(updatedList));
+      loadFleetAdmins();
+      alert('已刪除此車隊管理員！');
+    }
+
+    // 8. 載入已審核的車隊管理員列表（新增刪除按鈕）
     function loadFleetAdmins() {
       const adminList = JSON.parse(localStorage.getItem(FLEET_ADMIN_KEY) || '[]');
       const keyword = document.getElementById('search-fleet-manager').value.trim();
       const statusFilter = document.getElementById('filter-fleet-status').value;
       const tbody = document.getElementById('fleet-manager-list');
 
-      // 搜尋+狀態過濾
       let filteredList = adminList;
       if (keyword) {
         filteredList = adminList.filter(item =>
@@ -491,11 +501,10 @@
 
       tbody.innerHTML = '';
       if (filteredList.length === 0) {
-        tbody.innerHTML = '<tr><td colspan=\"7\" class=\"empty-tip\">目前沒有任何車隊管理員資料</td></tr>';
+        tbody.innerHTML = '<tr><td colspan=\"8\" class=\"empty-tip\">目前沒有任何車隊管理員資料</td></tr>';
         return;
       }
 
-      // 渲染已審核列表（新增密碼欄位）
       filteredList.forEach(item => {
         const statusText = item.status === 'suspended' ? '停權' : '正常';
         const actionText = item.status === 'suspended' ? '復權' : '停權';
@@ -505,48 +514,57 @@
           <td>${item.fleetName}</td>
           <td>${item.managerName}</td>
           <td>${item.phone}</td>
-          <td>${item.account || '未設定'}</td> <!-- 解決undefined問題 -->
-          <td>${item.password || '未設定'}</td> <!-- 新增：顯示密碼 -->
+          <td>${item.email || '未設定'}</td>
+          <td>${item.account || '未設定'}</td>
+          <td>${item.password || '未設定'}</td>
           <td>${statusText}</td>
           <td>
-            <button class=\"search-btn\" data-id=\"${item.id}\" data-next-status=\"${nextStatus}\">${actionText}</button>
+            <button class=\"search-btn status-btn\" data-id=\"${item.id}\" data-next-status=\"${nextStatus}\">${actionText}</button>
+            <button class=\"delete-btn\" data-id=\"${item.id}\">刪除</button>
           </td>
         `;
         tbody.appendChild(row);
       });
 
       // 綁定狀態切換按鈕事件
-      document.getElementById('fleet-manager-list').addEventListener('click', (e) => {
-        const target = e.target;
-        if (target.tagName.toLowerCase() !== 'button') return;
-        const id = target.getAttribute('data-id');
-        const nextStatus = target.getAttribute('data-next-status');
-        const list = JSON.parse(localStorage.getItem(FLEET_ADMIN_KEY) || '[]');
-        const updated = list.map(item => item.id === id ? { ...item, status: nextStatus } : item);
-        localStorage.setItem(FLEET_ADMIN_KEY, JSON.stringify(updated));
-        loadFleetAdmins();
+      document.querySelectorAll('.status-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const id = this.getAttribute('data-id');
+          const nextStatus = this.getAttribute('data-next-status');
+          const list = JSON.parse(localStorage.getItem(FLEET_ADMIN_KEY) || '[]');
+          const updated = list.map(item => item.id === id ? { ...item, status: nextStatus } : item);
+          localStorage.setItem(FLEET_ADMIN_KEY, JSON.stringify(updated));
+          loadFleetAdmins();
+        });
+      });
+
+      // 綁定刪除按鈕事件
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const id = this.getAttribute('data-id');
+          if (confirm('確定要刪除此車隊管理員嗎？')) {
+            deleteFleetAdmin(id);
+          }
+        });
       });
     }
 
-    // 8. 搜尋註冊申請
+    // 9. 搜尋註冊申請
     document.getElementById('search-register-apply').addEventListener('input', loadRegisterApply);
 
-    // 9. 載入既有設定
+    // 10. 載入既有設定
     window.addEventListener('load', () => {
-      // 載入租金價格
       const storedPrice = JSON.parse(localStorage.getItem(PRICE_KEY) || '{}');
       document.getElementById('monthly-price').value = storedPrice.monthly || 9500;
       document.getElementById('quarterly-price').value = storedPrice.quarterly || 9000;
       document.getElementById('halfyear-price').value = storedPrice.halfyear || 9500;
       document.getElementById('yearly-price').value = storedPrice.yearly || 8500;
 
-      // 載入銀行帳戶
       const storedBank = JSON.parse(localStorage.getItem(BANK_KEY) || '{}');
       document.getElementById('bank-name').value = storedBank.bankName || '';
       document.getElementById('bank-account-name').value = storedBank.accountName || '';
       document.getElementById('bank-account-number').value = storedBank.accountNumber || '';
 
-      // 預設載入註冊申請面板
       document.querySelector('[data-panel="fleet-register-apply"]').click();
     });
   </script>
