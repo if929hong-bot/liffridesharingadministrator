@@ -198,6 +198,14 @@
       display: block;
     }
 
+    /* 密碼修改區域樣式 */
+    #password-change-mode {
+      display: none;
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #e0e0e0;
+    }
+
     /* 響應式斷點：平板/手機 */
     @media (max-width: 768px) {
       .sidebar-wrapper {
@@ -264,6 +272,7 @@
         <p>聯繫電話：<span id="view-fleet-phone">0912345678</span></p>
         <p>LINE ID：<span id="view-fleet-lineid">dididaida-001</span></p>
         <button class="btn btn-secondary" id="edit-fleet-btn">更改資料</button>
+        <button class="btn btn-primary" id="change-password-btn">更改密碼</button>
       </div>
       <!-- 資料編輯區（預設隱藏） -->
       <div id="fleet-edit-mode" style="display: none;">
@@ -285,6 +294,25 @@
         </div>
         <button class="btn btn-success" id="save-fleet-btn">儲存</button>
         <button class="btn btn-secondary" id="cancel-edit-btn">取消</button>
+      </div>
+      
+      <!-- 密碼修改區域（預設隱藏） -->
+      <div id="password-change-mode">
+        <h4 style="margin-bottom: 1rem; font-size: 1rem;">更改密碼</h4>
+        <div class="form-group">
+          <label>當前密碼</label>
+          <input type="password" id="current-password" class="input-field" placeholder="請輸入當前密碼">
+        </div>
+        <div class="form-group">
+          <label>新密碼</label>
+          <input type="password" id="new-password" class="input-field" placeholder="請輸入新密碼（至少6位）">
+        </div>
+        <div class="form-group">
+          <label>確認新密碼</label>
+          <input type="password" id="confirm-password" class="input-field" placeholder="請再次輸入新密碼">
+        </div>
+        <button class="btn btn-success" id="save-password-btn">儲存新密碼</button>
+        <button class="btn btn-secondary" id="cancel-password-btn">取消</button>
       </div>
     </section>
 
@@ -398,6 +426,7 @@
     const DRIVER_APPLY_KEY = 'driverRegisterApplication';
     const DRIVER_PASS_KEY = 'driverPassedList';
     const FLEET_DATA_KEY = 'fleetData';
+    const FLEET_PASSWORD_KEY = 'fleetPassword'; // 新增：車隊密碼儲存鍵名
 
     // 初始化車隊資料
     function initFleetData() {
@@ -420,10 +449,18 @@
         };
         localStorage.setItem(FLEET_DATA_KEY, JSON.stringify(defaultFleet));
       }
+      
+      // 初始化車隊密碼（預設密碼：123456）
+      const savedPassword = localStorage.getItem(FLEET_PASSWORD_KEY);
+      if (!savedPassword) {
+        localStorage.setItem(FLEET_PASSWORD_KEY, '123456');
+      }
     }
 
     // 1. 車隊資料編輯/儲存功能
     document.getElementById('edit-fleet-btn').addEventListener('click', () => {
+      // 關閉密碼修改區域
+      document.getElementById('password-change-mode').style.display = 'none';
       document.getElementById('fleet-view-mode').style.display = 'none';
       document.getElementById('fleet-edit-mode').style.display = 'block';
     });
@@ -466,14 +503,76 @@
       alert('車隊資料已更新！');
     });
 
-    // 2. 側邊欄收合功能（手機端）
+    // 2. 密碼修改功能（新增）
+    document.getElementById('change-password-btn').addEventListener('click', () => {
+      // 關閉資料編輯區域
+      document.getElementById('fleet-edit-mode').style.display = 'none';
+      document.getElementById('fleet-view-mode').style.display = 'block';
+      // 顯示密碼修改區域
+      document.getElementById('password-change-mode').style.display = 'block';
+      // 清空密碼輸入框
+      document.getElementById('current-password').value = '';
+      document.getElementById('new-password').value = '';
+      document.getElementById('confirm-password').value = '';
+    });
+
+    document.getElementById('cancel-password-btn').addEventListener('click', () => {
+      document.getElementById('password-change-mode').style.display = 'none';
+    });
+
+    document.getElementById('save-password-btn').addEventListener('click', () => {
+      const currentPwd = document.getElementById('current-password').value.trim();
+      const newPwd = document.getElementById('new-password').value.trim();
+      const confirmPwd = document.getElementById('confirm-password').value.trim();
+      
+      // 驗證欄位
+      if (!currentPwd || !newPwd || !confirmPwd) {
+        alert('請填寫完整所有密碼欄位！');
+        return;
+      }
+      
+      // 驗證當前密碼
+      const savedPwd = localStorage.getItem(FLEET_PASSWORD_KEY);
+      if (currentPwd !== savedPwd) {
+        alert('當前密碼錯誤！');
+        document.getElementById('current-password').focus();
+        return;
+      }
+      
+      // 驗證新密碼長度
+      if (newPwd.length < 6) {
+        alert('新密碼至少需要6位數！');
+        document.getElementById('new-password').focus();
+        return;
+      }
+      
+      // 驗證確認密碼
+      if (newPwd !== confirmPwd) {
+        alert('兩次輸入的新密碼不一致！');
+        document.getElementById('confirm-password').focus();
+        return;
+      }
+      
+      // 儲存新密碼
+      localStorage.setItem(FLEET_PASSWORD_KEY, newPwd);
+      
+      // 重置界面
+      document.getElementById('password-change-mode').style.display = 'none';
+      document.getElementById('current-password').value = '';
+      document.getElementById('new-password').value = '';
+      document.getElementById('confirm-password').value = '';
+      
+      alert('密碼已成功修改！請使用新密碼登入。');
+    });
+
+    // 3. 側邊欄收合功能（手機端）
     const sidebarToggle = document.getElementById('sidebarToggle');
     const sidebarWrapper = document.getElementById('sidebarWrapper');
     sidebarToggle.addEventListener('click', () => {
       sidebarWrapper.classList.toggle('open');
     });
 
-    // 3. 左側菜單切換面板
+    // 4. 左側菜單切換面板
     document.querySelectorAll('.menu a').forEach(link => {
       link.addEventListener('click', (e) => {
         e.preventDefault();
@@ -485,12 +584,14 @@
         link.classList.add('active');
         const panelId = link.getAttribute('data-panel');
         document.getElementById(panelId).classList.add('active');
+        // 關閉密碼修改面板
+        document.getElementById('password-change-mode').style.display = 'none';
         if (panelId === 'payment-history') loadMyPaymentRecords();
         if (panelId === 'driver-register') loadDriverApplications();
       });
     });
 
-    // 4. 同步超管設定的租金單價
+    // 5. 同步超管設定的租金單價
     function loadRentalPrice() {
       const savedPrice = JSON.parse(localStorage.getItem(PRICE_KEY) || '{}');
       document.getElementById('monthly-unit').textContent = savedPrice.monthly || 9500;
@@ -500,7 +601,7 @@
       calculateTotalAmount();
     }
 
-    // 5. 計算應繳總金額
+    // 6. 計算應繳總金額
     function calculateTotalAmount() {
       const period = document.getElementById('payment-period').value;
       let unitPrice = 0;
@@ -528,7 +629,7 @@
       window.currentPaymentData = { period, unitPrice, totalAmount: total };
     }
 
-    // 6. 同步超管設定的銀行資訊
+    // 7. 同步超管設定的銀行資訊
     function loadBankInfo() {
       const savedBank = JSON.parse(localStorage.getItem(BANK_KEY) || '{}');
       document.getElementById('bank-name').textContent = savedBank.bankName || '未設定';
@@ -537,7 +638,7 @@
       document.getElementById('bank-account-number').textContent = savedBank.accountNumber || '未設定';
     }
 
-    // 7. 確認繳費
+    // 8. 確認繳費
     const confirmPaymentBtn = document.getElementById('confirm-payment');
     confirmPaymentBtn.addEventListener('click', () => {
       const last5 = document.getElementById('payment-last5').value.trim();
@@ -575,7 +676,7 @@
       document.getElementById('payment-screenshot').value = '';
     });
 
-    // 8. 加載個人繳費紀錄
+    // 9. 加載個人繳費紀錄
     function loadMyPaymentRecords() {
       const existingPayments = JSON.parse(localStorage.getItem(PAYMENT_KEY) || '[]');
       const myPayments = existingPayments.filter(item => item.fleetName === document.getElementById('view-fleet-name').textContent);
@@ -597,7 +698,7 @@
       });
     }
 
-    // 9. 加載司機註冊申請
+    // 10. 加載司機註冊申請
     function loadDriverApplications() {
       const driverApplications = JSON.parse(localStorage.getItem(DRIVER_APPLY_KEY) || '[]');
       const listEl = document.getElementById('driver-application-list');
@@ -624,7 +725,7 @@
       bindDriverAuditEvents();
     }
 
-    // 10. 司機註冊審核事件
+    // 11. 司機註冊審核事件
     function bindDriverAuditEvents() {
       document.querySelectorAll('.approve-driver').forEach(btn => {
         btn.addEventListener('click', (e) => {
