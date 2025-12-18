@@ -4,87 +4,59 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>註冊 - 多元化乘車管理系統</title>
+  <title>車隊管理員註冊</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
 </head>
-<body class="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-  <div class="w-full max-w-md bg-white rounded-xl shadow-md p-8">
-    <div class="text-center mb-8">
-      <i class="fa fa-car text-green-600 text-4xl mb-3"></i> <!-- 修正語法錯誤：多餘的 < 和 / -->
-      <h1 class="text-xl font-bold text-gray-800">車隊管理員註冊</h1>
-    </div>
-
-    <form id="register-form" class="space-y-4">
+<body class="bg-gray-100">
+  <div class="max-w-md mx-auto p-8 bg-white rounded-lg shadow-md mt-10">
+    <h2 class="text-2xl font-bold mb-6 text-center">車隊管理員註冊</h2>
+    <form id="fleetManagerRegisterForm">
       <!-- 車隊名稱 -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">車隊名稱</label>
-        <input type="text" id="fleet-name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="請輸入車隊名稱" required>
+      <div class="mb-4">
+        <label class="block text-gray-700 mb-2" for="fleetName">車隊名稱</label>
+        <input type="text" id="fleetName" class="w-full px-4 py-2 border rounded-lg" required>
       </div>
-
-      <!-- 姓名 -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">姓名</label>
-        <input type="text" id="name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="請輸入姓名" required>
+      <!-- 管理員姓名 -->
+      <div class="mb-4">
+        <label class="block text-gray-700 mb-2" for="managerName">管理員姓名</label>
+        <input type="text" id="managerName" class="w-full px-4 py-2 border rounded-lg" required>
       </div>
-
-      <!-- 帳號 -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">帳號</label>
-        <input type="text" id="username" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="請設定帳號" required>
+      <!-- 聯繫電話 -->
+      <div class="mb-4">
+        <label class="block text-gray-700 mb-2" for="managerPhone">聯繫電話</label>
+        <input type="tel" id="managerPhone" class="w-full px-4 py-2 border rounded-lg" required>
       </div>
-
-      <!-- 密碼 -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">密碼</label>
-        <input type="password" id="password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="請設定密碼（至少6位）" minlength="6" required>
-      </div>
-
-      <!-- 電話 -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">電話</label>
-        <input type="tel" id="phone" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="請輸入電話號碼" required>
-      </div>
-
-      <!-- LINE ID -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">LINE ID</label>
-        <input type="text" id="line-id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="請輸入LINE ID" required>
-      </div>
-
-      <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors mt-4">
-        提交註冊申請
+      <!-- 提交按鈕 -->
+      <button type="submit" class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition">
+        提交註冊
       </button>
     </form>
-
-    <div class="text-center mt-6 text-sm text-gray-500">
-      <p>已有帳號？<a href="managerindex.html" class="text-green-600 hover:underline">立即登入</a></p> <!-- 修正：跳轉到正確的登入頁 managerindex.html -->
-    </div>
   </div>
 
   <script>
-    document.getElementById('register-form').addEventListener('submit', (e) => {
+    // 監聽註冊表單提交
+    document.getElementById('fleetManagerRegisterForm').addEventListener('submit', function(e) {
       e.preventDefault();
       
-      // 模擬註冊提交（實際需後端儲存）
-      const fleetName = document.getElementById('fleet-name').value;
-      const name = document.getElementById('name').value;
-      const username = document.getElementById('username').value;
-      const phone = document.getElementById('phone').value;
-      const lineId = document.getElementById('line-id').value;
-
-      // 驗證手機格式（09開頭10位數）
-      const phoneRegex = /^09\d{8}$/;
-      if (!phoneRegex.test(phone)) {
-        alert('請輸入正確的手機號碼（09開頭10位數）！');
-        return;
-      }
-
-      // 模擬提交成功提示
-      alert(`註冊申請已提交！\n車隊：${fleetName}\n姓名：${name}\n請等待超級管理員審核`);
+      // 獲取表單數據
+      const fleetManagerData = {
+        fleetName: document.getElementById('fleetName').value,
+        managerName: document.getElementById('managerName').value,
+        managerPhone: document.getElementById('managerPhone').value,
+        status: "待審核" // 初始狀態為待審核
+      };
       
-      // 跳轉回正確的登入頁
-      window.location.href = 'managerindex.html';
+      // 從localStorage讀取已有的註冊列表（若無則初始化為空數組）
+      let fleetManagers = JSON.parse(localStorage.getItem('fleetManagers')) || [];
+      // 新增當前註冊數據
+      fleetManagers.push(fleetManagerData);
+      // 存回localStorage
+      localStorage.setItem('fleetManagers', JSON.stringify(fleetManagers));
+      
+      // 提示提交成功
+      alert('車隊管理員註冊已提交，請等待超級管理員審核！');
+      // 重置表單
+      this.reset();
     });
   </script>
 </body>
