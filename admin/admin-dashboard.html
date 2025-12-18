@@ -44,7 +44,7 @@
             <h1 class="text-xl font-bold text-text-dark" id="systemTitle">LINE多元化搭車管理員登入系統</h1>
             <div class="flex items-center space-x-4">
                 <button class="text-text-light hover:text-primary">
-                    <<i class="fa fa-bell text-lg"></</i>
+                    <i class="fa fa-bell text-lg"></i>
                 </button>
                 <div class="flex items-center space-x-2">
                     <img src="https://via.placeholder.com/32" alt="管理員頭像" class="w-8 h-8 rounded-full">
@@ -60,23 +60,23 @@
         <aside class="sidebar w-56 bg-white shadow-sm p-4">
             <nav class="space-y-1">
                 <a href="admin-dashboard.html" class="block py-2 px-3 rounded-md menu-active font-medium">
-                    <<i class="fa fa-home mr-2"></</i>首頁
+                    <i class="fa fa-home mr-2"></i>首頁
                 </a>
                 <a href="admin-area.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
-                    <<i class="fa fa-map-marker mr-2"></</i>區域管理
+                    <i class="fa fa-map-marker mr-2"></i>區域管理
                 </a>
                 <a href="admin-driver.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
-                    <<i class="fa fa-car mr-2"></</i>司機管理
+                    <i class="fa fa-car mr-2"></i>司機管理
                 </a>
                 <a href="admin-order.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
-                    <<i class="fa fa-users mr-2"></</i>訂單管理
+                    <i class="fa fa-users mr-2"></i>訂單管理
                 </a>
                 <a href="admin-report.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
-                    <<i class="fa fa-money mr-2"></</i>財務管理
+                    <i class="fa fa-money mr-2"></i>財務管理
                 </a>
                 <!-- 已刪除「系統設置」選項 -->
                 <a href="../managerindex.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all mt-4" id="logoutLink">
-                    <<i class="fa fa-sign-out mr-2"></</i>退出登入
+                    <i class="fa fa-sign-out mr-2"></i>退出登入
                 </a>
             </nav>
         </aside>
@@ -88,21 +88,21 @@
                 <div class="card-bg rounded-lg p-4 shadow-sm border border-gray-100">
                     <div class="flex items-center justify-between mb-2">
                         <p class="text-text-light text-sm">線上司機人數</p>
-                        <<i class="fa fa-car text-primary text-xl"></</i>
+                        <i class="fa fa-car text-primary text-xl"></i>
                     </div>
                     <p class="text-2xl font-bold text-text-dark" id="onlineDriverCount">12人</p>
                 </div>
                 <div class="card-bg rounded-lg p-4 shadow-sm border border-gray-100">
                     <div class="flex items-center justify-between mb-2">
                         <p class="text-text-light text-sm">今日訂單</p>
-                        <<i class="fa fa-shopping-cart text-primary text-xl"></</i>
+                        <i class="fa fa-shopping-cart text-primary text-xl"></i>
                     </div>
                     <p class="text-2xl font-bold text-text-dark" id="todayOrderCount">36單</p>
                 </div>
                 <div class="card-bg rounded-lg p-4 shadow-sm border border-gray-100">
                     <div class="flex items-center justify-between mb-2">
                         <p class="text-text-light text-sm">今日收入</p>
-                        <<i class="fa fa-yen-sign text-primary text-xl"></</i>
+                        <i class="fa fa-yen text-primary text-xl"></i> <!-- 修正圖標名稱：fa-yen-sign → fa-yen (font-awesome 4.7 兼容) -->
                     </div>
                     <p class="text-2xl font-bold text-text-dark" id="todayIncome">8,560元</p>
                 </div>
@@ -154,12 +154,12 @@
                     <table class="min-w-full">
                         <thead>
                             <tr class="border-b border-gray-200 bg-gray-50">
-                                <<th class="text-left py-2 px-3 text-sm text-text-light">訂單編號</</th>
-                                <<th class="text-left py-2 px-3 text-sm text-text-light">司機</</th>
-                                <<th class="text-left py-2 px-3 text-sm text-text-light">乘客</</th>
-                                <<th class="text-left py-2 px-3 text-sm text-text-light">金額</</th>
-                                <<th class="text-left py-2 px-3 text-sm text-text-light">狀態</</th>
-                                <<th class="text-left py-2 px-3 text-sm text-text-light">操作</</th>
+                                <th class="text-left py-2 px-3 text-sm text-text-light">訂單編號</th>
+                                <th class="text-left py-2 px-3 text-sm text-text-light">司機</th>
+                                <th class="text-left py-2 px-3 text-sm text-text-light">乘客</th>
+                                <th class="text-left py-2 px-3 text-sm text-text-light">金額</th>
+                                <th class="text-left py-2 px-3 text-sm text-text-light">狀態</th>
+                                <th class="text-left py-2 px-3 text-sm text-text-light">操作</th>
                             </tr>
                         </thead>
                         <tbody>
