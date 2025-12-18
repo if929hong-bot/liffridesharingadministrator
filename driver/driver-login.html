@@ -1,299 +1,82 @@
+<!-- driver/login.html（司機登入頁 - 改造後） -->
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <title>司機登入</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>司機入口 - 多元化乘車管理系統</title>
   <style>
-    .login-card {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      padding: 32px;
-      width: 100%;
-      max-width: 400px;
-    }
+    body { font-family: 'Noto Sans TC', sans-serif; background: #f5f5f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    .login-card { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+    .login-card h1 { margin: 0 0 1.5rem; font-size: 1.5rem; color: #333; }
+    .input-group { margin-bottom: 1rem; }
+    .input-group label { display: block; margin-bottom: 0.5rem; color: #666; }
+    .input-group input { width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 4px; }
+    .btn-login { width: 100%; padding: 0.8rem; background: #228B22; color: white; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; }
+    .link-area { text-align: right; margin: 0.5rem 0; }
+    .link-area a { color: #228B22; text-decoration: none; }
+    .note { margin-top: 1.5rem; text-align: center; font-size: 0.875rem; color: #666; }
+    .header-area { display: flex; justify-content: space-between; align-items: center; }
+    .header-area a { color: #228B22; text-decoration: none; }
   </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen py-8 px-4">
+<body>
   <div class="login-card">
-    <div class="text-center mb-8">
-      <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 0 1-2.827 0l-4.244-4.243a8 8 0 1 1 11.314 0z" />
-        </svg>
+    <div class="header-area">
+      <h1>司機入口</h1>
+      <a href="register.html">註冊</a>
+    </div>
+    <form id="driver-login-form">
+      <div class="input-group">
+        <label>帳號 (手機號碼)</label>
+        <input type="text" id="driver-username" placeholder="請輸入手機號碼" required>
       </div>
-      <h1 class="text-2xl font-bold">司機帳號登入</h1>
-    </div>
-
-    <!-- 帳號輸入 -->
-    <div class="mb-4">
-      <label class="block mb-2 text-gray-700 text-sm">帳號</label>
-      <input type="text" id="driverAccount" placeholder="請輸入司機帳號" class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500">
-    </div>
-
-    <!-- 密碼輸入 -->
-    <div class="mb-6">
-      <label class="block mb-2 text-gray-700 text-sm">密碼</label>
-      <input type="password" id="driverPwd" placeholder="請輸入密碼" class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500">
-    </div>
-
-    <!-- 登入按鈕 -->
-    <button id="driverLoginBtn" class="w-full py-3 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition shadow-md mb-4">
-      登入
-    </button>
-
-    <!-- 註冊入口 -->
-    <div class="text-center">
-      <span class="text-gray-600 text-sm">還沒有帳號？</span>
-      <button id="toRegisterBtn" class="text-green-600 text-sm hover:underline ml-1">
-        註冊帳戶
-      </button>
+      <div class="input-group">
+        <label>密碼</label>
+        <input type="password" id="driver-password" placeholder="請輸入密碼" required>
+      </div>
+      <div class="link-area">
+        <a href="#">忘記密碼？</a>
+      </div>
+      <button type="submit" class="btn-login">登錄</button>
+    </form>
+    <div class="note">
+      註冊申請提交後，我們將在3個工作天內進行審核<br>
+      審核通過後將以簡訊通知您，敬請耐心等候
     </div>
   </div>
 
-  <script src="../js/auth.js"></script>
-  <script src="../js/common.js"></script>
   <script>
-    // 頁面加載時檢查是否有已停權的相關標記（預防直接訪問此頁）
-    document.addEventListener('DOMContentLoaded', function() {
-        // 讀取儲存的會員數據和不可接單標記
-        const currentMemberStr = localStorage.getItem('currentMember');
-        const inactiveFleets = JSON.parse(localStorage.getItem('inactiveFleets') || '[]');
-        
-        // 若已有登錄會員，直接檢查接單狀態
-        if (currentMemberStr) {
-            const currentMember = JSON.parse(currentMemberStr);
-            if (currentMember.role === 'driver' && (!currentMember.canReceiveOrders || inactiveFleets.includes(currentMember.fleetId))) {
-                alert('您所屬的車隊已被停權或帳號不可接單，暫時無法登入使用');
-                // 清除無效登錄狀態，強制返回首頁
-                localStorage.removeItem('currentMember');
-                setTimeout(() => {
-                    window.location.href = '../index.html';
-                }, 1500);
-            }
-        }
-    });
+    // 司機帳號儲存鍵名（與管理員後台同步）
+    const DRIVER_PASS_KEY = 'driverPassedList';
+    const DRIVER_LOGIN_KEY = 'driverLoggedIn';
 
-    document.getElementById('driverLoginBtn').addEventListener('click', () => {
-      const account = document.getElementById('driverAccount').value.trim();
-      const pwd = document.getElementById('driverPwd').value.trim();
+    const loginForm = document.getElementById('driver-login-form');
+    const usernameInput = document.getElementById('driver-username');
+    const passwordInput = document.getElementById('driver-password');
 
-      if (!account || !pwd) {
-        alert('請輸入帳號和密碼！');
-        return;
+    loginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const inputUsername = usernameInput.value.trim();
+      const inputPassword = passwordInput.value.trim();
+
+      // 從 LocalStorage 獲取已審核通過的司機列表
+      const passedDrivers = JSON.parse(localStorage.getItem(DRIVER_PASS_KEY) || '[]');
+      // 校驗帳號密碼
+      const validDriver = passedDrivers.find(
+        driver => driver.phone === inputUsername && driver.password === inputPassword
+      );
+
+      if (validDriver) {
+        // 儲存司機登錄狀態
+        localStorage.setItem(DRIVER_LOGIN_KEY, JSON.stringify(validDriver));
+        // 跳轉到訂單頁
+        window.location.href = 'order.html';
+      } else {
+        alert('帳號或密碼錯誤，或您的申請尚未通過審核！');
+        passwordInput.value = '';
       }
-
-      // 1. 先透過 Auth 驗證會員基礎信息（原邏輯保留）
-      const m = window.Auth ? Auth.findMemberByAccount(account) : null;
-      if (!m || m.password !== pwd || m.status !== 'active') {
-        alert('帳號或密碼錯誤，或會員未啟用');
-        return;
-      }
-
-      // 2. 關鍵新增：驗證會員是否來自 member-system 且可接單
-      const memberSystemData = localStorage.getItem('memberSystemMembers');
-      if (!memberSystemData) {
-        alert('無有效會員數據，請聯繫管理員透過後台新增會員');
-        return;
-      }
-
-      try {
-        const members = JSON.parse(memberSystemData);
-        // 查找對應帳號的會員（必須是透過 member-system 新增的）
-        const validMember = members.find(item => 
-          item.account === account && 
-          item.isAddedViaMemberSystem === true && 
-          item.role === 'driver'
-        );
-
-        if (!validMember) {
-          alert('會員未透過管理後台新增，無法登入');
-          return;
-        }
-
-        // 3. 檢查是否可接單（是否被停權或所屬車隊被停權）
-        const inactiveFleets = JSON.parse(localStorage.getItem('inactiveFleets') || '[]');
-        if (!validMember.canReceiveOrders || inactiveFleets.includes(validMember.fleetId)) {
-          alert('您的帳號不可接單或所屬車隊已被停權，無法登入');
-          return;
-        }
-
-        // 4. 所有驗證通過，執行原登入邏輯
-        if (window.Auth) Auth.setCurrentMember(m.id);
-        const driver = TaxiSystem.driverLogin(account, pwd);
-        if (!driver) {
-          alert('登入失敗，請確認帳密或聯繫管理員');
-          return;
-        }
-
-        // 儲存當前會員信息到 localStorage（供其他頁面使用）
-        localStorage.setItem('currentMember', JSON.stringify(validMember));
-        alert('登入成功！');
-        window.location.href = 'driver.html';
-
-      } catch (error) {
-        console.error('司機登入驗證出錯：', error);
-        alert('系統錯誤，請稍後再試');
-      }
-    });
-
-    // 註冊按鈕邏輯（跳轉至註冊頁，這裡先模擬彈窗）
-    document.getElementById('toRegisterBtn').addEventListener('click', () => {
-      alert('即將跳轉至司機註冊頁面（註冊後需管理員透過 member-system.html 審核啟用）');
-      // 實際專案中可跳轉至 driver-register.html
-      // window.location.href = 'driver-register.html';
     });
   </script>
 </body>
-=======
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>司機登入</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .login-card {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      padding: 32px;
-      width: 100%;
-      max-width: 400px;
-    }
-  </style>
-</head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen py-8 px-4">
-  <div class="login-card">
-    <div class="text-center mb-8">
-      <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 0 1-2.827 0l-4.244-4.243a8 8 0 1 1 11.314 0z" />
-        </svg>
-      </div>
-      <h1 class="text-2xl font-bold">司機帳號登入</h1>
-    </div>
-
-    <!-- 帳號輸入 -->
-    <div class="mb-4">
-      <label class="block mb-2 text-gray-700 text-sm">帳號</label>
-      <input type="text" id="driverAccount" placeholder="請輸入司機帳號" class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500">
-    </div>
-
-    <!-- 密碼輸入 -->
-    <div class="mb-6">
-      <label class="block mb-2 text-gray-700 text-sm">密碼</label>
-      <input type="password" id="driverPwd" placeholder="請輸入密碼" class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500">
-    </div>
-
-    <!-- 登入按鈕 -->
-    <button id="driverLoginBtn" class="w-full py-3 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition shadow-md mb-4">
-      登入
-    </button>
-
-    <!-- 註冊入口 -->
-    <div class="text-center">
-      <span class="text-gray-600 text-sm">還沒有帳號？</span>
-      <button id="toRegisterBtn" class="text-green-600 text-sm hover:underline ml-1">
-        註冊帳戶
-      </button>
-    </div>
-  </div>
-
-  <script src="../js/auth.js"></script>
-  <script src="../js/common.js"></script>
-  <script>
-    // 頁面加載時檢查是否有已停權的相關標記（預防直接訪問此頁）
-    document.addEventListener('DOMContentLoaded', function() {
-        // 讀取儲存的會員數據和不可接單標記
-        const currentMemberStr = localStorage.getItem('currentMember');
-        const inactiveFleets = JSON.parse(localStorage.getItem('inactiveFleets') || '[]');
-        
-        // 若已有登錄會員，直接檢查接單狀態
-        if (currentMemberStr) {
-            const currentMember = JSON.parse(currentMemberStr);
-            if (currentMember.role === 'driver' && (!currentMember.canReceiveOrders || inactiveFleets.includes(currentMember.fleetId))) {
-                alert('您所屬的車隊已被停權或帳號不可接單，暫時無法登入使用');
-                // 清除無效登錄狀態，強制返回首頁
-                localStorage.removeItem('currentMember');
-                setTimeout(() => {
-                    window.location.href = '../index.html';
-                }, 1500);
-            }
-        }
-    });
-
-    document.getElementById('driverLoginBtn').addEventListener('click', () => {
-      const account = document.getElementById('driverAccount').value.trim();
-      const pwd = document.getElementById('driverPwd').value.trim();
-
-      if (!account || !pwd) {
-        alert('請輸入帳號和密碼！');
-        return;
-      }
-
-      // 1. 先透過 Auth 驗證會員基礎信息（原邏輯保留）
-      const m = window.Auth ? Auth.findMemberByAccount(account) : null;
-      if (!m || m.password !== pwd || m.status !== 'active') {
-        alert('帳號或密碼錯誤，或會員未啟用');
-        return;
-      }
-
-      // 2. 關鍵新增：驗證會員是否來自 member-system 且可接單
-      const memberSystemData = localStorage.getItem('memberSystemMembers');
-      if (!memberSystemData) {
-        alert('無有效會員數據，請聯繫管理員透過後台新增會員');
-        return;
-      }
-
-      try {
-        const members = JSON.parse(memberSystemData);
-        // 查找對應帳號的會員（必須是透過 member-system 新增的）
-        const validMember = members.find(item => 
-          item.account === account && 
-          item.isAddedViaMemberSystem === true && 
-          item.role === 'driver'
-        );
-
-        if (!validMember) {
-          alert('會員未透過管理後台新增，無法登入');
-          return;
-        }
-
-        // 3. 檢查是否可接單（是否被停權或所屬車隊被停權）
-        const inactiveFleets = JSON.parse(localStorage.getItem('inactiveFleets') || '[]');
-        if (!validMember.canReceiveOrders || inactiveFleets.includes(validMember.fleetId)) {
-          alert('您的帳號不可接單或所屬車隊已被停權，無法登入');
-          return;
-        }
-
-        // 4. 所有驗證通過，執行原登入邏輯
-        if (window.Auth) Auth.setCurrentMember(m.id);
-        const driver = TaxiSystem.driverLogin(account, pwd);
-        if (!driver) {
-          alert('登入失敗，請確認帳密或聯繫管理員');
-          return;
-        }
-
-        // 儲存當前會員信息到 localStorage（供其他頁面使用）
-        localStorage.setItem('currentMember', JSON.stringify(validMember));
-        alert('登入成功！');
-        window.location.href = 'driver.html';
-
-      } catch (error) {
-        console.error('司機登入驗證出錯：', error);
-        alert('系統錯誤，請稍後再試');
-      }
-    });
-
-    // 註冊按鈕邏輯（跳轉至註冊頁，這裡先模擬彈窗）
-    document.getElementById('toRegisterBtn').addEventListener('click', () => {
-      alert('即將跳轉至司機註冊頁面（註冊後需管理員透過 member-system.html 審核啟用）');
-      // 實際專案中可跳轉至 driver-register.html
-      // window.location.href = 'driver-register.html';
-    });
-  </script>
-</body>
->>>>>>> 352392ca9f8cf542e966877407b0fdb95cd821aa
 </html>
