@@ -1,294 +1,125 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>多元化乘車管理系統 - 登入</title>
-    <!-- 引入 Tailwind CSS 簡化樣式開發 -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 引入 Font Awesome 圖示 -->
-    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    
-    <style>
-        /* 自定義基礎樣式 */
-        body {
-            background-color: #f8fafc;
-            font-family: 'Noto Sans TC', sans-serif;
-        }
-        .login-card {
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
-        }
-        .login-card:hover {
-            box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.1);
-        }
-        .input-focus {
-            @apply focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>車隊管理員登入</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background-color: #f0f2f5;
+      font-family: "Microsoft JhengHei", sans-serif;
+    }
+    .login-card {
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+  </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
-    <!-- 登入卡片 -->
-    <div class="w-full max-w-md bg-white rounded-2xl p-8 login-card">
-        <!-- 系統標題 -->
-        <div class="text-center mb-10">
-            <i class="fa fa-bus text-blue-600 text-5xl mb-4"></i>
-            <h1 class="text-2xl font-bold text-gray-800">多元化乘車管理系統</h1>
-            <p class="text-gray-500 mt-2">請輸入帳號密碼進行登入</p>
-        </div>
+  <div class="login-card bg-white rounded-lg p-8 w-full max-w-md">
+    <h2 class="text-2xl font-bold text-center mb-8 text-gray-800">車隊管理員登入</h2>
+    
+    <!-- 登入表單 -->
+    <form id="managerLoginForm">
+      <div class="mb-4">
+        <label class="block text-gray-700 mb-2" for="loginAccount">登入帳號</label>
+        <input 
+          type="text" 
+          id="loginAccount" 
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          placeholder="請輸入您的登入帳號"
+          required
+        >
+      </div>
+      <div class="mb-6">
+        <label class="block text-gray-700 mb-2" for="loginPassword">登入密碼</label>
+        <input 
+          type="password" 
+          id="loginPassword" 
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          placeholder="請輸入您的登入密碼"
+          required
+        >
+      </div>
+      <button 
+        type="submit" 
+        class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition duration-200"
+      >
+        登入系統
+      </button>
+    </form>
 
-        <!-- 登入表單 -->
-        <form id="login-form" class="space-y-6">
-            <!-- 帳號輸入框 -->
-            <div>
-                <label for="username" class="block text-sm font-medium text-gray-700 mb-1">帳號</label>
-                <div class="relative">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-                        <i class="fa fa-user"></i>
-                    </span>
-                    <input type="text" id="username" name="username" 
-                        class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg input-focus outline-none"
-                        placeholder="請輸入帳號" required>
-                </div>
-            </div>
-
-            <!-- 密碼輸入框 -->
-            <div>
-                <label for="password" class="block text-sm font-medium text-gray-700 mb-1">密碼</label>
-                <div class="relative">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-                        <i class="fa fa-lock"></i>
-                    </span>
-                    <input type="password" id="password" name="password" 
-                        class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg input-focus outline-none"
-                        placeholder="請輸入密碼" required>
-                </div>
-            </div>
-
-            <!-- 忘記密碼連結 -->
-            <div class="text-right">
-                <button type="button" id="forgot-password" class="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors">
-                    忘記密碼？
-                </button>
-            </div>
-
-            <!-- 登入按鈕 -->
-            <button type="submit" class="w-full bg-blue-600 text-white font-medium py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
-                <i class="fa fa-sign-in mr-2"></i>
-                <span>立即登入</span>
-            </button>
-        </form>
-
-        <!-- 分隔線 -->
-        <div class="relative my-8">
-            <div class="absolute inset-0 flex items-center">
-                <div class="w-full border-t border-gray-300"></div>
-            </div>
-            <div class="relative flex justify-center text-sm">
-                <span class="px-2 bg-white text-gray-500">還沒有帳號？</span>
-            </div>
-        </div>
-
-        <!-- 註冊按鈕（修正為連結到 register.html） -->
-        <a href="register.html" class="block w-full text-center bg-gray-200 text-gray-800 font-medium py-3 px-4 rounded-lg hover:bg-gray-300 transition-colors">
-            <i class="fa fa-user-plus mr-2"></i>
-            <span>註冊帳號</span>
-        </a>
+    <!-- 忘記密碼按鈕（可選，基於信箱重置） -->
+    <div class="text-center mt-4">
+      <button id="forgotPasswordBtn" class="text-blue-600 hover:underline text-sm">
+        忘記密碼？
+      </button>
     </div>
+  </div>
 
-    <!-- 忘記密碼彈窗 -->
-    <div id="forgot-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white rounded-xl p-8 w-full max-w-md mx-4">
-            <div class="text-center mb-6">
-                <i class="fa fa-envelope text-blue-600 text-4xl mb-3"></i>
-                <h3 class="text-xl font-bold text-gray-800">忘記密碼</h3>
-                <p class="text-gray-500 mt-1">系統將發送密碼重置連結至您的註冊信箱</p>
-            </div>
+  <script>
+    // 儲存鍵名（與後台保持一致）
+    const FLEET_ADMIN_KEY = 'fleetAdminList';
 
-            <div class="space-y-4">
-                <div>
-                    <label for="reset-email" class="block text-sm font-medium text-gray-700 mb-1">註冊信箱</label>
-                    <div class="relative">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-                            <i class="fa fa-envelope-o"></i>
-                        </span>
-                        <input type="email" id="reset-email" 
-                            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg input-focus outline-none"
-                            placeholder="請輸入您的註冊信箱" required>
-                    </div>
-                </div>
+    // 1. 登入驗證邏輯
+    document.getElementById('managerLoginForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // 獲取輸入的帳號密碼
+      const inputAccount = document.getElementById('loginAccount').value.trim();
+      const inputPassword = document.getElementById('loginPassword').value.trim();
+      
+      // 讀取已審核的管理員列表
+      const adminList = JSON.parse(localStorage.getItem(FLEET_ADMIN_KEY) || '[]');
+      
+      // 驗證帳號密碼
+      const validAdmin = adminList.find(item => 
+        item.account === inputAccount &&  // 匹配帳號
+        item.password === inputPassword && // 匹配密碼
+        item.status === 'active'          // 狀態必須是正常（未停權）
+      );
+      
+      if (validAdmin) {
+        // 登入成功：儲存當前登入用戶信息，跳轉到管理員首頁
+        localStorage.setItem('currentManager', JSON.stringify({
+          id: validAdmin.id,
+          fleetName: validAdmin.fleetName,
+          name: validAdmin.managerName,
+          account: validAdmin.account
+        }));
+        alert('登入成功！');
+        // 跳轉到車隊管理員的功能頁（替換為實際的管理頁面路徑）
+        window.location.href = 'manager-dashboard.html'; // 請替換為真實的後台頁面
+      } else {
+        // 登入失敗：提示錯誤
+        alert('登入失敗！請檢查：\n1. 帳號密碼是否正確\n2. 帳號是否已通過審核\n3. 帳號是否被停權');
+      }
+    });
 
-                <div class="flex space-x-3">
-                    <button id="cancel-reset" class="flex-1 bg-gray-200 text-gray-800 font-medium py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">
-                        取消
-                    </button>
-                    <button id="send-reset" class="flex-1 bg-blue-600 text-white font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
-                        發送重置連結
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+    // 2. 忘記密碼功能（基於信箱重置，可選）
+    document.getElementById('forgotPasswordBtn').addEventListener('click', function() {
+      const inputAccount = prompt('請輸入您的登入帳號，我們將發送密碼重置郵件到您的信箱：');
+      if (!inputAccount) return;
+      
+      const adminList = JSON.parse(localStorage.getItem(FLEET_ADMIN_KEY) || '[]');
+      const admin = adminList.find(item => item.account === inputAccount);
+      
+      if (admin && admin.email) {
+        // 真實專案中這裡會發送郵件，這裡模擬提示
+        alert(`已發送密碼重置連結到您的信箱：${admin.email}\n（測試模式：您的密碼是 ${admin.password}）`);
+      } else {
+        alert('未找到該帳號，或該帳號未綁定信箱！');
+      }
+    });
 
-    <!-- 成功提示彈窗 -->
-    <div id="success-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white rounded-xl p-8 w-full max-w-md mx-4 text-center">
-            <i class="fa fa-check-circle text-green-500 text-5xl mb-4"></i>
-            <h3 class="text-xl font-bold text-gray-800">發送成功！</h3>
-            <p class="text-gray-500 mt-2 mb-6">重置密碼的連結已發送至您的信箱，請檢查收件夾（包含垃圾郵件）</p>
-            <button id="close-success" class="w-full bg-blue-600 text-white font-medium py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors">
-                確認
-            </button>
-        </div>
-    </div>
-
-    <script>
-        // 獲取 DOM 元素
-        const loginForm = document.getElementById('login-form');
-        const usernameInput = document.getElementById('username');
-        const passwordInput = document.getElementById('password');
-        const forgotPasswordBtn = document.getElementById('forgot-password');
-        const forgotModal = document.getElementById('forgot-modal');
-        const cancelResetBtn = document.getElementById('cancel-reset');
-        const sendResetBtn = document.getElementById('send-reset');
-        const resetEmailInput = document.getElementById('reset-email');
-        const successModal = document.getElementById('success-modal');
-        const closeSuccessBtn = document.getElementById('close-success');
-
-        // 預設超級管理員帳號密碼（不直接顯示在網頁上）
-        const ADMIN_USERNAME = '0975521219';
-        const ADMIN_PASSWORD = 'fffishau';
-        // 測試車隊管理員帳號（審核通過後可登入）
-        const TEST_MANAGER_USERNAME = 'test1111';
-        const TEST_MANAGER_PASSWORD = '123456';
-        // 預設重置信箱（不直接顯示在網頁上）
-        const DEFAULT_RESET_EMAIL = 'if929hong@gmail.com';
-
-        // 修復跳轉問題：使用 location.assign() 確保跳轉生效
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault(); // 阻止表單預設提交
-
-            const inputUsername = usernameInput.value.trim();
-            const inputPassword = passwordInput.value.trim();
-
-            // 驗證超級管理員帳號密碼 - 跳轉到 administrator.html
-            if (inputUsername === ADMIN_USERNAME && inputPassword === ADMIN_PASSWORD) {
-                try {
-                    // 設置超級管理員登錄狀態（用於後台頁面驗證）
-                    sessionStorage.setItem('adminLoggedIn', 'true');
-                    sessionStorage.removeItem('managerLoggedIn');
-                    
-                    // 延遲一小段時間確保跳轉生效
-                    setTimeout(() => {
-                        window.location.assign('administrator.html'); // 修改：跳轉到 administrator.html
-                    }, 100);
-                } catch (error) {
-                    // 異常處理：直接強制跳轉
-                    window.location.href = 'administrator.html';
-                }
-            }
-            // 驗證測試車隊管理員帳號密碼 - 也跳轉到 administrator.html
-            else if (inputUsername === TEST_MANAGER_USERNAME && inputPassword === TEST_MANAGER_PASSWORD) {
-                try {
-                    // 設置車隊管理員登錄狀態
-                    sessionStorage.setItem('managerLoggedIn', 'true');
-                    sessionStorage.setItem('managerUsername', TEST_MANAGER_USERNAME);
-                    sessionStorage.removeItem('adminLoggedIn');
-                    
-                    // 延遲一小段時間確保跳轉生效
-                    setTimeout(() => {
-                        window.location.assign('administrator.html'); // 修改：跳轉到 administrator.html
-                    }, 100);
-                } catch (error) {
-                    // 異常處理：直接強制跳轉
-                    window.location.href = 'administrator.html';
-                }
-            }
-            else {
-                // 帳號密碼錯誤提示（移除超管帳密暴露）
-                alert('帳號或密碼錯誤，請重新輸入！\n\n若為車隊管理員，請先完成註冊並等待超管審核');
-                passwordInput.value = ''; // 清空密碼輸入框
-                passwordInput.focus(); // 聚焦到密碼輸入框
-            }
-        });
-
-        // 忘記密碼按鈕點擊事件
-        forgotPasswordBtn.addEventListener('click', () => {
-            forgotModal.classList.remove('hidden');
-        });
-
-        // 取消重置按鈕點擊事件
-        cancelResetBtn.addEventListener('click', () => {
-            forgotModal.classList.add('hidden');
-            resetEmailInput.value = ''; // 清空信箱輸入框
-        });
-
-        // 發送重置連結按鈕點擊事件
-        sendResetBtn.addEventListener('click', () => {
-            const inputEmail = resetEmailInput.value.trim();
-            
-            // 驗證信箱格式
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(inputEmail)) {
-                alert('請輸入有效的信箱格式！');
-                return;
-            }
-
-            // 驗證信箱是否匹配預設信箱
-            if (inputEmail.toLowerCase() === DEFAULT_RESET_EMAIL.toLowerCase()) {
-                // 模擬發送重置連結
-                forgotModal.classList.add('hidden');
-                successModal.classList.remove('hidden');
-                resetEmailInput.value = ''; // 清空信箱輸入框
-            } else {
-                alert('此信箱未註冊，請輸入正確的註冊信箱！');
-            }
-        });
-
-        // 關閉成功提示彈窗
-        closeSuccessBtn.addEventListener('click', () => {
-            successModal.classList.add('hidden');
-        });
-
-        // 點擊彈窗外部關閉彈窗
-        forgotModal.addEventListener('click', (e) => {
-            if (e.target === forgotModal) {
-                forgotModal.classList.add('hidden');
-                resetEmailInput.value = '';
-            }
-        });
-
-        successModal.addEventListener('click', (e) => {
-            if (e.target === successModal) {
-                successModal.classList.add('hidden');
-            }
-        });
-
-        // 按下 ESC 鍵關閉彈窗
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                forgotModal.classList.add('hidden');
-                successModal.classList.add('hidden');
-                resetEmailInput.value = '';
-            }
-        });
-
-        // 額外防護：確保頁面載入時沒有快取干擾
-        window.addEventListener('load', () => {
-            // 清除可能的表單自動填充
-            usernameInput.value = '';
-            passwordInput.value = '';
-            
-            // 清除無效的登錄狀態
-            const adminLoggedIn = sessionStorage.getItem('adminLoggedIn');
-            const managerLoggedIn = sessionStorage.getItem('managerLoggedIn');
-            if (adminLoggedIn && adminLoggedIn !== 'true') {
-                sessionStorage.removeItem('adminLoggedIn');
-            }
-            if (managerLoggedIn && managerLoggedIn !== 'true') {
-                sessionStorage.removeItem('managerLoggedIn');
-            }
-        });
-    </script>
+    // 3. 防止重複登入（若已登入直接跳轉）
+    window.addEventListener('load', function() {
+      const currentManager = JSON.parse(localStorage.getItem('currentManager') || 'null');
+      if (currentManager) {
+        alert(`您已登入：${currentManager.fleetName} - ${currentManager.name}`);
+        window.location.href = 'manager-dashboard.html';
+      }
+    });
+  </script>
 </body>
 </html>
