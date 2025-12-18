@@ -92,7 +92,7 @@
         </section>
     </main>
 
-    <!-- 訂單詳情彈窗 -->
+    <!-- 訂單詳情彈窗（僅用於待接訂單確認） -->
     <div id="order-detail-modal" class="fixed inset-0 bg-black/50 flex justify-center items-center z-50 hidden">
         <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4">
             <div class="flex justify-between items-center mb-4">
@@ -110,9 +110,6 @@
                 </button>
                 <button id="accept-order-btn" class="flex-1 bg-green-600 text-white hover:bg-green-700 py-2 rounded-lg transition-colors hidden">
                     確認接單
-                </button>
-                <button id="complete-order-btn" class="flex-1 bg-blue-600 text-white hover:bg-blue-700 py-2 rounded-lg transition-colors hidden">
-                    完成訂單
                 </button>
             </div>
         </div>
@@ -136,7 +133,6 @@
         const closeModalBtn = document.getElementById('close-modal-btn');
         const cancelDetailBtn = document.getElementById('cancel-detail-btn');
         const acceptOrderBtn = document.getElementById('accept-order-btn');
-        const completeOrderBtn = document.getElementById('complete-order-btn');
 
         // 初始化頁面
         window.addEventListener('load', () => {
@@ -188,7 +184,7 @@
                 return;
             }
 
-            // 渲染待接訂單列表
+            // 渲染待接訂單列表（點擊彈窗確認接單）
             let html = '<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">';
             pendingOrders.forEach(order => {
                 html += `
@@ -223,7 +219,7 @@
             pendingOrdersContainer.innerHTML = html;
         }
 
-        // 加載進行中訂單
+        // 加載進行中訂單（點擊直接跳轉詳情頁）
         function loadActiveOrders() {
             const orders = JSON.parse(localStorage.getItem(DRIVER_ORDER_KEY) || '[]');
             const activeOrders = orders.filter(order => order.status === 'active');
@@ -238,11 +234,11 @@
                 return;
             }
 
-            // 渲染進行中訂單列表
+            // 渲染進行中訂單列表（點擊跳轉詳情頁）
             let html = '<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">';
             activeOrders.forEach(order => {
                 html += `
-                    <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-500 transition-colors cursor-pointer" onclick="showOrderDetail('${order.id}', 'active')">
+                    <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-500 transition-colors cursor-pointer" onclick="goToOrderDetail('${order.id}')">
                         <div class="flex justify-between items-start mb-2">
                             <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">進行中</span>
                             <span class="text-sm text-gray-500">${order.id}</span>
@@ -277,7 +273,13 @@
             activeOrdersContainer.innerHTML = html;
         }
 
-        // 顯示訂單詳情彈窗
+        // 跳轉到訂單詳情頁
+        function goToOrderDetail(orderId) {
+            // 將訂單ID通過URL參數傳遞到詳情頁
+            window.location.href = `driver-order-detail.html?orderId=${orderId}`;
+        }
+
+        // 顯示待接訂單詳情彈窗
         function showOrderDetail(orderId, orderType) {
             currentOrderId = orderId;
             const orders = JSON.parse(localStorage.getItem(DRIVER_ORDER_KEY) || '[]');
@@ -313,29 +315,21 @@
                 </div>
                 <div>
                     <span class="font-bold">訂單狀態：</span>
-                    <span class="${orderType === 'pending' ? 'text-yellow-600' : 'text-blue-600'} font-medium">
-                        ${orderType === 'pending' ? '待接單' : '進行中'}
-                    </span>
+                    <span class="text-yellow-600 font-medium">待接單</span>
                 </div>
                 <div class="text-xs text-gray-500 mt-2">
                     訂單創建時間：${order.createTime || '未知'}
                 </div>
             `;
 
-            // 顯示對應按鈕
-            acceptOrderBtn.classList.add('hidden');
-            completeOrderBtn.classList.add('hidden');
-            if (orderType === 'pending') {
-                acceptOrderBtn.classList.remove('hidden');
-            } else if (orderType === 'active') {
-                completeOrderBtn.classList.remove('hidden');
-            }
+            // 顯示接單按鈕
+            acceptOrderBtn.classList.remove('hidden');
 
             // 顯示彈窗
             orderDetailModal.classList.remove('hidden');
         }
 
-        // 接單操作
+        // 接單操作（成功後跳轉詳情頁）
         acceptOrderBtn.addEventListener('click', () => {
             if (!currentOrderId) return;
 
@@ -354,34 +348,11 @@
                     // 保存更新後的訂單
                     localStorage.setItem(DRIVER_ORDER_KEY, JSON.stringify(orders));
                     
-                    // 關閉彈窗並重新加載訂單
+                    // 關閉彈窗
                     orderDetailModal.classList.add('hidden');
-                    loadAllOrders();
-                    alert('接單成功！請儘快聯繫乘客確認乘車細節。');
-                }
-            }
-        });
-
-        // 完成訂單操作
-        completeOrderBtn.addEventListener('click', () => {
-            if (!currentOrderId) return;
-
-            if (confirm('確認此訂單已完成嗎？完成後訂單將從進行中列表移除！')) {
-                const orders = JSON.parse(localStorage.getItem(DRIVER_ORDER_KEY) || '[]');
-                
-                // 更新訂單狀態
-                const orderIndex = orders.findIndex(item => item.id === currentOrderId);
-                if (orderIndex !== -1) {
-                    orders[orderIndex].status = 'completed';
-                    orders[orderIndex].finishTime = new Date().toLocaleString('zh-TW');
                     
-                    // 保存更新後的訂單
-                    localStorage.setItem(DRIVER_ORDER_KEY, JSON.stringify(orders));
-                    
-                    // 關閉彈窗並重新加載訂單
-                    orderDetailModal.classList.add('hidden');
-                    loadAllOrders();
-                    alert('訂單完成成功！感謝您的服務。');
+                    // 跳轉到訂單詳情頁
+                    goToOrderDetail(currentOrderId);
                 }
             }
         });
