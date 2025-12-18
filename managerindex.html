@@ -13,6 +13,12 @@
     .login-card {
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
+    .error-tip {
+      color: #dc3545;
+      font-size: 0.875rem;
+      margin-top: 0.5rem;
+      display: none;
+    }
   </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
@@ -40,6 +46,7 @@
           placeholder="請輸入您的登入密碼"
           required
         >
+        <div class="error-tip" id="loginErrorTip"></div>
       </div>
       <button 
         type="submit" 
@@ -49,7 +56,7 @@
       </button>
     </form>
 
-    <!-- 忘記密碼按鈕（可選，基於信箱重置） -->
+    <!-- 忘記密碼按鈕 -->
     <div class="text-center mt-4">
       <button id="forgotPasswordBtn" class="text-blue-600 hover:underline text-sm">
         忘記密碼？
@@ -58,68 +65,114 @@
   </div>
 
   <script>
-    // 儲存鍵名（與後台保持一致）
-    const FLEET_ADMIN_KEY = 'fleetAdminList';
+    // 核心配置：與超管後台統一的存儲鍵 + 登入跳轉目標
+    const FLEET_ADMIN_KEY = 'fleetAdminList';       // 已審核管理員列表鍵名
+    const CURRENT_MANAGER_KEY = 'currentFleetManager'; // 當前登入用戶存儲鍵
+    const DASHBOARD_URL = 'admin/admin-dashboard.html'; // 登入後跳轉頁面
 
-    // 1. 登入驗證邏輯
-    document.getElementById('managerLoginForm').addEventListener('submit', function(e) {
+    // 1. 登錄表單提交處理
+    document.getElementById('managerLoginForm').addEventListener('submit', async function(e) {
       e.preventDefault();
-      
-      // 獲取輸入的帳號密碼
+      const errorTip = document.getElementById('loginErrorTip');
+      errorTip.style.display = 'none'; // 隱藏之前的錯誤提示
+
+      // 獲取並校驗輸入
       const inputAccount = document.getElementById('loginAccount').value.trim();
       const inputPassword = document.getElementById('loginPassword').value.trim();
       
-      // 讀取已審核的管理員列表
-      const adminList = JSON.parse(localStorage.getItem(FLEET_ADMIN_KEY) || '[]');
-      
-      // 驗證帳號密碼
-      const validAdmin = adminList.find(item => 
-        item.account === inputAccount &&  // 匹配帳號
-        item.password === inputPassword && // 匹配密碼
-        item.status === 'active'          // 狀態必須是正常（未停權）
-      );
-      
-      if (validAdmin) {
-        // 登入成功：儲存當前登入用戶信息，跳轉到管理員首頁
-        localStorage.setItem('currentManager', JSON.stringify({
-          id: validAdmin.id,
-          fleetName: validAdmin.fleetName,
-          name: validAdmin.managerName,
-          account: validAdmin.account
-        }));
-        alert('登入成功！');
-        // 跳轉到車隊管理員的功能頁（替換為實際的管理頁面路徑）
-        window.location.href = 'manager-dashboard.html'; // 請替換為真實的後台頁面
-      } else {
-        // 登入失敗：提示錯誤
-        alert('登入失敗！請檢查：\n1. 帳號密碼是否正確\n2. 帳號是否已通過審核\n3. 帳號是否被停權');
+      if (!inputAccount) {
+        errorTip.textContent = '請輸入登入帳號！';
+        errorTip.style.display = 'block';
+        return;
+      }
+      if (!inputPassword) {
+        errorTip.textContent = '請輸入登入密碼！';
+        errorTip.style.display = 'block';
+        return;
+      }
+
+      try {
+        // 讀取已審核的車隊管理員數據
+        const adminList = JSON.parse(localStorage.getItem(FLEET_ADMIN_KEY) || '[]');
+        
+        // 嚴格驗證：帳號匹配 + 密碼匹配 + 狀態正常
+        const validManager = adminList.find(item => 
+          item.account === inputAccount && 
+          item.password === inputPassword && 
+          item.status === 'active'
+        );
+
+        if (validManager) {
+          // 登入成功：存儲用戶信息（僅存必要字段，避免敏感信息過多）
+          const loginUserInfo = {
+            id: validManager.id,
+            fleetName: validManager.fleetName,
+            managerName: validManager.managerName,
+            account: validManager.account,
+            phone: validManager.phone,
+            email: validManager.email
+          };
+          localStorage.setItem(CURRENT_MANAGER_KEY, JSON.stringify(loginUserInfo));
+
+          // 友好提示 + 跳轉後台
+          alert(`🎉 登入成功！歡迎 ${validManager.fleetName} - ${validManager.managerName}`);
+          window.location.href = DASHBOARD_URL;
+        } else {
+          // 登錄失敗：模糊提示（避免洩露帳號是否存在）
+          errorTip.textContent = '帳號/密碼錯誤，或帳號未審核/已停權！';
+          errorTip.style.display = 'block';
+          document.getElementById('loginPassword').value = ''; // 清空密碼框
+        }
+      } catch (err) {
+        // 異常處理
+        console.error('登錄驗證失敗：', err);
+        errorTip.textContent = '系統異常，請稍後再試！';
+        errorTip.style.display = 'block';
       }
     });
 
-    // 2. 忘記密碼功能（基於信箱重置，可選）
+    // 2. 忘記密碼功能（基於帳號查詢密碼/信箱）
     document.getElementById('forgotPasswordBtn').addEventListener('click', function() {
-      const inputAccount = prompt('請輸入您的登入帳號，我們將發送密碼重置郵件到您的信箱：');
+      const inputAccount = prompt('請輸入您的登入帳號，我們將提示密碼信息（測試模式）：');
       if (!inputAccount) return;
-      
+
       const adminList = JSON.parse(localStorage.getItem(FLEET_ADMIN_KEY) || '[]');
-      const admin = adminList.find(item => item.account === inputAccount);
+      const manager = adminList.find(item => item.account === inputAccount);
       
-      if (admin && admin.email) {
-        // 真實專案中這裡會發送郵件，這裡模擬提示
-        alert(`已發送密碼重置連結到您的信箱：${admin.email}\n（測試模式：您的密碼是 ${admin.password}）`);
+      if (manager) {
+        // 測試環境：直接提示密碼（正式環境需替換為郵件發送邏輯）
+        const tipContent = manager.email 
+          ? `📧 您的綁定信箱：${manager.email}\n🔑 您的登錄密碼：${manager.password}`
+          : `🔑 您的登錄密碼：${manager.password}\n⚠️ 未綁定信箱，請聯繫超級管理員`;
+        alert(tipContent);
       } else {
-        alert('未找到該帳號，或該帳號未綁定信箱！');
+        alert('❌ 未找到該帳號，請確認帳號是否正確且已通過審核！');
       }
     });
 
-    // 3. 防止重複登入（若已登入直接跳轉）
+    // 3. 頁面加載時：檢查是否已登入，避免重複登錄
     window.addEventListener('load', function() {
-      const currentManager = JSON.parse(localStorage.getItem('currentManager') || 'null');
+      const currentManager = JSON.parse(localStorage.getItem(CURRENT_MANAGER_KEY) || 'null');
       if (currentManager) {
-        alert(`您已登入：${currentManager.fleetName} - ${currentManager.name}`);
-        window.location.href = 'manager-dashboard.html';
+        // 已登入：直接跳轉後台
+        alert(`ℹ️ 檢測到您已登入：${currentManager.fleetName} - ${currentManager.managerName}\n即將跳轉到管理後台`);
+        window.location.href = DASHBOARD_URL;
       }
     });
+
+    // 4. 防呆：檢查跳轉路徑是否合法（避免相對路徑錯誤）
+    function checkDashboardPath() {
+      const isLocalEnv = window.location.protocol === 'file:' || window.location.hostname === 'localhost';
+      if (isLocalEnv) return; // 本地開發環境跳過檢查
+      
+      // 模擬檢查路徑是否存在（正式環境可替換為後端接口驗證）
+      fetch(DASHBOARD_URL, { method: 'HEAD' })
+        .catch(err => {
+          console.warn(`⚠️ 跳轉目標頁面 ${DASHBOARD_URL} 可能不存在，請檢查路徑！`, err);
+        });
+    }
+    // 頁面加載完成後檢查路徑
+    window.addEventListener('DOMContentLoaded', checkDashboardPath);
   </script>
 </body>
 </html>
