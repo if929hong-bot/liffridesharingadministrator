@@ -24,6 +24,8 @@
             primary: '#00A86B', // 綠色主色
             secondary: '#F5F5F5', // 淺灰色背景
             dark: '#333333', // 深灰色文字
+            super: '#8A2BE2', // 超級管理員紫色
+            fleet: '#FF6B00', // 車隊管理員橙色
           },
           fontFamily: {
             sans: ['Helvetica Neue', 'Arial', 'sans-serif'],
@@ -43,6 +45,12 @@
       }
       .btn-secondary {
         @apply bg-white text-primary border border-primary py-3 px-6 rounded-lg font-medium transition-all duration-300 hover:bg-gray-50 active:scale-95;
+      }
+      .btn-super {
+        @apply bg-super text-white py-3 px-6 rounded-lg font-medium transition-all duration-300 hover:bg-super/90 active:scale-95 shadow-md;
+      }
+      .btn-fleet {
+        @apply bg-fleet text-white py-3 px-6 rounded-lg font-medium transition-all duration-300 hover:bg-fleet/90 active:scale-95 shadow-md;
       }
       .input-field {
         @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all;
@@ -71,6 +79,19 @@
       }
       .map-btn {
         @apply w-full py-2 mt-1 bg-gray-100 text-dark rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium;
+      }
+      /* 權限標籤樣式 */
+      .role-badge {
+        @apply inline-block px-2 py-1 rounded-full text-xs font-medium;
+      }
+      .role-super {
+        @apply bg-super/10 text-super;
+      }
+      .role-fleet {
+        @apply bg-fleet/10 text-fleet;
+      }
+      .role-driver {
+        @apply bg-primary/10 text-primary;
       }
     }
   </style>
@@ -180,22 +201,48 @@
             </div>
           </div>
           
-          <!-- 司機登錄表單 -->
+          <!-- 司機登錄表單 - 串聯車隊管理員 -->
           <div id="driver-login-form">
+            <div class="mb-4">
+              <label class="block text-left text-sm font-medium text-gray-700 mb-2">司機類型</label>
+              <div class="radio-group">
+                <label class="radio-label">
+                  <input type="radio" name="driverType" value="individual" checked class="text-primary">
+                  <span>個人司機</span>
+                </label>
+                <label class="radio-label">
+                  <input type="radio" name="driverType" value="fleet" class="text-primary">
+                  <span>車隊司機</span>
+                </label>
+              </div>
+            </div>
+            
+            <!-- 車隊編號欄位 (預設隱藏) -->
+            <div id="fleet-code-container" class="hidden mb-4">
+              <label class="block text-left text-sm font-medium text-gray-700 mb-1">車隊編號</label>
+              <input type="text" class="input-field" id="fleet-code" placeholder="輸入所屬車隊編號" required>
+              <p class="text-xs text-gray-500 mt-1">請向您的車隊管理員索取車隊編號</p>
+            </div>
+            
             <div class="space-y-4 mb-6">
               <div>
                 <label class="block text-left text-sm font-medium text-gray-700 mb-1">帳號 (手機號碼)</label>
-                <input type="tel" class="input-field" placeholder="輸入手機號碼" required>
+                <input type="tel" id="driver-phone" class="input-field" placeholder="輸入手機號碼" required>
               </div>
               <div>
                 <label class="block text-left text-sm font-medium text-gray-700 mb-1">密碼</label>
-                <input type="password" class="input-field" placeholder="輸入密碼" required>
+                <input type="password" id="driver-password" class="input-field" placeholder="輸入密碼" required>
               </div>
               <div class="text-right">
                 <a href="#" class="text-primary text-sm hover:underline">忘記密碼？</a>
               </div>
             </div>
-            <button class="btn-primary w-full">登錄</button>
+            <button id="driver-login-btn" class="btn-primary w-full">登錄</button>
+            
+            <!-- 車隊管理員快速入口 -->
+            <div class="mt-6 pt-6 border-t border-gray-100">
+              <p class="text-sm text-gray-600 mb-3 text-center">車隊管理員？<a href="#" id="goto-fleet-admin" class="text-fleet hover:underline">點此登錄</a></p>
+            </div>
           </div>
           
           <!-- 司機註冊表單 - 提交至管理員後台司機管理頁面 -->
@@ -217,10 +264,14 @@
                     <label class="block text-left text-sm font-medium text-gray-700 mb-1">目前職業</label>
                     <input type="text" class="input-field" name="driver-job" placeholder="輸入您的目前職業" required>
                   </div>
-                  <!-- 新增車隊名稱欄位 -->
+                  <!-- 車隊資訊 - 串聯車隊管理員 -->
                   <div>
                     <label class="block text-left text-sm font-medium text-gray-700 mb-1">車隊名稱</label>
                     <input type="text" class="input-field" name="fleet-name" placeholder="輸入所屬車隊名稱（無車隊可填寫「個人」）" required>
+                  </div>
+                  <div>
+                    <label class="block text-left text-sm font-medium text-gray-700 mb-1">車隊管理員聯繫方式</label>
+                    <input type="tel" class="input-field" name="fleet-manager-phone" placeholder="輸入車隊管理員電話（無車隊可不填）">
                   </div>
                   <div>
                     <label class="block text-left text-sm font-medium text-gray-700 mb-1">車牌號碼</label>
@@ -382,16 +433,32 @@
       </div>
     </section>
 
-    <!-- 管理員介面 -->
+    <!-- 管理員介面 - 整合超級管理員與車隊管理員 -->
     <section id="admin-section" class="hidden">
       <div class="max-w-md mx-auto">
         <div class="card">
           <div class="text-center mb-6">
             <h2 class="text-2xl font-bold">管理員登錄</h2>
+            <div class="mt-2">
+              <label class="radio-label justify-center">
+                <input type="radio" name="adminRole" value="fleet" checked class="text-fleet">
+                <span class="role-badge role-fleet mr-2">車隊管理員</span>
+              </label>
+              <label class="radio-label justify-center">
+                <input type="radio" name="adminRole" value="super" class="text-super">
+                <span class="role-badge role-super">超級管理員</span>
+              </label>
+            </div>
           </div>
           
-          <!-- 管理員登錄表單 - 包含預設帳號密碼驗證 -->
-          <form id="admin-login-form" action="admin.html" method="POST">
+          <!-- 管理員登錄表單 - 串聯超級管理員與車隊管理員 -->
+          <form id="admin-login-form">
+            <!-- 車隊編號 (僅車隊管理員顯示) -->
+            <div id="admin-fleet-code-container" class="mb-4">
+              <label class="block text-left text-sm font-medium text-gray-700 mb-1">車隊編號</label>
+              <input type="text" class="input-field" name="fleet-code" placeholder="輸入車隊編號" required>
+            </div>
+            
             <div class="space-y-4 mb-6">
               <div>
                 <label class="block text-left text-sm font-medium text-gray-700 mb-1">管理員帳號</label>
@@ -403,12 +470,12 @@
               </div>
             </div>
             
-            <button type="submit" class="btn-primary w-full">
-              <span>登錄後台</span>
+            <button type="submit" id="admin-login-btn" class="btn-fleet w-full">
+              <span>登錄車隊管理員後台</span>
             </button>
           </form>
           
-          <!-- 管理員後台快速連結 (僅供參考，實際使用時需在後台頁面顯示) -->
+          <!-- 管理員後台快速連結 (根據權限顯示) -->
           <div class="mt-8 pt-6 border-t border-gray-100">
             <h3 class="text-sm font-semibold text-gray-500 mb-4 text-center">後台功能快速連結</h3>
             <div class="grid grid-cols-2 gap-3">
@@ -424,8 +491,12 @@
               <a href="admin-system.html" class="flex items-center justify-center p-3 border border-gray-200 rounded-lg hover:border-primary hover:bg-gray-50 transition-colors">
                 <span class="text-sm">系統設置</span>
               </a>
+              <!-- 超級管理員專屬功能 -->
               <a href="admin-report.html" class="flex items-center justify-center p-3 border border-gray-200 rounded-lg hover:border-primary hover:bg-gray-50 transition-colors col-span-2">
                 <span class="text-sm">報表統計</span>
+              </a>
+              <a href="admin-super.html" id="super-admin-link" class="flex items-center justify-center p-3 border border-gray-200 rounded-lg hover:border-super hover:bg-gray-50 transition-colors col-span-2 hidden">
+                <span class="text-sm"><i class="fa fa-crown mr-1 text-super"></i>超管專屬功能</span>
               </a>
             </div>
           </div>
@@ -450,6 +521,17 @@
     </div>
   </div>
 
+  <!-- 權限提示彈窗 -->
+  <div id="permission-modal" class="modal">
+    <div class="modal-content">
+      <div class="mb-4">
+        <h3 class="text-xl font-bold mb-2" id="permission-title">登錄成功</h3>
+      </div>
+      <p class="text-gray-600 mb-6" id="permission-message">您已成功登錄，將為您跳轉到對應後台</p>
+      <button id="close-permission-modal" class="btn-primary w-full">確認</button>
+    </div>
+  </div>
+
   <!-- 頁腳 -->
   <footer class="bg-white border-t border-gray-200 py-6">
     <div class="container mx-auto px-4 text-center text-gray-500 text-sm">
@@ -464,6 +546,31 @@
 
   <!-- JavaScript -->
   <script>
+    // ===== 全域帳號體系設定 =====
+    const ACCOUNT_SYSTEM = {
+      // 司機帳號 (串聯車隊管理員)
+      drivers: [
+        { phone: '0912345678', password: 'driver123', fleetCode: 'F001', fleetName: '安心車隊', managerId: 'admin_fleet_001' },
+        { phone: '0987654321', password: 'driver456', fleetCode: '', fleetName: '個人', managerId: '' }
+      ],
+      // 車隊管理員帳號 (串聯超級管理員)
+      fleetAdmins: [
+        { username: 'fleet001', password: 'fleet123', fleetCode: 'F001', fleetName: '安心車隊', superAdminId: 'admin_super_001' },
+        { username: 'fleet002', password: 'fleet456', fleetCode: 'F002', fleetName: '平安車隊', superAdminId: 'admin_super_001' }
+      ],
+      // 超級管理員帳號
+      superAdmins: [
+        { username: 'superadmin', password: 'super123', manageFleets: ['F001', 'F002', 'F003'] },
+        { username: 'admin', password: 'admin123', manageFleets: ['all'] }
+      ],
+      // 預設測試帳號
+      testAccounts: {
+        driver: { phone: '0912345678', password: 'driver123' },
+        fleetAdmin: { username: 'fleet001', password: 'fleet123', fleetCode: 'F001' },
+        superAdmin: { username: 'superadmin', password: 'super123' }
+      }
+    };
+
     // ===== 地圖選擇功能 =====
     let currentMapTarget = ''; // 當前選擇的是上車/下車地圖
     let mapInstances = {};     // 儲存地圖實例
@@ -542,6 +649,174 @@
           // 錯誤處理：顯示座標
           document.getElementById(`${target}-location`).value = `(${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)})`;
         });
+    }
+
+    // ===== 帳號串聯邏輯 =====
+    // 司機類型切換（個人/車隊）
+    const driverTypeRadios = document.querySelectorAll('input[name="driverType"]');
+    const fleetCodeContainer = document.getElementById('fleet-code-container');
+    
+    driverTypeRadios.forEach(radio => {
+      radio.addEventListener('change', () => {
+        if (radio.value === 'fleet') {
+          fleetCodeContainer.classList.remove('hidden');
+          document.getElementById('fleet-code').required = true;
+        } else {
+          fleetCodeContainer.classList.add('hidden');
+          document.getElementById('fleet-code').required = false;
+        }
+      });
+    });
+
+    // 管理員角色切換（車隊/超級）
+    const adminRoleRadios = document.querySelectorAll('input[name="adminRole"]');
+    const adminFleetCodeContainer = document.getElementById('admin-fleet-code-container');
+    const superAdminLink = document.getElementById('super-admin-link');
+    const adminLoginBtn = document.getElementById('admin-login-btn');
+    
+    adminRoleRadios.forEach(radio => {
+      radio.addEventListener('change', () => {
+        if (radio.value === 'super') {
+          // 超級管理員 - 隱藏車隊編號，顯示超管按鈕，更換按鈕樣式
+          adminFleetCodeContainer.classList.add('hidden');
+          adminFleetCodeContainer.querySelector('input').required = false;
+          superAdminLink.classList.remove('hidden');
+          adminLoginBtn.classList.remove('btn-fleet');
+          adminLoginBtn.classList.add('btn-super');
+          adminLoginBtn.innerHTML = '<span>登錄超級管理員後台</span>';
+        } else {
+          // 車隊管理員 - 顯示車隊編號，隱藏超管按鈕，恢復按鈕樣式
+          adminFleetCodeContainer.classList.remove('hidden');
+          adminFleetCodeContainer.querySelector('input').required = true;
+          superAdminLink.classList.add('hidden');
+          adminLoginBtn.classList.remove('btn-super');
+          adminLoginBtn.classList.add('btn-fleet');
+          adminLoginBtn.innerHTML = '<span>登錄車隊管理員後台</span>';
+        }
+      });
+    });
+
+    // 司機登錄驗證（串聯車隊管理員）
+    document.getElementById('driver-login-btn').addEventListener('click', function() {
+      const driverType = document.querySelector('input[name="driverType"]:checked').value;
+      const phone = document.getElementById('driver-phone').value.trim();
+      const password = document.getElementById('driver-password').value.trim();
+      const fleetCode = driverType === 'fleet' ? document.getElementById('fleet-code').value.trim() : '';
+      
+      // 查找司機帳號
+      const driver = ACCOUNT_SYSTEM.drivers.find(d => 
+        d.phone === phone && d.password === password && 
+        (driverType === 'individual' || d.fleetCode === fleetCode)
+      );
+      
+      if (driver) {
+        // 儲存司機資訊到 localStorage
+        localStorage.setItem('currentUser', JSON.stringify({
+          type: 'driver',
+          info: driver,
+          fleetManager: driver.managerId ? ACCOUNT_SYSTEM.fleetAdmins.find(a => a.fleetCode === driver.fleetCode) : null
+        }));
+        
+        // 顯示成功提示
+        showPermissionModal('司機登錄成功', `歡迎回來！${driver.fleetName} - ${phone}`, () => {
+          // 跳轉到司機後台
+          window.location.href = 'driver-dashboard.html';
+        });
+      } else {
+        alert('司機帳號、密碼或車隊編號錯誤，請重新輸入');
+        document.getElementById('driver-password').value = '';
+        document.getElementById('driver-password').focus();
+      }
+    });
+
+    // 管理員登錄驗證（串聯超級管理員）
+    document.getElementById('admin-login-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const adminRole = document.querySelector('input[name="adminRole"]:checked').value;
+      const username = this.querySelector('input[name="admin-username"]').value.trim();
+      const password = this.querySelector('input[name="admin-password"]').value.trim();
+      const fleetCode = adminRole === 'fleet' ? this.querySelector('input[name="fleet-code"]').value.trim() : '';
+      
+      let admin = null;
+      let redirectUrl = '';
+      
+      if (adminRole === 'super') {
+        // 超級管理員驗證
+        admin = ACCOUNT_SYSTEM.superAdmins.find(a => a.username === username && a.password === password);
+        redirectUrl = 'super-admin-dashboard.html';
+      } else {
+        // 車隊管理員驗證
+        admin = ACCOUNT_SYSTEM.fleetAdmins.find(a => 
+          a.username === username && a.password === password && a.fleetCode === fleetCode
+        );
+        redirectUrl = 'admin-dashboard.html';
+      }
+      
+      if (admin) {
+        // 儲存管理員資訊到 localStorage
+        const userData = {
+          type: adminRole === 'super' ? 'super_admin' : 'fleet_admin',
+          info: admin,
+          // 串聯關係：車隊管理員對應超級管理員，超級管理員管理多個車隊
+          relatedAdmins: adminRole === 'fleet' 
+            ? { superAdmin: ACCOUNT_SYSTEM.superAdmins.find(a => a.username === 'superadmin') }
+            : { managedFleets: ACCOUNT_SYSTEM.fleetAdmins.filter(a => admin.manageFleets.includes(a.fleetCode) || admin.manageFleets[0] === 'all') }
+        };
+        
+        localStorage.setItem('currentUser', JSON.stringify(userData));
+        
+        // 顯示成功提示
+        const roleText = adminRole === 'super' ? '超級管理員' : '車隊管理員';
+        showPermissionModal(
+          `${roleText}登錄成功`, 
+          `您已以${roleText}身份登錄，將跳轉到對應後台`, 
+          () => {
+            window.location.href = redirectUrl;
+          }
+        );
+      } else {
+        alert(`${adminRole === 'super' ? '超級' : '車隊'}管理員帳號、密碼或車隊編號錯誤，請重新輸入`);
+        this.querySelector('input[name="admin-password"]').value = '';
+        this.querySelector('input[name="admin-password"]').focus();
+      }
+    });
+
+    // 車隊管理員快速入口
+    document.getElementById('goto-fleet-admin').addEventListener('click', function(e) {
+      e.preventDefault();
+      switchSection('admin-section');
+      // 自動選擇車隊管理員角色
+      document.querySelector('input[name="adminRole"][value="fleet"]').checked = true;
+      // 觸發角色切換事件
+      document.querySelector('input[name="adminRole"][value="fleet"]').dispatchEvent(new Event('change'));
+    });
+
+    // 顯示權限提示彈窗
+    function showPermissionModal(title, message, callback) {
+      const modal = document.getElementById('permission-modal');
+      const titleEl = document.getElementById('permission-title');
+      const messageEl = document.getElementById('permission-message');
+      const closeBtn = document.getElementById('close-permission-modal');
+      
+      titleEl.textContent = title;
+      messageEl.textContent = message;
+      modal.classList.remove('hidden');
+      
+      // 關閉按鈕事件
+      closeBtn.onclick = function() {
+        modal.classList.add('hidden');
+        if (typeof callback === 'function') {
+          callback();
+        }
+      };
+      
+      // 點擊外部關閉
+      modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+          modal.classList.add('hidden');
+        }
+      });
     }
 
     // ===== 原有頁面功能 =====
@@ -690,8 +965,25 @@
           return;
         }
         
+        // 獲取車隊資訊，建立司機與車隊管理員的串聯
+        const fleetName = this.querySelector('input[name="fleet-name"]').value;
+        const fleetManagerPhone = this.querySelector('input[name="fleet-manager-phone"]').value;
+        
+        // 模擬儲存司機註冊資料，並串聯到對應車隊管理員
+        const newDriver = {
+          phone: this.querySelector('input[name="driver-phone"]').value,
+          password: password,
+          name: this.querySelector('input[name="driver-name"]').value,
+          fleetName: fleetName,
+          fleetCode: fleetName !== '個人' ? 'F' + Math.floor(Math.random() * 1000).toString().padStart(3, '0') : '',
+          managerPhone: fleetManagerPhone
+        };
+        
+        // 將新司機添加到全域帳號體系
+        ACCOUNT_SYSTEM.drivers.push(newDriver);
+        
         // 模擬表單提交到管理員後台
-        console.log('司機註冊資料已提交至 admin-driver.html');
+        console.log('司機註冊資料已提交至 admin-driver.html', newDriver);
         
         // 顯示審核中彈窗
         reviewModal.classList.remove('hidden');
@@ -712,42 +1004,24 @@
       }
     });
     
-    // 管理員登錄驗證 - 預設帳號：tester，密碼：123456
-    const adminLoginForm = document.getElementById('admin-login-form');
-    
-    if (adminLoginForm) {
-      adminLoginForm.addEventListener('submit', function(e) {
-        e.preventDefault(); // 阻止表單預設提交行為
-        
-        // 獲取使用者輸入的帳號密碼
-        const username = this.querySelector('input[name="admin-username"]').value.trim();
-        const password = this.querySelector('input[name="admin-password"]').value.trim();
-        
-        // 預設管理員帳號密碼（不顯示在頁面上）
-        const defaultUsername = 'tester';
-        const defaultPassword = '123456';
-        
-        // 驗證帳號密碼
-        if (username === defaultUsername && password === defaultPassword) {
-          // 驗證成功，跳轉到後台首頁
-          window.location.href = 'admin.html';
-        } else {
-          // 驗證失敗，顯示錯誤提示
-          alert('管理員帳號或密碼錯誤，請重新輸入');
-          
-          // 清空密碼輸入框
-          this.querySelector('input[name="admin-password"]').value = '';
-          
-          // 聚焦到密碼輸入框
-          this.querySelector('input[name="admin-password"]').focus();
-        }
-      });
-    }
-    
     // 添加頁面加載動畫
     window.addEventListener('load', () => {
       document.body.classList.add('opacity-100');
       document.body.classList.remove('opacity-0');
+      
+      // 頁面加載時自動填入測試帳號
+      // 司機測試帳號
+      document.getElementById('driver-phone').value = ACCOUNT_SYSTEM.testAccounts.driver.phone;
+      document.getElementById('driver-password').value = ACCOUNT_SYSTEM.testAccounts.driver.password;
+      
+      // 管理員測試帳號
+      const adminUsernameInput = document.querySelector('input[name="admin-username"]');
+      const adminPasswordInput = document.querySelector('input[name="admin-password"]');
+      const adminFleetCodeInput = document.querySelector('input[name="fleet-code"]');
+      
+      if (adminUsernameInput) adminUsernameInput.value = ACCOUNT_SYSTEM.testAccounts.fleetAdmin.username;
+      if (adminPasswordInput) adminPasswordInput.value = ACCOUNT_SYSTEM.testAccounts.fleetAdmin.password;
+      if (adminFleetCodeInput) adminFleetCodeInput.value = ACCOUNT_SYSTEM.testAccounts.fleetAdmin.fleetCode;
     });
   </script>
 </body>
