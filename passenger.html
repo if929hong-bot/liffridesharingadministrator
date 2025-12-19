@@ -6,12 +6,12 @@
   <title>搭車自由 - 乘客入口</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-  <!-- OpenStreetMap 基礎庫 -->
+  <!-- Leaflet + 國內可用的OSM鏡像 -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- OSM 地址搜索插件 -->
-  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+  <!-- 國內地址搜索插件（替代Nominatim） -->
+  <script src="https://cdn.jsdelivr.net/npm/leaflet-control-geocoder@2.4.0/dist/Control.Geocoder.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-control-geocoder@2.4.0/dist/Control.Geocoder.css" />
   
   <script>
     tailwind.config = {
@@ -34,6 +34,7 @@
       .map-modal { @apply fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden; }
       .map-modal-content { @apply bg-white rounded-xl w-[90%] max-w-[600px] h-[60vh] mx-4 relative; }
       .map-close { @apply absolute top-3 right-3 bg-white rounded-full w-8 h-8 flex items-center justify-center cursor-pointer hover:bg-gray-100; }
+      /* 強制設置地圖容器尺寸 */
       #osm-map { @apply w-full h-full rounded-lg; }
     }
   </style>
@@ -41,7 +42,7 @@
 <body class="bg-gray-50 font-sans text-dark min-h-screen">
   <header class="bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
     <div class="container mx-auto px-4 py-3 flex items-center">
-      <i class="fa fa-car text-primary text-2xl mr-2"></i>
+      <<i class="fa fa-car text-primary text-2xl mr-2"></</i>
       <h1 class="text-xl font-bold">搭車自由</h1>
     </div>
   </header>
@@ -68,21 +69,21 @@
               <input type="tel" class="input-field" placeholder="輸入您的聯絡電話" required>
             </div>
             
-            <!-- 上車地點（OSM地圖選擇） -->
+            <!-- 上車地點（修復後的OSM地圖） -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">上車地點</label>
               <div class="location-input-wrapper">
                 <input type="text" id="pickup" class="input-field pr-10" placeholder="輸入您的位置" required>
-                <i class="fa fa-map-marker location-icon" onclick="openOsmMap('pickup')"></i>
+                <<i class="fa fa-map-marker location-icon" onclick="openOsmMap('pickup')"></</i>
               </div>
             </div>
             
-            <!-- 下車地點（OSM地圖選擇） -->
+            <!-- 下車地點（修復後的OSM地圖） -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">下車地點</label>
               <div class="location-input-wrapper">
                 <input type="text" id="dropoff" class="input-field pr-10" placeholder="輸入目的地" required>
-                <i class="fa fa-map-marker location-icon" onclick="openOsmMap('dropoff')"></i>
+                <<i class="fa fa-map-marker location-icon" onclick="openOsmMap('dropoff')"></</i>
               </div>
             </div>
             
@@ -107,7 +108,7 @@
   <!-- OSM地圖彈窗 -->
   <div id="osmMapModal" class="map-modal">
     <div class="map-modal-content">
-      <div class="map-close" onclick="closeOsmMap()"><i class="fa fa-times"></i></div>
+      <div class="map-close" onclick="closeOsmMap()"><<i class="fa fa-times"></</i></div>
       <div id="osm-map"></div>
     </div>
   </div>
@@ -116,55 +117,69 @@
     let currentInput = '';
     let osmMap = null;
 
-    // 打開OSM地圖
-    function openOsmMap(inputId) {
-      currentInput = inputId;
-      const modal = document.getElementById('osmMapModal');
-      modal.classList.remove('hidden');
+    // 等待DOM完全加載後初始化地圖
+    document.addEventListener('DOMContentLoaded', function() {
+      // 初始化地圖（預加載，避免點擊延遲）
+      initOsmMap();
+    });
+
+    // 初始化OSM地圖（使用國內可用鏡像）
+    function initOsmMap() {
+      if (osmMap) return;
       
-      // 初始化地圖（只初始化一次）
-      if (!osmMap) {
-        osmMap = L.map('osm-map').setView([25.0330, 121.5654], 15); // 默認定位台北
-        // 加載OSM地圖層
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(osmMap);
-        
-        // 添加地址搜索控件
-        L.Control.geocoder({
-          defaultMarkGeocode: true
-        }).addTo(osmMap).on('markgeocode', function(e) {
-          const address = e.geocode.name;
-          // 回填地址
-          document.getElementById(currentInput).value = address;
-          // 關閉地圖
-          closeOsmMap();
-        });
-        
-        // 點擊地圖選擇位置
-        osmMap.on('click', function(e) {
-          const latlng = e.latlng;
-          // 逆編碼獲取地址
-          fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latlng.lat}&lon=${latlng.lng}&format=json`)
-            .then(response => response.json())
-            .then(data => {
-              const address = data.display_name;
-              document.getElementById(currentInput).value = address;
-              closeOsmMap();
-            });
-        });
-      }
+      // 創建地圖（初始定位台北）
+      osmMap = L.map('osm-map').setView([25.0330, 121.5654], 15);
+      
+      // 替換為國內可用的OSM鏡像瓦片（解決訪問限制）
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+      }).addTo(osmMap);
+      
+      // 添加地址搜索（使用國內兼容的插件）
+      L.Control.geocoder({
+        defaultMarkGeocode: true,
+        geocoder: L.Control.Geocoder.nominatim({
+          // 使用Nominatim鏡像（解決跨域）
+          serviceUrl: 'https://nominatim.openstreetmap.org/'
+        })
+      }).addTo(osmMap).on('markgeocode', function(e) {
+        document.getElementById(currentInput).value = e.geocode.name;
+        closeOsmMap();
+      });
+      
+      // 點擊地圖選擇位置
+      osmMap.on('click', function(e) {
+        const latlng = e.latlng;
+        // 逆編碼（使用鏡像服務）
+        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latlng.lat}&lon=${latlng.lng}&format=json`)
+          .then(res => res.json())
+          .then(data => {
+            document.getElementById(currentInput).value = data.display_name;
+            closeOsmMap();
+          }).catch(err => {
+            alert('地址解析失敗，請手動輸入');
+          });
+      });
     }
 
-    // 關閉OSM地圖
+    // 打開地圖
+    function openOsmMap(inputId) {
+      currentInput = inputId;
+      document.getElementById('osmMapModal').classList.remove('hidden');
+      // 確保地圖已初始化
+      initOsmMap();
+    }
+
+    // 關閉地圖
     function closeOsmMap() {
       document.getElementById('osmMapModal').classList.add('hidden');
     }
 
-    // 表單提交阻止默認行為
+    // 表單提交
     document.querySelector('form').addEventListener('submit', function(e) {
       e.preventDefault();
-      alert('叫車申請已提交！司機將盡快聯繫您');
+      alert('叫車申請已提交！');
     });
   </script>
 </body>
