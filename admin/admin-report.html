@@ -151,15 +151,15 @@
 </head>
 <body>
   <div class="app-container">
-    <!-- 側邊欄 (刪除系統設置，與order頁風格統一) -->
+    <!-- 側邊欄 (統一跳轉路徑) -->
     <div class="sidebar">
       <div class="sidebar-logo">LINE多元化搭車管理員</div>
       <ul class="sidebar-menu">
-        <li><a href="index.html"><i class="fa fa-home"></i>首頁</a></li>
-        <li><a href="area-management.html"><i class="fa fa-map-marker"></i>區域管理</a></li>
+        <li><a href="admin-dashboard.html"><i class="fa fa-home"></i>首頁</a></li>
+        <li><a href="admin-area.html"><i class="fa fa-map-marker"></i>區域管理</a></li>
         <li><a href="admin-driver.html"><i class="fa fa-car"></i>司機管理</a></li>
         <li><a href="admin-order.html"><i class="fa fa-list"></i>訂單管理</a></li>
-        <li><a href="finance-management.html"><i class="fa fa-money"></i>財務管理</a></li>
+        <li><a href="admin-report.html"><i class="fa fa-money"></i>財務管理</a></li>
         <li><a href="admin-report.html" class="active"><i class="fa fa-bar-chart"></i>報表統計</a></li>
         <li><a href="../managerindex.html"><i class="fa fa-sign-out"></i>退出登入</a></li>
       </ul>
@@ -362,6 +362,12 @@
     // 頁面載入初始化
     window.onload = () => {
       updateOrderTrendChart(periodData.day.trendLabels, periodData.day.trendData);
+      
+      // 校驗登入狀態
+      const currentManager = JSON.parse(localStorage.getItem('currentFleetManager') || 'null');
+      if (!currentManager) {
+        window.location.href = '../managerindex.html';
+      }
     };
   </script>
 </body>
