@@ -47,16 +47,57 @@
         .bank-info-card:hover {
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
+        /* 登入驗證遮罩 */
+        .auth-overlay {
+            position: fixed;
+            inset: 0;
+            background: white;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        .auth-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
     </style>
 </head>
 <body class="bg-gray-50 font-sans">
+    <!-- 登入驗證遮罩（預設顯示，驗證通過後隱藏） -->
+    <div id="authOverlay" class="auth-overlay">
+        <div class="auth-card">
+            <h2 class="text-2xl font-bold text-center mb-6 text-text-dark">管理員身份驗證</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-text-dark mb-1">管理員帳號</label>
+                    <input type="text" id="authAccount" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary" placeholder="輸入管理員帳號">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-text-dark mb-1">密碼</label>
+                    <input type="password" id="authPassword" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary" placeholder="輸入管理員密碼">
+                </div>
+                <div id="authError" class="text-red-500 text-sm text-center hidden">帳號或密碼錯誤，請重新輸入</div>
+                <button id="authSubmit" class="w-full py-3 bg-primary text-white rounded-lg font-medium hover:bg-secondary transition-all">
+                    驗證身份
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- 頁首（標題支援後續修改） -->
     <header class="bg-white shadow-sm py-3 px-4 fixed top-0 w-full z-10">
         <div class="flex justify-between items-center">
             <h1 class="text-xl font-bold text-text-dark" id="systemTitle">LINE多元化搭車管理員登入系統</h1>
             <div class="flex items-center space-x-4">
                 <button class="text-text-light hover:text-primary">
-                    <i class="fa fa-bell text-lg"></i>
+                    <<i class="fa fa-bell text-lg"></</i>
                 </button>
                 <div class="flex items-center space-x-2">
                     <img src="https://via.placeholder.com/32" alt="管理員頭像" class="w-8 h-8 rounded-full">
@@ -72,25 +113,25 @@
         <aside class="sidebar w-56 bg-white shadow-sm p-4">
             <nav class="space-y-1">
                 <a href="admin-dashboard.html" class="block py-2 px-3 rounded-md menu-active font-medium">
-                    <i class="fa fa-home mr-2"></i>首頁
+                    <<i class="fa fa-home mr-2"></</i>首頁
                 </a>
                 <a href="admin-area.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
-                    <i class="fa fa-map-marker mr-2"></i>區域管理
+                    <<i class="fa fa-map-marker mr-2"></</i>區域管理
                 </a>
                 <a href="admin-driver.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
-                    <i class="fa fa-car mr-2"></i>司機管理
+                    <<i class="fa fa-car mr-2"></</i>司機管理
                 </a>
                 <a href="admin-order.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
-                    <i class="fa fa-users mr-2"></i>訂單管理
+                    <<i class="fa fa-users mr-2"></</i>訂單管理
                 </a>
                 <a href="admin-report.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
-                    <i class="fa fa-money mr-2"></i>財務管理
+                    <<i class="fa fa-money mr-2"></</i>財務管理
                 </a>
                 <a href="admin-report.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
-                    <i class="fa fa-bar-chart mr-2"></i>報表統計
+                    <<i class="fa fa-bar-chart mr-2"></</i>報表統計
                 </a>
                 <a href="../managerindex.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all mt-4" id="logoutLink">
-                    <i class="fa fa-sign-out mr-2"></i>退出登入
+                    <<i class="fa fa-sign-out mr-2"></</i>退出登入
                 </a>
             </nav>
         </aside>
@@ -165,7 +206,7 @@
                         <!-- 租金資訊 -->
                         <div class="bg-white rounded-lg p-5 border border-gray-200">
                             <div class="flex items-center mb-3">
-                                <i class="fa fa-money text-primary text-xl mr-3"></i>
+                                <<i class="fa fa-money text-primary text-xl mr-3"></</i>
                                 <p class="font-semibold text-text-dark text-base">租金資訊</p>
                             </div>
                             <div class="space-y-3 text-sm">
@@ -191,7 +232,7 @@
                         <!-- 銀行資訊 -->
                         <div class="bank-info-card bg-white rounded-lg p-5 border border-gray-200">
                             <div class="flex items-center mb-3">
-                                <i class="fa fa-bank text-primary text-xl mr-3"></i>
+                                <<i class="fa fa-bank text-primary text-xl mr-3"></</i>
                                 <p class="font-semibold text-text-dark text-base">超管收款銀行資訊</p>
                             </div>
                             <div class="space-y-2 text-sm">
@@ -240,7 +281,7 @@
                                 <input type="file" id="receiptUpload" accept="image/*,.pdf" class="hidden" required>
                                 <label for="receiptUpload" class="cursor-pointer">
                                     <div class="flex flex-col items-center">
-                                        <i class="fa fa-cloud-upload text-2xl text-text-light mb-3"></i>
+                                        <<i class="fa fa-cloud-upload text-2xl text-text-light mb-3"></</i>
                                         <p class="text-sm text-text-dark mb-1">點擊上傳繳費憑證</p>
                                         <p class="text-xs text-text-light">支援格式：JPG、PNG、PDF (最大5MB)</p>
                                     </div>
@@ -277,21 +318,21 @@
                 <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
                     <div class="flex items-center justify-between mb-3">
                         <p class="text-text-light text-sm">線上司機人數</p>
-                        <i class="fa fa-car text-primary text-xl"></i>
+                        <<i class="fa fa-car text-primary text-xl"></</i>
                     </div>
                     <p class="text-2xl font-bold text-text-dark" id="onlineDriverCount">12人</p>
                 </div>
                 <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
                     <div class="flex items-center justify-between mb-3">
                         <p class="text-text-light text-sm">今日訂單</p>
-                        <i class="fa fa-shopping-cart text-primary text-xl"></i>
+                        <<i class="fa fa-shopping-cart text-primary text-xl"></</i>
                     </div>
                     <p class="text-2xl font-bold text-text-dark" id="todayOrderCount">36單</p>
                 </div>
                 <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
                     <div class="flex items-center justify-between mb-3">
                         <p class="text-text-light text-sm">今日收入</p>
-                        <i class="fa fa-yen text-primary text-xl"></i>
+                        <<i class="fa fa-yen text-primary text-xl"></</i>
                     </div>
                     <p class="text-2xl font-bold text-text-dark" id="todayIncome">8,560元</p>
                 </div>
@@ -343,12 +384,12 @@
                     <table class="min-w-full">
                         <thead>
                             <tr class="border-b border-gray-200 bg-gray-50">
-                                <th class="text-left py-3 px-4 text-sm text-text-light">訂單編號</th>
-                                <th class="text-left py-3 px-4 text-sm text-text-light">司機</th>
-                                <th class="text-left py-3 px-4 text-sm text-text-light">乘客</th>
-                                <th class="text-left py-3 px-4 text-sm text-text-light">金額</th>
-                                <th class="text-left py-3 px-4 text-sm text-text-light">狀態</th>
-                                <th class="text-left py-3 px-4 text-sm text-text-light">操作</th>
+                                <<th class="text-left py-3 px-4 text-sm text-text-light">訂單編號</</th>
+                                <<th class="text-left py-3 px-4 text-sm text-text-light">司機</</th>
+                                <<th class="text-left py-3 px-4 text-sm text-text-light">乘客</</th>
+                                <<th class="text-left py-3 px-4 text-sm text-text-light">金額</</th>
+                                <<th class="text-left py-3 px-4 text-sm text-text-light">狀態</</th>
+                                <<th class="text-left py-3 px-4 text-sm text-text-light">操作</</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -418,6 +459,46 @@
     </div>
 
     <script>
+        // 管理員身份驗證（與managerindex.html同步帳號體系）
+        const VALID_ADMINS = [
+            { account: "admin001", password: "admin123" },
+            { account: "superadmin", password: "super123" }
+        ];
+
+        // 驗證按鈕點擊事件
+        document.getElementById('authSubmit').addEventListener('click', function() {
+            const account = document.getElementById('authAccount').value.trim();
+            const password = document.getElementById('authPassword').value.trim();
+            const errorEl = document.getElementById('authError');
+
+            // 驗證帳號密碼
+            const validAdmin = VALID_ADMINS.find(admin => admin.account === account && admin.password === password);
+            
+            if (validAdmin) {
+                // 驗證通過：隱藏遮罩，保存登入狀態
+                localStorage.setItem('isAdminAuthenticated', 'true');
+                document.getElementById('authOverlay').style.display = 'none';
+                errorEl.classList.add('hidden');
+            } else {
+                // 驗證失敗：顯示錯誤提示
+                errorEl.classList.remove('hidden');
+            }
+        });
+
+        // 頁面加載時檢查是否已驗證
+        window.addEventListener('load', function() {
+            const isAuthenticated = localStorage.getItem('isAdminAuthenticated') === 'true';
+            if (isAuthenticated) {
+                document.getElementById('authOverlay').style.display = 'none';
+            }
+        });
+
+        // 退出登入時清除驗證狀態
+        document.getElementById('logoutLink').addEventListener('click', function() {
+            localStorage.removeItem('isAdminAuthenticated');
+            localStorage.removeItem('currentFleetManager');
+        });
+
         // 繳費週期選擇後計算應繳金額
         document.getElementById('paymentCycle').addEventListener('change', function() {
             const selectedOption = this.options[this.selectedIndex];
@@ -653,7 +734,8 @@
             initLogout();
             
             const currentManager = JSON.parse(localStorage.getItem('currentFleetManager') || 'null');
-            if (!currentManager) {
+            if (!currentManager && localStorage.getItem('isAdminAuthenticated') !== 'true') {
+                // 未登入且未驗證：強制跳轉到登入頁
                 window.location.href = '../managerindex.html';
             }
         };
