@@ -3,15 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>搭車自由 - 乘客端</title>
-  <!-- Tailwind CSS -->
+  <title>搭車自由 - 我的訂單</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Font Awesome -->
   <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-  <!-- OpenStreetMap (Leaflet) -->
+  <!-- Leaflet OSM -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- Firebase SDK（實時數據庫） -->
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js"></script>
 
@@ -35,14 +33,9 @@
   <style type="text/tailwindcss">
     @layer utilities {
       .btn-primary { @apply bg-primary text-white py-3 px-6 rounded-lg font-medium transition-all duration-300 hover:bg-primary/90 active:scale-95 shadow-md; }
-      .input-field { @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none; }
       .card { @apply bg-white rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg; }
-      .location-input-wrapper { @apply relative; }
-      .location-icon { @apply absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 cursor-pointer hover:text-primary; }
       .order-card { @apply border border-gray-200 rounded-lg p-4 mb-4 bg-white shadow-sm; }
-      .tab-active { @apply border-b-2 border-primary text-primary; }
-      /* OSM地圖容器強制樣式 */
-      #driver-map { @apply w-full h-[300px] rounded-lg mb-4; }
+      #order-map { @apply w-full h-[250px] rounded-lg mb-4; }
     }
   </style>
 </head>
@@ -52,373 +45,163 @@
     <div class="container mx-auto px-4 py-3 flex justify-between items-center">
       <div class="flex items-center space-x-2">
         <i class="fa fa-car text-primary text-2xl"></i>
-        <h1 class="text-xl font-bold">搭車自由</h1>
+        <h1 class="text-xl font-bold">搭車自由 - 我的訂單</h1>
       </div>
-      <div id="user-phone" class="text-sm text-gray-600"></div>
+      <a href="../passenger.html" class="text-primary text-sm"><i class="fa fa-arrow-left mr-1"></i> 返回叫車</a>
     </div>
   </header>
 
   <!-- 主要內容 -->
   <main class="container mx-auto px-4 pt-24 pb-16">
-    <!-- 標籤切換：叫車/我的訂單/附近司機 -->
-    <div class="max-w-md mx-auto mb-6 flex justify-around">
-      <button id="tab-order" class="tab-active py-2 px-4 font-medium" onclick="switchTab('order')">立即叫車</button>
-      <button id="tab-my-orders" class="py-2 px-4 font-medium text-gray-600" onclick="switchTab('my-orders')">我的訂單</button>
-      <button id="tab-drivers" class="py-2 px-4 font-medium text-gray-600" onclick="switchTab('drivers')">附近司機</button>
-    </div>
-
-    <!-- 1. 立即叫車表單（默認顯示） -->
-    <div id="content-order" class="max-w-md mx-auto block">
+    <div class="max-w-md mx-auto">
       <div class="card">
-        <div class="text-center mb-8">
-          <h2 class="text-2xl font-bold mb-2">乘客叫車</h2>
-          <p class="text-gray-600">無需登錄，立即叫車</p>
+        <h2 class="text-xl font-bold mb-6 text-center">當前訂單</h2>
+        
+        <!-- 訂單信息卡片 -->
+        <div id="order-detail" class="order-card">
+          <p class="text-gray-500 text-center">加載訂單信息中...</p>
         </div>
         
-        <form id="order-form">
-          <div class="space-y-5">
-            <!-- 姓名 -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">姓名</label>
-              <input type="text" id="name" class="input-field" placeholder="輸入您的姓名" required>
-            </div>
-            
-            <!-- 電話（唯一識別訂單） -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">電話（查詢訂單用）</label>
-              <input type="tel" id="phone" class="input-field" placeholder="輸入您的聯絡電話" required>
-            </div>
-            
-            <!-- 上車地點 -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">上車地點</label>
-              <div class="location-input-wrapper">
-                <input type="text" id="pickup" class="input-field pr-10" placeholder="輸入您的位置" required>
-                <i class="fa fa-map-marker location-icon" onclick="getCurrentLocation('pickup')"></i>
-              </div>
-            </div>
-            
-            <!-- 下車地點 -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">下車地點</label>
-              <div class="location-input-wrapper">
-                <input type="text" id="dropoff" class="input-field pr-10" placeholder="輸入目的地" required>
-                <i class="fa fa-map-marker location-icon" onclick="getCurrentLocation('dropoff')"></i>
-              </div>
-            </div>
-            
-            <!-- 乘客人數 -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">乘客人數</label>
-              <select id="count" class="input-field" required>
-                <option value="1">1 人</option>
-                <option value="2">2 人</option>
-                <option value="3">3 人</option>
-                <option value="4+">4 人以上</option>
-              </select>
-            </div>
-          </div>
-          
-          <button type="submit" class="btn-primary w-full mt-8">提交叫車申請</button>
-        </form>
-      </div>
-    </div>
-
-    <!-- 2. 我的訂單（默認隱藏） -->
-    <div id="content-my-orders" class="max-w-md mx-auto hidden">
-      <div class="card mb-4">
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-1">輸入電話查詢訂單</label>
-          <div class="flex space-x-2">
-            <input type="tel" id="query-phone" class="input-field flex-1" placeholder="您的聯絡電話">
-            <button onclick="queryOrders()" class="btn-primary px-4">查詢</button>
-          </div>
+        <!-- 訂單位置地圖 -->
+        <div id="order-map"></div>
+        
+        <!-- 訂單狀態提示 -->
+        <div id="order-status" class="text-center py-2 text-primary font-medium">
+          等待司機接單...
         </div>
-        <div id="orders-list" class="space-y-2">
-          <p class="text-gray-500 text-center">請輸入電話查詢訂單</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- 3. 附近司機（默認隱藏） -->
-    <div id="content-drivers" class="max-w-md mx-auto hidden">
-      <div class="card">
-        <h3 class="text-lg font-medium mb-4">附近司機位置</h3>
-        <!-- OpenStreetMap 容器 -->
-        <div id="driver-map"></div>
-        <!-- 司機列表 -->
-        <div id="drivers-list" class="space-y-2 max-h-[200px] overflow-y-auto">
-          <p class="text-gray-500 text-center">加載中...</p>
-        </div>
+        
+        <!-- 取消訂單按鈕 -->
+        <button id="cancel-order" class="btn-primary w-full mt-4 bg-red-600 hover:bg-red-700">
+          取消訂單
+        </button>
       </div>
     </div>
   </main>
 
   <script>
-    // ==================== 1. Firebase 配置（替換為你的配置） ====================
+    // ==================== 1. Firebase 配置（與乘客頁一致） ====================
     const firebaseConfig = {
-      apiKey: "替換為你的Firebase API Key",
-      authDomain: "替換為你的Firebase Auth Domain",
-      databaseURL: "替換為你的Firebase Database URL",
-      projectId: "替換為你的Firebase Project ID",
-      storageBucket: "替換為你的Firebase Storage Bucket",
-      messagingSenderId: "替換為你的Firebase Sender ID",
-      appId: "替換為你的Firebase App ID"
+      apiKey: "替換為你的API Key",
+      authDomain: "替換為你的Auth Domain",
+      databaseURL: "替換為你的Database URL",
+      projectId: "替換為你的Project ID",
+      storageBucket: "替換為你的Storage Bucket",
+      messagingSenderId: "替換為你的Sender ID",
+      appId: "替換為你的App ID"
     };
-    // 初始化Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // ==================== 2. 頁面基礎功能 ====================
-    // 標籤切換
-    function switchTab(tabName) {
-      // 隱藏所有內容
-      document.getElementById('content-order').classList.add('hidden');
-      document.getElementById('content-my-orders').classList.add('hidden');
-      document.getElementById('content-drivers').classList.add('hidden');
-      // 重置所有標籤樣式
-      document.getElementById('tab-order').classList.remove('tab-active');
-      document.getElementById('tab-my-orders').classList.remove('tab-active');
-      document.getElementById('tab-drivers').classList.remove('tab-active');
-      // 顯示當前內容+激活標籤
-      document.getElementById(`content-${tabName}`).classList.remove('hidden');
-      document.getElementById(`tab-${tabName}`).classList.add('tab-active');
-      
-      // 切換到司機標籤時加載地圖和司機數據
-      if (tabName === 'drivers') {
-        initDriverMap();
-        loadNearbyDrivers();
-      }
-    }
+    // ==================== 2. 頁面初始化 ====================
+    let orderMap = null;
+    let currentOrderId = localStorage.getItem('currentOrderId');
+    let currentOrder = JSON.parse(localStorage.getItem('currentOrder'));
 
-    // 獲取當前位置（瀏覽器原生定位 + OSM逆編碼）
-    function getCurrentLocation(inputId) {
-      const input = document.getElementById(inputId);
-      
-      if (!navigator.geolocation) {
-        alert('您的瀏覽器不支持定位功能，請手動輸入地址');
-        return;
-      }
-
-      // 瀏覽器原生定位
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
-          
-          // OSM逆地理編碼（經緯度轉地址）
-          try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=zh-TW`);
-            const data = await res.json();
-            input.value = data.display_name || `${lat}, ${lng}`;
-          } catch (err) {
-            input.value = `${lat}, ${lng}`; // 編碼失敗顯示經緯度
-          }
-        },
-        (err) => {
-          alert(`定位失敗：${err.message}，請手動輸入地址`);
-        }
-      );
-    }
-
-    // ==================== 3. 訂單提交功能 ====================
-    document.getElementById('order-form').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      
-      // 收集表單數據
-      const orderData = {
-        name: document.getElementById('name').value,
-        phone: document.getElementById('phone').value,
-        pickup: document.getElementById('pickup').value,
-        dropoff: document.getElementById('dropoff').value,
-        count: document.getElementById('count').value,
-        status: '待接單', // 訂單狀態：待接單/已接單/已完成
-        createTime: new Date().toLocaleString('zh-TW'),
-        // 解析上車地點經緯度（用於匹配附近司機）
-        location: await getLocationFromAddress(document.getElementById('pickup').value)
-      };
-
-      // 提交到Firebase實時數據庫
-      try {
-        await db.ref('orders').push(orderData);
-        alert('叫車申請已提交！可前往「我的訂單」查看進度');
-        this.reset(); // 重置表單
-        // 存儲電話用於後續查詢
-        localStorage.setItem('userPhone', orderData.phone);
-        document.getElementById('user-phone').textContent = orderData.phone;
-      } catch (err) {
-        alert('提交失敗：' + err.message);
-      }
+    document.addEventListener('DOMContentLoaded', function() {
+      // 加載訂單信息
+      loadOrderDetail();
+      // 初始化訂單地圖
+      initOrderMap();
+      // 實時監聽訂單狀態變更（司機接單後同步更新）
+      listenOrderStatus();
     });
 
-    // 從地址解析經緯度（OSM正編碼）
-    async function getLocationFromAddress(address) {
-      try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1&accept-language=zh-TW`);
-        const data = await res.json();
-        if (data.length > 0) {
-          return {
-            lat: parseFloat(data[0].lat),
-            lng: parseFloat(data[0].lon)
-          };
-        }
-      } catch (err) {
-        console.log('地址解析失敗，使用默認位置：', err);
-      }
-      // 默認定位台北
-      return { lat: 25.0330, lng: 121.5654 };
-    }
-
-    // ==================== 4. 我的訂單查詢 ====================
-    function queryOrders() {
-      const phone = document.getElementById('query-phone').value.trim();
-      if (!phone) {
-        alert('請輸入查詢電話');
+    // ==================== 3. 加載訂單詳情 ====================
+    function loadOrderDetail() {
+      const orderDetailEl = document.getElementById('order-detail');
+      
+      if (!currentOrder) {
+        orderDetailEl.innerHTML = '<p class="text-gray-500 text-center">未找到訂單信息</p>';
         return;
       }
-      
-      const ordersList = document.getElementById('orders-list');
-      ordersList.innerHTML = '<p class="text-gray-500 text-center">查詢中...</p>';
-      
-      // 查詢Firebase中對應電話的訂單（實時同步）
-      db.ref('orders').orderByChild('phone').equalTo(phone).on('value', function(snapshot) {
-        const orders = snapshot.val();
-        if (!orders) {
-          ordersList.innerHTML = '<p class="text-gray-500 text-center">未查找到訂單</p>';
-          return;
-        }
-        
-        // 渲染訂單列表
-        let html = '';
-        Object.keys(orders).forEach(orderId => {
-          const order = orders[orderId];
-          html += `
-            <div class="order-card">
-              <div class="flex justify-between mb-2">
-                <span class="font-medium">訂單ID：${orderId.substring(0, 8)}</span>
-                <span class="text-primary">${order.status}</span>
-              </div>
-              <div class="text-sm mb-1"><i class="fa fa-user mr-1"></i> 姓名：${order.name}</div>
-              <div class="text-sm mb-1"><i class="fa fa-phone mr-1"></i> 電話：${order.phone}</div>
-              <div class="text-sm mb-1"><i class="fa fa-map-marker mr-1"></i> 上車：${order.pickup}</div>
-              <div class="text-sm mb-1"><i class="fa fa-flag mr-1"></i> 下車：${order.dropoff}</div>
-              <div class="text-sm mb-1"><i class="fa fa-users mr-1"></i> 人數：${order.count}</div>
-              <div class="text-sm text-gray-500"><i class="fa fa-clock-o mr-1"></i> 提交時間：${order.createTime}</div>
-            </div>
-          `;
-        });
-        ordersList.innerHTML = html;
-      });
+
+      // 渲染訂單信息
+      orderDetailEl.innerHTML = `
+        <div class="flex justify-between mb-2">
+          <span class="font-medium">訂單ID：${currentOrder.orderId}</span>
+          <span class="text-primary" id="status-text">${currentOrder.status}</span>
+        </div>
+        <div class="text-sm mb-1"><i class="fa fa-user mr-1"></i> 姓名：${currentOrder.name}</div>
+        <div class="text-sm mb-1"><i class="fa fa-phone mr-1"></i> 電話：${currentOrder.phone}</div>
+        <div class="text-sm mb-1"><i class="fa fa-map-marker mr-1"></i> 上車：${currentOrder.pickup}</div>
+        <div class="text-sm mb-1"><i class="fa fa-flag mr-1"></i> 下車：${currentOrder.dropoff}</div>
+        <div class="text-sm mb-1"><i class="fa fa-users mr-1"></i> 人數：${currentOrder.count}</div>
+        <div class="text-sm text-gray-500"><i class="fa fa-clock-o mr-1"></i> 提交時間：${currentOrder.createTime}</div>
+      `;
     }
 
-    // ==================== 5. 附近司機功能（基於OSM） ====================
-    let driverMap = null; // OSM地圖實例
-    let driverMarkers = []; // 司機標記數組
-
-    // 初始化OSM司機地圖
-    function initDriverMap() {
-      if (driverMap) return;
+    // ==================== 4. 初始化訂單地圖 ====================
+    function initOrderMap() {
+      orderMap = L.map('order-map').setView([25.0330, 121.5654], 14);
       
-      // 初始化OSM地圖（默認定位台北）
-      driverMap = L.map('driver-map').setView([25.0330, 121.5654], 14);
-      
-      // 使用台灣訪問穩定的OSM鏡像瓦片
+      // OSM瓦片層
       L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
         maxZoom: 19,
         attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
-      }).addTo(driverMap);
+      }).addTo(orderMap);
+
+      // 標記上車/下車點（模擬經緯度，實際可從地址解析）
+      const pickupPoint = [25.0330, 121.5654]; // 上車點
+      const dropoffPoint = [25.0400, 121.5700]; // 下車點
       
-      // 添加當前用戶標記（如果有存儲電話）
-      if (localStorage.getItem('userPhone')) {
-        const userPoint = [25.0330, 121.5654]; // 默認台北，可替換為用戶實際位置
-        const userMarker = L.marker(userPoint)
-          .addTo(driverMap)
-          .bindPopup('你的位置')
-          .openPopup();
-      }
+      // 上車點標記
+      L.marker(pickupPoint)
+        .addTo(orderMap)
+        .bindPopup(`<b>上車地點</b><br>${currentOrder.pickup}`)
+        .openPopup();
+      
+      // 下車點標記
+      L.marker(dropoffPoint, { icon: L.divIcon({ 
+        className: 'custom-dropoff-marker',
+        html: '<i class="fa fa-flag text-red-500 text-xl"></i>',
+        iconSize: [24, 24]
+      })})
+        .addTo(orderMap)
+        .bindPopup(`<b>下車地點</b><br>${currentOrder.dropoff}`);
+      
+      // 畫出路線（簡化版）
+      L.polyline([pickupPoint, dropoffPoint], { color: '#00A86B', weight: 3 }).addTo(orderMap);
     }
 
-    // 加載附近司機數據（實時同步Firebase）
-    function loadNearbyDrivers() {
-      const driversList = document.getElementById('drivers-list');
+    // ==================== 5. 實時監聽訂單狀態（司機接單後同步） ====================
+    function listenOrderStatus() {
+      if (!currentOrderId) return;
       
-      // 從Firebase加載司機數據（實時監聽）
-      db.ref('drivers').on('value', function(snapshot) {
-        const drivers = snapshot.val() || {
-          // 模擬司機數據（實際由司機端實時上報）
-          driver1: {
-            name: '張司機',
-            phone: '0912345678',
-            car: 'Toyota Camry',
-            status: '可接單',
-            location: { lat: 25.0350, lng: 121.5670 },
-            distance: '0.5公里'
-          },
-          driver2: {
-            name: '李司機',
-            phone: '0987654321',
-            car: 'Honda Civic',
-            status: '可接單',
-            location: { lat: 25.0300, lng: 121.5600 },
-            distance: '1.2公里'
-          },
-          driver3: {
-            name: '王司機',
-            phone: '0922333444',
-            car: 'Ford Focus',
-            status: '忙碌中',
-            location: { lat: 25.0400, lng: 121.5700 },
-            distance: '1.8公里'
-          }
-        };
-
-        // 清空原有司機標記
-        driverMarkers.forEach(marker => driverMap.removeLayer(marker));
-        driverMarkers = [];
-
-        // 渲染司機列表 + 添加地圖標記
-        let html = '';
-        Object.keys(drivers).forEach(driverId => {
-          const driver = drivers[driverId];
-          const driverPoint = [driver.location.lat, driver.location.lng];
+      // 實時監聽Firebase中的訂單狀態
+      db.ref(`activeOrders/${currentOrderId}`).on('value', function(snapshot) {
+        const updatedOrder = snapshot.val();
+        if (updatedOrder) {
+          currentOrder = updatedOrder;
+          // 更新頁面狀態
+          document.getElementById('status-text').textContent = updatedOrder.status;
+          document.getElementById('order-status').textContent = 
+            updatedOrder.status === '已接單' 
+              ? `已接單！司機：${updatedOrder.driverName || '未知'} | 電話：${updatedOrder.driverPhone || '未知'}`
+              : updatedOrder.status === '已完成'
+                ? '訂單已完成'
+                : '等待司機接單...';
           
-          // 添加司機地圖標記
-          const marker = L.marker(driverPoint)
-            .addTo(driverMap)
-            .bindPopup(`
-              <div class="text-sm">
-                <p class="font-medium">${driver.name}</p>
-                <p>車型：${driver.car}</p>
-                <p>狀態：${driver.status}</p>
-                <p>距離：${driver.distance}</p>
-              </div>
-            `);
-          driverMarkers.push(marker);
-
-          // 渲染司機列表
-          html += `
-            <div class="border-b border-gray-100 pb-2 last:border-0">
-              <div class="flex justify-between items-center mb-1">
-                <span class="font-medium">${driver.name}</span>
-                <span class="${driver.status === '可接單' ? 'text-green-600' : 'text-gray-500'} text-xs">${driver.status}</span>
-              </div>
-              <div class="text-xs text-gray-600 mb-1">車型：${driver.car}</div>
-              <div class="text-xs text-gray-600">距離：${driver.distance} | 電話：${driver.phone}</div>
-            </div>
-          `;
-        });
-
-        driversList.innerHTML = html || '<p class="text-gray-500 text-center">暫無附近司機</p>';
+          // 已接單/已完成時禁用取消按鈕
+          if (updatedOrder.status !== '待接單') {
+            document.getElementById('cancel-order').disabled = true;
+            document.getElementById('cancel-order').classList.add('bg-gray-400', 'cursor-not-allowed');
+          }
+        }
       });
-    });
+    }
 
-    // 頁面加載完成後初始化
-    document.addEventListener('DOMContentLoaded', function() {
-      // 自動填充上次查詢的電話
-      const savedPhone = localStorage.getItem('userPhone');
-      if (savedPhone) {
-        document.getElementById('query-phone').value = savedPhone;
-        document.getElementById('user-phone').textContent = savedPhone;
+    // ==================== 6. 取消訂單 ====================
+    document.getElementById('cancel-order').addEventListener('click', function() {
+      if (confirm('確定要取消訂單嗎？')) {
+        db.ref(`activeOrders/${currentOrderId}`).update({
+          status: '已取消',
+          cancelTime: new Date().toLocaleString('zh-TW')
+        }).then(() => {
+          alert('訂單已取消');
+          window.location.href = '../passenger.html';
+        }).catch(err => {
+          alert('取消失敗：' + err.message);
+        });
       }
     });
   </script>
