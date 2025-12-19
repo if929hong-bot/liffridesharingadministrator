@@ -4,26 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>搭車自由 - 乘客入口</title>
-  <!-- 引入 Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- 只保留必要的 Font Awesome 核心（避免多餘 icon） -->
   <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-  <!-- 引入高德地圖 API（替換成自己的 Key，免費申請） -->
-  <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=你的高德地圖Key"></script>
-  <!-- 高德地址自動補全插件 -->
-  <script type="text/javascript" src="https://webapi.amap.com/ui/1.0/main.js?v=1.0.11"></script>
+  <!-- OpenStreetMap 基礎庫 -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- OSM 地址搜索插件 -->
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
   
   <script>
     tailwind.config = {
       theme: {
         extend: {
-          colors: {
-            primary: '#00A86B', 
-            dark: '#333333',
-          },
-          fontFamily: {
-            sans: ['Helvetica Neue', 'Arial', 'sans-serif'],
-          },
+          colors: { primary: '#00A86B', dark: '#333333' },
+          fontFamily: { sans: ['Helvetica Neue', 'Arial', 'sans-serif'] },
         },
       }
     }
@@ -31,159 +26,142 @@
   
   <style type="text/tailwindcss">
     @layer utilities {
-      .btn-primary {
-        @apply bg-primary text-white py-3 px-6 rounded-lg font-medium transition-all duration-300 hover:bg-primary/90 active:scale-95 shadow-md;
-      }
-      .input-field {
-        @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all;
-      }
-      .card {
-        @apply bg-white rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg;
-      }
-      /* 內嵌地圖選擇的輸入框容器 */
-      .location-input-wrapper {
-        @apply relative;
-      }
-      .location-icon {
-        @apply absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 cursor-pointer hover:text-primary transition-colors;
-      }
+      .btn-primary { @apply bg-primary text-white py-3 px-6 rounded-lg font-medium hover:bg-primary/90 active:scale-95 shadow-md; }
+      .input-field { @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none; }
+      .card { @apply bg-white rounded-xl shadow-md p-6 hover:shadow-lg; }
+      .location-input-wrapper { @apply relative; }
+      .location-icon { @apply absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 cursor-pointer hover:text-primary; }
+      .map-modal { @apply fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden; }
+      .map-modal-content { @apply bg-white rounded-xl w-[90%] max-w-[600px] h-[60vh] mx-4 relative; }
+      .map-close { @apply absolute top-3 right-3 bg-white rounded-full w-8 h-8 flex items-center justify-center cursor-pointer hover:bg-gray-100; }
+      #osm-map { @apply w-full h-full rounded-lg; }
     }
   </style>
 </head>
 <body class="bg-gray-50 font-sans text-dark min-h-screen">
-  <!-- 頂部導航欄（僅保留必要元素，無多餘 icon） -->
   <header class="bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
-    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-      <div class="flex items-center space-x-2">
-        <i class="fa fa-car text-primary text-2xl"></i>
-        <h1 class="text-xl font-bold">搭車自由</h1>
-      </div>
+    <div class="container mx-auto px-4 py-3 flex items-center">
+      <i class="fa fa-car text-primary text-2xl mr-2"></i>
+      <h1 class="text-xl font-bold">搭車自由</h1>
     </div>
   </header>
 
-  <!-- 主要內容區域（布局徹底優化） -->
   <main class="container mx-auto px-4 pt-24 pb-16">
-    <section>
-      <div class="max-w-md mx-auto">
-        <div class="card">
-          <div class="text-center mb-8">
-            <h2 class="text-2xl font-bold mb-2">乘客叫車</h2>
-            <p class="text-gray-600">無需登錄，立即叫車</p>
-          </div>
-          
-          <!-- 叫車表單（徹底清理多餘元素） -->
-          <form>
-            <div class="space-y-5">
-              <!-- 姓名 -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">姓名</label>
-                <input type="text" class="input-field" placeholder="輸入您的姓名" required>
-              </div>
-              
-              <!-- 電話 -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">電話</label>
-                <input type="tel" class="input-field" placeholder="輸入您的聯絡電話" required>
-              </div>
-              
-              <!-- 上車地點（內嵌地圖選擇） -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">上車地點</label>
-                <div class="location-input-wrapper">
-                  <input type="text" id="pickup-location" class="input-field pr-10" placeholder="輸入您的位置" required>
-                  <i class="fa fa-map-marker location-icon" onclick="chooseLocation('pickup-location')"></i>
-                </div>
-              </div>
-              
-              <!-- 下車地點（內嵌地圖選擇） -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">下車地點</label>
-                <div class="location-input-wrapper">
-                  <input type="text" id="dropoff-location" class="input-field pr-10" placeholder="輸入目的地" required>
-                  <i class="fa fa-map-marker location-icon" onclick="chooseLocation('dropoff-location')"></i>
-                </div>
-              </div>
-              
-              <!-- 乘客人數 -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">乘客人數</label>
-                <select class="input-field" required>
-                  <option value="1">1 人</option>
-                  <option value="2">2 人</option>
-                  <option value="3">3 人</option>
-                  <option value="4+">4 人以上</option>
-                </select>
+    <div class="max-w-md mx-auto">
+      <div class="card">
+        <div class="text-center mb-8">
+          <h2 class="text-2xl font-bold mb-2">乘客叫車</h2>
+          <p class="text-gray-600">無需登錄，立即叫車</p>
+        </div>
+        
+        <form>
+          <div class="space-y-5">
+            <!-- 姓名 -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">姓名</label>
+              <input type="text" class="input-field" placeholder="輸入您的姓名" required>
+            </div>
+            
+            <!-- 電話 -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">電話</label>
+              <input type="tel" class="input-field" placeholder="輸入您的聯絡電話" required>
+            </div>
+            
+            <!-- 上車地點（OSM地圖選擇） -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">上車地點</label>
+              <div class="location-input-wrapper">
+                <input type="text" id="pickup" class="input-field pr-10" placeholder="輸入您的位置" required>
+                <i class="fa fa-map-marker location-icon" onclick="openOsmMap('pickup')"></i>
               </div>
             </div>
             
-            <button type="submit" class="btn-primary w-full mt-8">
-              我要叫車
-            </button>
-          </form>
-        </div>
+            <!-- 下車地點（OSM地圖選擇） -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">下車地點</label>
+              <div class="location-input-wrapper">
+                <input type="text" id="dropoff" class="input-field pr-10" placeholder="輸入目的地" required>
+                <i class="fa fa-map-marker location-icon" onclick="openOsmMap('dropoff')"></i>
+              </div>
+            </div>
+            
+            <!-- 乘客人數 -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">乘客人數</label>
+              <select class="input-field" required>
+                <option value="1">1 人</option>
+                <option value="2">2 人</option>
+                <option value="3">3 人</option>
+                <option value="4+">4 人以上</option>
+              </select>
+            </div>
+          </div>
+          
+          <button type="submit" class="btn-primary w-full mt-8">我要叫車</button>
+        </form>
       </div>
-    </section>
+    </div>
   </main>
 
-  <script>
-    // 初始化高德地址自動補全（頁面加載完成後執行）
-    window.onload = function() {
-      // 初始化上車地點補全
-      initAddressAutoComplete('pickup-location');
-      // 初始化下車地點補全
-      initAddressAutoComplete('dropoff-location');
-    };
+  <!-- OSM地圖彈窗 -->
+  <div id="osmMapModal" class="map-modal">
+    <div class="map-modal-content">
+      <div class="map-close" onclick="closeOsmMap()"><i class="fa fa-times"></i></div>
+      <div id="osm-map"></div>
+    </div>
+  </div>
 
-    // 地址自動補全初始化函數
-    function initAddressAutoComplete(inputId) {
-      const input = document.getElementById(inputId);
-      // 加載高德地址補全插件
-      AMapUI.load(['ui/geo/DistrictSearch', 'ui/input/AddressInput'], function(DistrictSearch, AddressInput) {
-        // 創建地址輸入框實例
-        const addressInput = new AddressInput({
-          input: input,
-          searchRadius: 5000,
-          // 默認定位到台灣（可根據需要調整）
-          districtSearch: new DistrictSearch({
-            level: 'city',
-            subdistrict: 3
-          })
+  <script>
+    let currentInput = '';
+    let osmMap = null;
+
+    // 打開OSM地圖
+    function openOsmMap(inputId) {
+      currentInput = inputId;
+      const modal = document.getElementById('osmMapModal');
+      modal.classList.remove('hidden');
+      
+      // 初始化地圖（只初始化一次）
+      if (!osmMap) {
+        osmMap = L.map('osm-map').setView([25.0330, 121.5654], 15); // 默認定位台北
+        // 加載OSM地圖層
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(osmMap);
+        
+        // 添加地址搜索控件
+        L.Control.geocoder({
+          defaultMarkGeocode: true
+        }).addTo(osmMap).on('markgeocode', function(e) {
+          const address = e.geocode.name;
+          // 回填地址
+          document.getElementById(currentInput).value = address;
+          // 關閉地圖
+          closeOsmMap();
         });
         
-        // 選擇地址後的回調
-        addressInput.on('selected', function(result) {
-          input.value = result.address;
+        // 點擊地圖選擇位置
+        osmMap.on('click', function(e) {
+          const latlng = e.latlng;
+          // 逆編碼獲取地址
+          fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latlng.lat}&lon=${latlng.lng}&format=json`)
+            .then(response => response.json())
+            .then(data => {
+              const address = data.display_name;
+              document.getElementById(currentInput).value = address;
+              closeOsmMap();
+            });
         });
-      });
+      }
     }
 
-    // 點擊地圖icon選擇位置（喚醒定位並回填）
-    function chooseLocation(inputId) {
-      const input = document.getElementById(inputId);
-      // 創建高德定位實例
-      const geolocation = new AMap.Geolocation({
-        enableHighAccuracy: true, // 高精度定位
-        timeout: 10000,
-        buttonPosition: 'RB'
-      });
-
-      // 執行定位
-      geolocation.getCurrentPosition(function(status, result) {
-        if (status === 'complete') {
-          // 定位成功，逆地理編碼獲取地址
-          const geocoder = new AMap.Geocoder();
-          geocoder.getAddress(result.position, function(status, res) {
-            if (status === 'complete') {
-              input.value = res.regeocode.formattedAddress;
-            }
-          });
-        } else {
-          alert('定位失敗，請手動輸入地址');
-        }
-      });
+    // 關閉OSM地圖
+    function closeOsmMap() {
+      document.getElementById('osmMapModal').classList.add('hidden');
     }
 
-    // 表單提交阻止默認行為（避免頁面刷新）
+    // 表單提交阻止默認行為
     document.querySelector('form').addEventListener('submit', function(e) {
       e.preventDefault();
       alert('叫車申請已提交！司機將盡快聯繫您');
