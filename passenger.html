@@ -48,18 +48,14 @@
   </style>
 </head>
 <body class="bg-gray-50 font-sans text-dark min-h-screen">
-  <!-- 頂部導航欄 -->
+  <!-- 頂部導航欄（刪除了右上角的乘客/司機/管理員鏈接） -->
   <header class="bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
     <div class="container mx-auto px-4 py-3 flex justify-between items-center">
       <div class="flex items-center space-x-2">
-        <<i class="fa fa-car text-primary text-2xl"></</i>
+        <i class="fa fa-car text-primary text-2xl"></i>
         <h1 class="text-xl font-bold">搭車自由</h1>
       </div>
-      <nav class="flex space-x-6">
-        <button class="text-primary font-medium">乘客</button>
-        <a href="driver.html" class="text-gray-600 hover:text-primary transition-colors">司機</a>
-        <a href="admin.html" class="text-gray-600 hover:text-primary transition-colors">管理員</a>
-      </nav>
+      <!-- 徹底刪除右上角導航鏈接 -->
     </div>
   </header>
 
@@ -88,22 +84,22 @@
                 <input type="tel" class="input-field" placeholder="輸入您的聯絡電話" required>
               </div>
               
-              <!-- 上車地點 -->
+              <!-- 上車地點（修正 icon 標籤） -->
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">上車地點</label>
                 <input type="text" class="input-field" placeholder="輸入您的位置" required>
                 <button type="button" class="map-btn">
-                  <<i class="fa fa-map-marker"></</i>
+                  <i class="fa fa-map-marker"></i>
                   <span>開啟地圖選擇</span>
                 </button>
               </div>
               
-              <!-- 下車地點 -->
+              <!-- 下車地點（修正 icon 標籤） -->
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">下車地點</label>
                 <input type="text" class="input-field" placeholder="輸入目的地" required>
                 <button type="button" class="map-btn">
-                  <<i class="fa fa-map-marker"></</i>
+                  <i class="fa fa-map-marker"></i>
                   <span>開啟地圖選擇</span>
                 </button>
               </div>
