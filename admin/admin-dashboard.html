@@ -56,7 +56,7 @@
             <h1 class="text-xl font-bold text-text-dark" id="systemTitle">LINE多元化搭車管理員登入系統</h1>
             <div class="flex items-center space-x-4">
                 <button class="text-text-light hover:text-primary">
-                    <i class="fa fa-bell text-lg"></i>
+                    <<i class="fa fa-bell text-lg"></</i>
                 </button>
                 <div class="flex items-center space-x-2">
                     <img src="https://via.placeholder.com/32" alt="管理員頭像" class="w-8 h-8 rounded-full">
@@ -72,25 +72,25 @@
         <aside class="sidebar w-56 bg-white shadow-sm p-4">
             <nav class="space-y-1">
                 <a href="admin-dashboard.html" class="block py-2 px-3 rounded-md menu-active font-medium">
-                    <i class="fa fa-home mr-2"></i>首頁
+                    <<i class="fa fa-home mr-2"></</i>首頁
                 </a>
                 <a href="admin-area.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
-                    <i class="fa fa-map-marker mr-2"></i>區域管理
+                    <<i class="fa fa-map-marker mr-2"></</i>區域管理
                 </a>
                 <a href="admin-driver.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
-                    <i class="fa fa-car mr-2"></i>司機管理
+                    <<i class="fa fa-car mr-2"></</i>司機管理
                 </a>
                 <a href="admin-order.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
-                    <i class="fa fa-users mr-2"></i>訂單管理
+                    <<i class="fa fa-users mr-2"></</i>訂單管理
                 </a>
                 <a href="admin-report.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
-                    <i class="fa fa-money mr-2"></i>財務管理
+                    <<i class="fa fa-money mr-2"></</i>財務管理
                 </a>
                 <a href="admin-report.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
-                    <i class="fa fa-bar-chart mr-2"></i>報表統計
+                    <<i class="fa fa-bar-chart mr-2"></</i>報表統計
                 </a>
                 <a href="../managerindex.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all mt-4" id="logoutLink">
-                    <i class="fa fa-sign-out mr-2"></i>退出登入
+                    <<i class="fa fa-sign-out mr-2"></</i>退出登入
                 </a>
             </nav>
         </aside>
@@ -104,74 +104,47 @@
                     <span class="text-sm text-text-light">最後更新：2025-12-19</span>
                 </div>
                 
-                <!-- 價格設定區域（從administrator.html整合） -->
+                <!-- 價格設定區域（替換為下拉選單，與administrator.html連結） -->
                 <div class="mb-6">
                     <h3 class="text-md font-medium text-text-dark mb-3">價格設定</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                        <div class="bg-white rounded-lg p-4 border border-gray-200">
-                            <p class="text-sm text-text-light mb-1">基礎服務費</p>
-                            <p class="text-xl font-bold text-text-dark">NT$ 5,000/月</p>
-                            <p class="text-xs text-text-light mt-1">包含基礎訂單管理、司機管理</p>
-                        </div>
-                        <div class="bg-white rounded-lg p-4 border border-gray-200">
-                            <p class="text-sm text-text-light mb-1">訂單傭金比例</p>
-                            <p class="text-xl font-bold text-text-dark">8%/單</p>
-                            <p class="text-xs text-text-light mt-1">每筆完成訂單抽取的傭金</p>
-                        </div>
-                        <div class="bg-white rounded-lg p-4 border border-gray-200">
-                            <p class="text-sm text-text-light mb-1">增值服務費</p>
-                            <p class="text-xl font-bold text-text-dark">NT$ 2,500/月</p>
-                            <p class="text-xs text-text-light mt-1">包含數據分析、報表導出</p>
-                        </div>
+                    <div class="bg-white rounded-lg p-4 border border-gray-200 mb-4">
+                        <label class="block text-sm text-text-dark mb-2">選擇繳費週期 <span class="text-red-500">*</span></label>
+                        <select id="paymentCycle" class="w-full p-2 border border-gray-200 rounded-md text-sm" required>
+                            <option value="">請選擇繳費週期</option>
+                            <option value="monthly" data-price="9500">月繳 (NT$ 9,500)</option>
+                            <option value="quarterly" data-price="9000">季繳 (NT$ 9,000/月)</option>
+                            <option value="halfYearly" data-price="9500">半年繳 (NT$ 9,500/月)</option>
+                            <option value="yearly" data-price="8500">年繳 (NT$ 8,500/月)</option>
+                        </select>
+                        <p class="text-sm text-text-dark font-medium mt-3">
+                            應繳金額：<span id="totalPayAmount" class="text-primary font-bold">NT$ 0</span>
+                        </p>
                     </div>
-                    <p class="text-sm text-text-dark font-medium">本月應繳總金額：<span class="text-primary font-bold">NT$ 7,500</span></p>
                 </div>
 
-                <!-- 銀行資訊區域（從administrator.html整合） -->
+                <!-- 銀行資訊區域（與administrator.html同步） -->
                 <div class="mb-6">
                     <h3 class="text-md font-medium text-text-dark mb-3">繳費銀行資訊</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-1 gap-4">
                         <div class="bank-info-card bg-white rounded-lg p-4 border border-gray-200">
                             <div class="flex items-center mb-2">
-                                <i class="fa fa-bank text-primary mr-2"></i>
-                                <p class="font-medium text-text-dark">台灣銀行 (TB)</p>
+                                <<i class="fa fa-bank text-primary mr-2"></</i>
+                                <p class="font-medium text-text-dark">中國信託</p>
                             </div>
                             <div class="space-y-1 text-sm">
-                                <p><span class="text-text-light">戶名：</span>LINE多元化搭車股份有限公司</p>
-                                <p><span class="text-text-light">帳號：</span>123-456789-000</p>
+                                <p><span class="text-text-light">戶名：</span>洪語涵</p>
+                                <p><span class="text-text-light">帳號：</span>901566141052</p>
                                 <p><span class="text-text-light">分行：</span>台北信義分行</p>
                             </div>
                         </div>
-                        <div class="bank-info-card bg-white rounded-lg p-4 border border-gray-200">
-                            <div class="flex items-center mb-2">
-                                <i class="fa fa-credit-card text-primary mr-2"></i>
-                                <p class="font-medium text-text-dark">國泰世華銀行 (Cathay)</p>
-                            </div>
-                            <div class="space-y-1 text-sm">
-                                <p><span class="text-text-light">戶名：</span>LINE多元化搭車股份有限公司</p>
-                                <p><span class="text-text-light">帳號：</span>987-654321-000</p>
-                                <p><span class="text-text-light">分行：</span>台中中港分行</p>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
-                <!-- 繳費表單 -->
+                <!-- 繳費表單（刪除繳費方式下拉選單） -->
                 <div class="payment-form bg-white rounded-lg p-5 border border-gray-200">
                     <h3 class="text-md font-medium text-text-dark mb-4">繳費資訊填寫</h3>
                     <form id="paymentForm">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <!-- 繳費方式選擇 -->
-                            <div>
-                                <label class="block text-sm text-text-dark mb-1">繳費方式 <span class="text-red-500">*</span></label>
-                                <select class="w-full p-2 border border-gray-200 rounded-md text-sm" required>
-                                    <option value="">請選擇繳費方式</option>
-                                    <option value="bank-transfer">銀行轉帳 - 台灣銀行</option>
-                                    <option value="bank-transfer-cathay">銀行轉帳 - 國泰世華銀行</option>
-                                    <option value="atm">ATM轉帳</option>
-                                    <option value="credit-card">信用卡線上繳費</option>
-                                </select>
-                            </div>
                             <!-- 繳費日期 -->
                             <div>
                                 <label class="block text-sm text-text-dark mb-1">繳費日期 <span class="text-red-500">*</span></label>
@@ -202,7 +175,7 @@
                                 <input type="file" id="receiptUpload" accept="image/*,.pdf" class="hidden" required>
                                 <label for="receiptUpload" class="cursor-pointer">
                                     <div class="flex flex-col items-center">
-                                        <i class="fa fa-cloud-upload text-2xl text-text-light mb-2"></i>
+                                        <<i class="fa fa-cloud-upload text-2xl text-text-light mb-2"></</i>
                                         <p class="text-sm text-text-dark mb-1">點擊上傳繳費憑證</p>
                                         <p class="text-xs text-text-light">支援格式：JPG、PNG、PDF (最大5MB)</p>
                                     </div>
@@ -239,21 +212,21 @@
                 <div class="card-bg rounded-lg p-4 shadow-sm border border-gray-100">
                     <div class="flex items-center justify-between mb-2">
                         <p class="text-text-light text-sm">線上司機人數</p>
-                        <i class="fa fa-car text-primary text-xl"></i>
+                        <<i class="fa fa-car text-primary text-xl"></</i>
                     </div>
                     <p class="text-2xl font-bold text-text-dark" id="onlineDriverCount">12人</p>
                 </div>
                 <div class="card-bg rounded-lg p-4 shadow-sm border border-gray-100">
                     <div class="flex items-center justify-between mb-2">
                         <p class="text-text-light text-sm">今日訂單</p>
-                        <i class="fa fa-shopping-cart text-primary text-xl"></i>
+                        <<i class="fa fa-shopping-cart text-primary text-xl"></</i>
                     </div>
                     <p class="text-2xl font-bold text-text-dark" id="todayOrderCount">36單</p>
                 </div>
                 <div class="card-bg rounded-lg p-4 shadow-sm border border-gray-100">
                     <div class="flex items-center justify-between mb-2">
                         <p class="text-text-light text-sm">今日收入</p>
-                        <i class="fa fa-yen text-primary text-xl"></i>
+                        <<i class="fa fa-yen text-primary text-xl"></</i>
                     </div>
                     <p class="text-2xl font-bold text-text-dark" id="todayIncome">8,560元</p>
                 </div>
@@ -305,12 +278,12 @@
                     <table class="min-w-full">
                         <thead>
                             <tr class="border-b border-gray-200 bg-gray-50">
-                                <th class="text-left py-2 px-3 text-sm text-text-light">訂單編號</th>
-                                <th class="text-left py-2 px-3 text-sm text-text-light">司機</th>
-                                <th class="text-left py-2 px-3 text-sm text-text-light">乘客</th>
-                                <th class="text-left py-2 px-3 text-sm text-text-light">金額</th>
-                                <th class="text-left py-2 px-3 text-sm text-text-light">狀態</th>
-                                <th class="text-left py-2 px-3 text-sm text-text-light">操作</th>
+                                <<th class="text-left py-2 px-3 text-sm text-text-light">訂單編號</</th>
+                                <<th class="text-left py-2 px-3 text-sm text-text-light">司機</</th>
+                                <<th class="text-left py-2 px-3 text-sm text-text-light">乘客</</th>
+                                <<th class="text-left py-2 px-3 text-sm text-text-light">金額</</th>
+                                <<th class="text-left py-2 px-3 text-sm text-text-light">狀態</</th>
+                                <<th class="text-left py-2 px-3 text-sm text-text-light">操作</</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -380,6 +353,26 @@
     </div>
 
     <script>
+        // 新增：繳費週期選擇後計算應繳金額
+        document.getElementById('paymentCycle').addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const price = selectedOption.getAttribute('data-price');
+            const cycleText = selectedOption.text.split(' ')[0];
+            
+            let totalAmount = 0;
+            if (cycleText === '月繳') {
+                totalAmount = price;
+            } else if (cycleText === '季繳') {
+                totalAmount = price * 3;
+            } else if (cycleText === '半年繳') {
+                totalAmount = price * 6;
+            } else if (cycleText === '年繳') {
+                totalAmount = price * 12;
+            }
+            
+            document.getElementById('totalPayAmount').textContent = `NT$ ${Number(totalAmount).toLocaleString()}`;
+        });
+
         // 新增：繳費憑證上傳預覽功能
         document.getElementById('receiptUpload').addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -414,6 +407,7 @@
             alert('繳費資訊提交成功！我們將盡快核對您的繳費憑證。');
             this.reset();
             document.getElementById('uploadPreview').classList.add('hidden');
+            document.getElementById('totalPayAmount').textContent = 'NT$ 0';
         });
 
         // 1. 動態加載系統標題與當前管理員信息
