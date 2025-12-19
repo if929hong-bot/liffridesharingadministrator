@@ -96,42 +96,42 @@
         </aside>
 
         <!-- 主內容區 -->
-        <main class="flex-1 p-6">
-            <!-- 新增：繳費欄目（頁面頂部） -->
-            <div class="card-bg rounded-lg p-6 shadow-sm border border-gray-100 mb-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-bold text-text-dark">車隊繳費管理</h2>
+        <main class="flex-1 p-6 max-w-7xl mx-auto">
+            <!-- 繳費欄目（頁面頂部） -->
+            <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-100 mb-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-text-dark">車隊繳費管理</h2>
                     <span class="text-sm text-text-light">最後更新：2025-12-19</span>
                 </div>
                 
-                <!-- 價格設定區域（替換為下拉選單，與administrator.html連結） -->
-                <div class="mb-6">
-                    <h3 class="text-md font-medium text-text-dark mb-3">價格設定</h3>
-                    <div class="bg-white rounded-lg p-4 border border-gray-200 mb-4">
+                <!-- 價格設定區域 -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-medium text-text-dark mb-4">價格設定</h3>
+                    <div class="bg-gray-50 rounded-lg p-5 border border-gray-200">
                         <label class="block text-sm text-text-dark mb-2">選擇繳費週期 <span class="text-red-500">*</span></label>
-                        <select id="paymentCycle" class="w-full p-2 border border-gray-200 rounded-md text-sm" required>
+                        <select id="paymentCycle" class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" required>
                             <option value="">請選擇繳費週期</option>
                             <option value="monthly" data-price="9500">月繳 (NT$ 9,500)</option>
                             <option value="quarterly" data-price="9000">季繳 (NT$ 9,000/月)</option>
                             <option value="halfYearly" data-price="9500">半年繳 (NT$ 9,500/月)</option>
                             <option value="yearly" data-price="8500">年繳 (NT$ 8,500/月)</option>
                         </select>
-                        <p class="text-sm text-text-dark font-medium mt-3">
-                            應繳金額：<span id="totalPayAmount" class="text-primary font-bold">NT$ 0</span>
+                        <p class="text-base text-text-dark font-medium mt-4">
+                            應繳金額：<span id="totalPayAmount" class="text-primary font-bold text-lg">NT$ 0</span>
                         </p>
                     </div>
                 </div>
 
-                <!-- 銀行資訊區域（與administrator.html同步） -->
-                <div class="mb-6">
-                    <h3 class="text-md font-medium text-text-dark mb-3">繳費銀行資訊</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-1 gap-4">
-                        <div class="bank-info-card bg-white rounded-lg p-4 border border-gray-200">
-                            <div class="flex items-center mb-2">
-                                <<i class="fa fa-bank text-primary mr-2"></</i>
-                                <p class="font-medium text-text-dark">中國信託</p>
+                <!-- 銀行資訊區域 -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-medium text-text-dark mb-4">繳費銀行資訊</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bank-info-card bg-white rounded-lg p-5 border border-gray-200">
+                            <div class="flex items-center mb-3">
+                                <<i class="fa fa-bank text-primary text-xl mr-3"></</i>
+                                <p class="font-semibold text-text-dark text-base">中國信託</p>
                             </div>
-                            <div class="space-y-1 text-sm">
+                            <div class="space-y-2 text-sm">
                                 <p><span class="text-text-light">戶名：</span>洪語涵</p>
                                 <p><span class="text-text-light">帳號：</span>901566141052</p>
                                 <p><span class="text-text-light">分行：</span>台北信義分行</p>
@@ -140,63 +140,63 @@
                     </div>
                 </div>
 
-                <!-- 繳費表單（刪除繳費方式下拉選單） -->
-                <div class="payment-form bg-white rounded-lg p-5 border border-gray-200">
-                    <h3 class="text-md font-medium text-text-dark mb-4">繳費資訊填寫</h3>
-                    <form id="paymentForm">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <!-- 繳費表單 -->
+                <div class="payment-form bg-gray-50 rounded-lg p-6 border border-gray-200">
+                    <h3 class="text-lg font-medium text-text-dark mb-5">繳費資訊填寫</h3>
+                    <form id="paymentForm" class="space-y-5">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <!-- 繳費日期 -->
                             <div>
-                                <label class="block text-sm text-text-dark mb-1">繳費日期 <span class="text-red-500">*</span></label>
-                                <input type="date" class="w-full p-2 border border-gray-200 rounded-md text-sm" required>
+                                <label class="block text-sm text-text-dark mb-2">繳費日期 <span class="text-red-500">*</span></label>
+                                <input type="date" class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" required>
                             </div>
                             <!-- 匯款後五碼 -->
                             <div>
-                                <label class="block text-sm text-text-dark mb-1">匯款帳號後五碼 <span class="text-red-500">*</span></label>
+                                <label class="block text-sm text-text-dark mb-2">匯款帳號後五碼 <span class="text-red-500">*</span></label>
                                 <input type="text" placeholder="請輸入匯款帳號後五碼" 
-                                       class="w-full p-2 border border-gray-200 rounded-md text-sm" 
+                                       class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" 
                                        pattern="[0-9]{5}" 
                                        title="請輸入數字且長度為5位"
                                        required>
                             </div>
                             <!-- 聯繫電話 -->
                             <div>
-                                <label class="block text-sm text-text-dark mb-1">聯繫電話</label>
+                                <label class="block text-sm text-text-dark mb-2">聯繫電話</label>
                                 <input type="tel" placeholder="請輸入聯繫電話" 
-                                       class="w-full p-2 border border-gray-200 rounded-md text-sm" 
+                                       class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" 
                                        pattern="[0-9]{2,4}-?[0-9]{3,4}-?[0-9]{3,4}">
                             </div>
                         </div>
                         
                         <!-- 繳費憑證上傳 -->
-                        <div class="mb-4">
-                            <label class="block text-sm text-text-dark mb-1">繳費憑證上傳 <span class="text-red-500">*</span></label>
-                            <div class="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center hover:border-primary transition-all">
+                        <div>
+                            <label class="block text-sm text-text-dark mb-2">繳費憑證上傳 <span class="text-red-500">*</span></label>
+                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary transition-all">
                                 <input type="file" id="receiptUpload" accept="image/*,.pdf" class="hidden" required>
                                 <label for="receiptUpload" class="cursor-pointer">
                                     <div class="flex flex-col items-center">
-                                        <<i class="fa fa-cloud-upload text-2xl text-text-light mb-2"></</i>
+                                        <<i class="fa fa-cloud-upload text-2xl text-text-light mb-3"></</i>
                                         <p class="text-sm text-text-dark mb-1">點擊上傳繳費憑證</p>
                                         <p class="text-xs text-text-light">支援格式：JPG、PNG、PDF (最大5MB)</p>
                                     </div>
                                 </label>
-                                <div id="uploadPreview" class="mt-3 hidden">
-                                    <img id="previewImage" src="" alt="繳費憑證預覽" class="max-h-40 mx-auto rounded-md border border-gray-200">
-                                    <p id="fileName" class="text-xs text-text-dark mt-2"></p>
+                                <div id="uploadPreview" class="mt-4 hidden">
+                                    <img id="previewImage" src="" alt="繳費憑證預覽" class="max-h-48 mx-auto rounded-md border border-gray-200">
+                                    <p id="fileName" class="text-xs text-text-dark mt-3"></p>
                                 </div>
                             </div>
                         </div>
                         
                         <!-- 備註 -->
-                        <div class="mb-4">
-                            <label class="block text-sm text-text-dark mb-1">備註</label>
-                            <textarea class="w-full p-2 border border-gray-200 rounded-md text-sm h-20 resize-none" 
+                        <div>
+                            <label class="block text-sm text-text-dark mb-2">備註</label>
+                            <textarea class="w-full p-3 border border-gray-200 rounded-md text-sm h-24 resize-none focus:outline-none focus:ring-2 focus:ring-primary/50" 
                                       placeholder="請輸入其他需要說明的事項（選填）"></textarea>
                         </div>
                         
                         <!-- 提交按鈕 -->
-                        <div class="flex justify-end">
-                            <button type="button" class="px-4 py-2 bg-gray-100 text-text-dark rounded-md text-sm mr-2 hover:bg-gray-200 transition-all">
+                        <div class="flex justify-end space-x-3">
+                            <button type="button" class="px-5 py-2 bg-gray-200 text-text-dark rounded-md text-sm hover:bg-gray-300 transition-all">
                                 儲存草稿
                             </button>
                             <button type="submit" class="px-6 py-2 bg-primary text-white rounded-md text-sm hover:bg-secondary transition-all">
@@ -207,24 +207,24 @@
                 </div>
             </div>
 
-            <!-- 原有的數據統計卡片 -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div class="card-bg rounded-lg p-4 shadow-sm border border-gray-100">
-                    <div class="flex items-center justify-between mb-2">
+            <!-- 數據統計卡片 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-3">
                         <p class="text-text-light text-sm">線上司機人數</p>
                         <<i class="fa fa-car text-primary text-xl"></</i>
                     </div>
                     <p class="text-2xl font-bold text-text-dark" id="onlineDriverCount">12人</p>
                 </div>
-                <div class="card-bg rounded-lg p-4 shadow-sm border border-gray-100">
-                    <div class="flex items-center justify-between mb-2">
+                <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-3">
                         <p class="text-text-light text-sm">今日訂單</p>
                         <<i class="fa fa-shopping-cart text-primary text-xl"></</i>
                     </div>
                     <p class="text-2xl font-bold text-text-dark" id="todayOrderCount">36單</p>
                 </div>
-                <div class="card-bg rounded-lg p-4 shadow-sm border border-gray-100">
-                    <div class="flex items-center justify-between mb-2">
+                <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-3">
                         <p class="text-text-light text-sm">今日收入</p>
                         <<i class="fa fa-yen text-primary text-xl"></</i>
                     </div>
@@ -235,117 +235,117 @@
             <!-- 圖表區域 -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <!-- 趨勢圖 -->
-                <div class="card-bg rounded-lg p-4 shadow-sm border border-gray-100">
-                    <div class="flex items-center justify-between mb-3">
+                <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-4">
                         <p class="font-medium text-text-dark">訂單趨勢（今日）</p>
-                        <select class="text-sm border border-gray-200 rounded px-2 py-1" id="trendTimeRange">
+                        <select class="text-sm border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary" id="trendTimeRange">
                             <option value="today">今日</option>
                             <option value="week">本周</option>
                             <option value="month">本月</option>
                         </select>
                     </div>
-                    <div class="h-48">
+                    <div class="h-60">
                         <canvas id="trendChart"></canvas>
                     </div>
                 </div>
 
                 <!-- 收入圖 -->
-                <div class="card-bg rounded-lg p-4 shadow-sm border border-gray-100">
-                    <div class="flex items-center justify-between mb-3">
+                <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-4">
                         <p class="font-medium text-text-dark">收入統計（本周）</p>
-                        <select class="text-sm border border-gray-200 rounded px-2 py-1" id="incomeTimeRange">
+                        <select class="text-sm border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary" id="incomeTimeRange">
                             <option value="week">本周</option>
                             <option value="month">本月</option>
                             <option value="quarter">本季度</option>
                         </select>
                     </div>
-                    <div class="h-48">
+                    <div class="h-60">
                         <canvas id="incomeChart"></canvas>
                     </div>
                 </div>
             </div>
 
             <!-- 訂單列表 -->
-            <div class="card-bg rounded-lg p-4 shadow-sm border border-gray-100">
-                <div class="flex justify-between items-center mb-4">
+            <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
+                <div class="flex justify-between items-center mb-5">
                     <p class="font-medium text-text-dark">今日訂單列表</p>
-                    <div class="flex items-center space-x-2">
-                        <input type="text" placeholder="搜索訂單號" class="text-sm border border-gray-200 rounded px-3 py-1 w-40">
-                        <a href="admin-order.html" class="text-primary text-sm">查看全部</a>
+                    <div class="flex items-center space-x-3">
+                        <input type="text" placeholder="搜索訂單號" class="text-sm border border-gray-200 rounded px-3 py-2 w-44 focus:outline-none focus:ring-1 focus:ring-primary">
+                        <a href="admin-order.html" class="text-primary text-sm hover:underline">查看全部</a>
                     </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full">
                         <thead>
                             <tr class="border-b border-gray-200 bg-gray-50">
-                                <<th class="text-left py-2 px-3 text-sm text-text-light">訂單編號</</th>
-                                <<th class="text-left py-2 px-3 text-sm text-text-light">司機</</th>
-                                <<th class="text-left py-2 px-3 text-sm text-text-light">乘客</</th>
-                                <<th class="text-left py-2 px-3 text-sm text-text-light">金額</</th>
-                                <<th class="text-left py-2 px-3 text-sm text-text-light">狀態</</th>
-                                <<th class="text-left py-2 px-3 text-sm text-text-light">操作</</th>
+                                <<th class="text-left py-3 px-4 text-sm text-text-light">訂單編號</</th>
+                                <<th class="text-left py-3 px-4 text-sm text-text-light">司機</</th>
+                                <<th class="text-left py-3 px-4 text-sm text-text-light">乘客</</th>
+                                <<th class="text-left py-3 px-4 text-sm text-text-light">金額</</th>
+                                <<th class="text-left py-3 px-4 text-sm text-text-light">狀態</</th>
+                                <<th class="text-left py-3 px-4 text-sm text-text-light">操作</</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr class="border-b border-gray-200 hover:bg-gray-50">
-                                <td class="py-2 px-3 text-sm">ORD2025001</td>
-                                <td class="py-2 px-3 text-sm">張司機</td>
-                                <td class="py-2 px-3 text-sm">李先生</td>
-                                <td class="py-2 px-3 text-sm font-medium">236元</td>
-                                <td class="py-2 px-3 text-sm">
+                                <td class="py-3 px-4 text-sm">ORD2025001</td>
+                                <td class="py-3 px-4 text-sm">張司機</td>
+                                <td class="py-3 px-4 text-sm">李先生</td>
+                                <td class="py-3 px-4 text-sm font-medium">236元</td>
+                                <td class="py-3 px-4 text-sm">
                                     <span class="px-2 py-1 bg-green-100 text-green-600 rounded-full text-xs">已完成</span>
                                 </td>
-                                <td class="py-2 px-3 text-sm">
+                                <td class="py-3 px-4 text-sm">
                                     <a href="admin-order.html" class="text-primary hover:underline">查看</a>
                                 </td>
                             </tr>
                             <tr class="border-b border-gray-200 hover:bg-gray-50">
-                                <td class="py-2 px-3 text-sm">ORD2025002</td>
-                                <td class="py-2 px-3 text-sm">王司機</td>
-                                <td class="py-2 px-3 text-sm">陳女士</td>
-                                <td class="py-2 px-3 text-sm font-medium">185元</td>
-                                <td class="py-2 px-3 text-sm">
+                                <td class="py-3 px-4 text-sm">ORD2025002</td>
+                                <td class="py-3 px-4 text-sm">王司機</td>
+                                <td class="py-3 px-4 text-sm">陳女士</td>
+                                <td class="py-3 px-4 text-sm font-medium">185元</td>
+                                <td class="py-3 px-4 text-sm">
                                     <span class="px-2 py-1 bg-blue-100 text-blue-600 rounded-full text-xs">行駛中</span>
                                 </td>
-                                <td class="py-2 px-3 text-sm">
+                                <td class="py-3 px-4 text-sm">
                                     <a href="admin-order.html" class="text-primary hover:underline">查看</a>
                                 </td>
                             </tr>
                             <tr class="border-b border-gray-200 hover:bg-gray-50">
-                                <td class="py-2 px-3 text-sm">ORD2025003</td>
-                                <td class="py-2 px-3 text-sm">李司機</td>
-                                <td class="py-2 px-3 text-sm">黃先生</td>
-                                <td class="py-2 px-3 text-sm font-medium">320元</td>
-                                <td class="py-2 px-3 text-sm">
+                                <td class="py-3 px-4 text-sm">ORD2025003</td>
+                                <td class="py-3 px-4 text-sm">李司機</td>
+                                <td class="py-3 px-4 text-sm">黃先生</td>
+                                <td class="py-3 px-4 text-sm font-medium">320元</td>
+                                <td class="py-3 px-4 text-sm">
                                     <span class="px-2 py-1 bg-yellow-100 text-yellow-600 rounded-full text-xs">待接單</span>
                                 </td>
-                                <td class="py-2 px-3 text-sm">
+                                <td class="py-3 px-4 text-sm">
                                     <a href="admin-order.html" class="text-primary hover:underline">查看</a>
                                 </td>
                             </tr>
                             <tr class="border-b border-gray-200 hover:bg-gray-50">
-                                <td class="py-2 px-3 text-sm">ORD2025004</td>
-                                <td class="py-2 px-3 text-sm">趙司機</td>
-                                <td class="py-2 px-3 text-sm">鄭女士</td>
-                                <td class="py-2 px-3 text-sm font-medium">158元</td>
-                                <td class="py-2 px-3 text-sm">
+                                <td class="py-3 px-4 text-sm">ORD2025004</td>
+                                <td class="py-3 px-4 text-sm">趙司機</td>
+                                <td class="py-3 px-4 text-sm">鄭女士</td>
+                                <td class="py-3 px-4 text-sm font-medium">158元</td>
+                                <td class="py-3 px-4 text-sm">
                                     <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">已取消</span>
                                 </td>
-                                <td class="py-2 px-3 text-sm">
+                                <td class="py-3 px-4 text-sm">
                                     <a href="admin-order.html" class="text-primary hover:underline">查看</a>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-                <div class="flex justify-between items-center mt-4 text-sm">
+                <div class="flex justify-between items-center mt-5 text-sm">
                     <p class="text-text-light">顯示 1-4 條，共 36 條</p>
-                    <div class="flex space-x-1">
-                        <button class="px-2 py-1 border border-gray-200 rounded text-text-light disabled:opacity-50" disabled>上一頁</button>
-                        <button class="px-2 py-1 border border-primary bg-primary text-white rounded">1</button>
-                        <button class="px-2 py-1 border border-gray-200 rounded text-text-dark hover:bg-gray-50">2</button>
-                        <button class="px-2 py-1 border border-gray-200 rounded text-text-dark hover:bg-gray-50">3</button>
-                        <button class="px-2 py-1 border border-gray-200 rounded text-text-dark hover:bg-gray-50">下一頁</button>
+                    <div class="flex space-x-2">
+                        <button class="px-3 py-1 border border-gray-200 rounded text-text-light disabled:opacity-50" disabled>上一頁</button>
+                        <button class="px-3 py-1 border border-primary bg-primary text-white rounded">1</button>
+                        <button class="px-3 py-1 border border-gray-200 rounded text-text-dark hover:bg-gray-50">2</button>
+                        <button class="px-3 py-1 border border-gray-200 rounded text-text-dark hover:bg-gray-50">3</button>
+                        <button class="px-3 py-1 border border-gray-200 rounded text-text-dark hover:bg-gray-50">下一頁</button>
                     </div>
                 </div>
             </div>
@@ -353,7 +353,7 @@
     </div>
 
     <script>
-        // 新增：繳費週期選擇後計算應繳金額
+        // 繳費週期選擇後計算應繳金額
         document.getElementById('paymentCycle').addEventListener('change', function() {
             const selectedOption = this.options[this.selectedIndex];
             const price = selectedOption.getAttribute('data-price');
@@ -373,7 +373,7 @@
             document.getElementById('totalPayAmount').textContent = `NT$ ${Number(totalAmount).toLocaleString()}`;
         });
 
-        // 新增：繳費憑證上傳預覽功能
+        // 繳費憑證上傳預覽功能
         document.getElementById('receiptUpload').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
@@ -381,13 +381,9 @@
                 const previewImg = document.getElementById('previewImage');
                 const fileName = document.getElementById('fileName');
                 
-                // 顯示預覽區域
                 preview.classList.remove('hidden');
-                
-                // 顯示檔案名稱
                 fileName.textContent = file.name;
                 
-                // 圖片預覽
                 if (file.type.startsWith('image/')) {
                     const reader = new FileReader();
                     reader.onload = function(e) {
@@ -395,13 +391,12 @@
                     }
                     reader.readAsDataURL(file);
                 } else {
-                    // PDF文件顯示預設圖標
                     previewImg.src = 'https://via.placeholder.com/200x150?text=PDF文件';
                 }
             }
         });
 
-        // 新增：繳費表單提交處理
+        // 繳費表單提交處理
         document.getElementById('paymentForm').addEventListener('submit', function(e) {
             e.preventDefault();
             alert('繳費資訊提交成功！我們將盡快核對您的繳費憑證。');
@@ -410,19 +405,16 @@
             document.getElementById('totalPayAmount').textContent = 'NT$ 0';
         });
 
-        // 1. 動態加載系統標題與當前管理員信息
+        // 動態加載系統標題與當前管理員信息
         function loadSystemInfo() {
-            // 加載系統標題
             const savedTitle = localStorage.getItem('systemTitle') || 'LINE多元化搭車管理員登入系統';
             document.getElementById('systemTitle').textContent = savedTitle;
             
-            // 加載當前登入管理員姓名
             const currentManager = JSON.parse(localStorage.getItem('currentFleetManager') || '{}');
             if (currentManager.managerName) {
                 document.getElementById('currentManagerName').textContent = currentManager.managerName;
             }
             
-            // 監聽storage變化，實時更新標題
             window.addEventListener('storage', (e) => {
                 if (e.key === 'systemTitle') {
                     document.getElementById('systemTitle').textContent = e.newValue || 'LINE多元化搭車管理員登入系統';
@@ -430,7 +422,7 @@
             });
         }
 
-        // 2. 初始化圖表
+        // 初始化圖表
         function initCharts() {
             // 訂單趨勢圖
             const trendCtx = document.getElementById('trendChart').getContext('2d');
@@ -453,22 +445,11 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: {
-                            display: false
-                        }
+                        legend: { display: false }
                     },
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.05)'
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            }
-                        }
+                        y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' } },
+                        x: { grid: { display: false } }
                     }
                 }
             });
@@ -491,22 +472,11 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: {
-                            display: false
-                        }
+                        legend: { display: false }
                     },
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.05)'
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            }
-                        }
+                        y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' } },
+                        x: { grid: { display: false } }
                     }
                 }
             });
@@ -557,7 +527,7 @@
             });
         }
 
-        // 3. 模擬實時數據更新
+        // 模擬實時數據更新
         function simulateRealTimeData() {
             setInterval(() => {
                 const onlineDrivers = Math.floor(Math.random() * 10) + 8;
@@ -570,25 +540,22 @@
             }, 300000); // 5分鐘更新一次
         }
 
-        // 4. 退出登入邏輯（清除狀態，避免重複提示）
+        // 退出登入邏輯
         function initLogout() {
             document.getElementById('logoutLink').addEventListener('click', function(e) {
-                e.preventDefault(); // 阻止默認跳轉
-                // 清除當前登入狀態
+                e.preventDefault();
                 localStorage.removeItem('currentFleetManager');
-                // 直接跳轉到登入頁，不彈提示
                 window.location.href = this.href;
             });
         }
 
-        // 5. 頁面加載初始化
+        // 頁面加載初始化
         window.onload = () => {
             loadSystemInfo();
             initCharts();
             simulateRealTimeData();
             initLogout();
             
-            // 校驗登入狀態（若未登入，直接跳轉）
             const currentManager = JSON.parse(localStorage.getItem('currentFleetManager') || 'null');
             if (!currentManager) {
                 window.location.href = '../managerindex.html';

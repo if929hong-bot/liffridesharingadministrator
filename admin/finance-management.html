@@ -75,67 +75,67 @@
     </style>
 </head>
 <body class="bg-neutral-100 font-sans text-neutral-700 min-h-screen flex">
-    <!-- 左側菜單（與範例圖同風格） -->
+    <!-- 左側菜單（修正所有連結路徑） -->
     <aside class="sidebar-menu w-56 h-screen sticky top-0">
         <div class="py-4 px-4 border-b border-neutral-200">
             <h2 class="font-bold text-lg text-neutral-700">LINE多元化搭車管理員</h2>
         </div>
         <nav>
-            <a href="admin/admin-dashboard.html" class="flex items-center gap-2">
-                <<i class="fa fa-home"></</i>
+            <a href="admin-dashboard.html" class="flex items-center gap-2">
+                <<<i class="fa fa-home"></</</i>
                 <span>首頁</span>
             </a>
-            <a href="admin/area-management.html" class="flex items-center gap-2">
-                <<i class="fa fa-map-marker"></</i>
+            <a href="admin-area.html" class="flex items-center gap-2">
+                <<<i class="fa fa-map-marker"></</</i>
                 <span>區域管理</span>
             </a>
-            <a href="admin/admin-driver.html" class="flex items-center gap-2">
-                <<i class="fa fa-car"></</i>
+            <a href="admin-driver.html" class="flex items-center gap-2">
+                <<<i class="fa fa-car"></</</i>
                 <span>司機管理</span>
             </a>
-            <a href="admin/admin-order.html" class="flex items-center gap-2">
-                <<i class="fa fa-list"></</i>
+            <a href="admin-order.html" class="flex items-center gap-2">
+                <<<i class="fa fa-list"></</</i>
                 <span>訂單管理</span>
             </a>
-            <a href="admin/finance-management.html" class="flex items-center gap-2 active">
-                <<i class="fa fa-money"></</i>
+            <a href="finance-management.html" class="flex items-center gap-2 active">
+                <<<i class="fa fa-money"></</</i>
                 <span>財務管理</span>
             </a>
-            <a href="admin/admin-report.html" class="flex items-center gap-2">
-                <<i class="fa fa-bar-chart"></</i>
+            <a href="admin-report.html" class="flex items-center gap-2">
+                <<<i class="fa fa-bar-chart"></</</i>
                 <span>報表統計</span>
             </a>
-            <a href="managerindex.html" class="flex items-center gap-2 mt-4">
-                <<i class="fa fa-sign-out"></</i>
+            <a href="../managerindex.html" class="flex items-center gap-2 mt-4">
+                <<<i class="fa fa-sign-out"></</</i>
                 <span>退出登入</span>
             </a>
         </nav>
     </aside>
 
-    <!-- 主內容區 -->
+    <!-- 主內容區（優化排版結構） -->
     <div class="flex-1 flex flex-col">
         <!-- 頂部導航欄 -->
         <header class="bg-white shadow-sm sticky top-0 z-50">
-            <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="container mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-4">
                 <div class="flex items-center gap-2">
-                    <<i class="fa fa-line-chart text-primary text-2xl"></</i>
+                    <<<i class="fa fa-line-chart text-primary text-2xl"></</</i>
                     <h1 class="text-xl font-bold text-neutral-700">財務管理系統</h1>
                 </div>
                 <div class="flex items-center gap-4">
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3">
-                            <<i class="fa fa-calendar text-neutral-400"></</i>
+                            <<<i class="fa fa-calendar text-neutral-400"></</</i>
                         </span>
                         <input type="date" id="startDate" class="bg-neutral-100 border border-neutral-200 text-neutral-700 rounded-lg py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all" placeholder="開始日期">
                     </div>
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3">
-                            <<i class="fa fa-calendar text-neutral-400"></</i>
+                            <<<i class="fa fa-calendar text-neutral-400"></</</i>
                         </span>
                         <input type="date" id="endDate" class="bg-neutral-100 border border-neutral-200 text-neutral-700 rounded-lg py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all" placeholder="結束日期">
                     </div>
                     <button id="searchBtn" class="bg-primary hover:bg-primary/90 text-white rounded-lg py-2 px-6 flex items-center gap-2 transition-all focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2">
-                        <<i class="fa fa-search"></</i>
+                        <<<i class="fa fa-search"></</</i>
                         <span>查詢</span>
                     </button>
                 </div>
@@ -153,12 +153,12 @@
                             <p class="text-3xl font-bold text-neutral-700 mt-2" id="todayTotal">NT$ 0</p>
                         </div>
                         <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                            <<i class="fa fa-sun-o text-primary text-xl"></</i>
+                            <<<i class="fa fa-sun-o text-primary text-xl"></</</i>
                         </div>
                     </div>
                     <div class="flex items-center text-sm">
                         <span class="text-success flex items-center">
-                            <<i class="fa fa-arrow-up mr-1"></</i>
+                            <<<i class="fa fa-arrow-up mr-1"></</</i>
                             <span id="todayGrowth">0%</span>
                         </span>
                         <span class="text-neutral-400 ml-2">較昨日</span>
@@ -173,12 +173,12 @@
                             <p class="text-3xl font-bold text-neutral-700 mt-2" id="weekTotal">NT$ 0</p>
                         </div>
                         <div class="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center">
-                            <<i class="fa fa-calendar-week text-secondary text-xl"></</i>
+                            <<<i class="fa fa-calendar-week text-secondary text-xl"></</</i>
                         </div>
                     </div>
                     <div class="flex items-center text-sm">
                         <span class="text-success flex items-center">
-                            <<i class="fa fa-arrow-up mr-1"></</i>
+                            <<<i class="fa fa-arrow-up mr-1"></</</i>
                             <span id="weekGrowth">0%</span>
                         </span>
                         <span class="text-neutral-400 ml-2">較上周</span>
@@ -193,12 +193,12 @@
                             <p class="text-3xl font-bold text-neutral-700 mt-2" id="monthTotal">NT$ 0</p>
                         </div>
                         <div class="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center">
-                            <<i class="fa fa-calendar text-accent text-xl"></</i>
+                            <<<i class="fa fa-calendar text-accent text-xl"></</</i>
                         </div>
                     </div>
                     <div class="flex items-center text-sm">
                         <span class="text-success flex items-center">
-                            <<i class="fa fa-arrow-up mr-1"></</i>
+                            <<<i class="fa fa-arrow-up mr-1"></</</i>
                             <span id="monthGrowth">0%</span>
                         </span>
                         <span class="text-neutral-400 ml-2">較上月</span>
@@ -216,15 +216,15 @@
 
             <!-- 訂單列表 -->
             <section class="bg-white rounded-xl shadow-card p-6 card-transition">
-                <div class="flex justify-between items-center mb-6">
+                <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
                     <h2 class="text-lg font-bold text-neutral-700">訂單收入記錄</h2>
                     <div class="flex gap-2">
                         <button id="exportBtn" class="bg-success hover:bg-success/90 text-white rounded-lg py-2 px-4 flex items-center gap-2 transition-all focus:outline-none focus:ring-2 focus:ring-success/50 focus:ring-offset-2">
-                            <<i class="fa fa-download"></</i>
+                            <<<i class="fa fa-download"></</</i>
                             <span>匯出Excel</span>
                         </button>
                         <button id="refreshBtn" class="bg-neutral-200 hover:bg-neutral-300 text-neutral-700 rounded-lg py-2 px-4 flex items-center gap-2 transition-all focus:outline-none focus:ring-2 focus:ring-neutral-400/50 focus:ring-offset-2">
-                            <<i class="fa fa-refresh"></</i>
+                            <<<i class="fa fa-refresh"></</</i>
                             <span>刷新</span>
                         </button>
                     </div>
@@ -235,19 +235,19 @@
                     <table class="w-full min-w-[800px]">
                         <thead>
                             <tr class="border-b border-neutral-200">
-                                <<th class="text-left py-4 px-4 text-neutral-500 font-medium">訂單編號</</th>
-                                <<th class="text-left py-4 px-4 text-neutral-500 font-medium">訂單日期</</th>
-                                <<th class="text-left py-4 px-4 text-neutral-500 font-medium">客戶名稱</</th>
-                                <<th class="text-right py-4 px-4 text-neutral-500 font-medium">訂單金額</</th>
-                                <<th class="text-center py-4 px-4 text-neutral-500 font-medium">付款狀態</</th>
-                                <<th class="text-center py-4 px-4 text-neutral-500 font-medium">操作</</th>
+                                <<<th class="text-left py-4 px-4 text-neutral-500 font-medium">訂單編號</</</th>
+                                <<<th class="text-left py-4 px-4 text-neutral-500 font-medium">訂單日期</</</th>
+                                <<<th class="text-left py-4 px-4 text-neutral-500 font-medium">客戶名稱</</</th>
+                                <<<th class="text-right py-4 px-4 text-neutral-500 font-medium">訂單金額</</</th>
+                                <<<th class="text-center py-4 px-4 text-neutral-500 font-medium">付款狀態</</</th>
+                                <<<th class="text-center py-4 px-4 text-neutral-500 font-medium">操作</</</th>
                             </tr>
                         </thead>
                         <tbody id="orderTableBody">
                             <!-- 訂單數據將通過JS動態加載 -->
                             <tr class="border-b border-neutral-100">
                                 <td colspan="6" class="py-8 text-center text-neutral-400">
-                                    <<i class="fa fa-inbox text-3xl mb-2"></</i>
+                                    <<<i class="fa fa-inbox text-3xl mb-2"></</</i>
                                     <p>暫無訂單數據</p>
                                 </td>
                             </tr>
@@ -256,19 +256,19 @@
                 </div>
 
                 <!-- 分頁控制 -->
-                <div class="flex justify-between items-center mt-6">
+                <div class="flex flex-wrap justify-between items-center mt-6 gap-4">
                     <div class="text-neutral-500 text-sm">
                         顯示 <span id="showingCount">0</span> 筆，共 <span id="totalCount">0</span> 筆
                     </div>
                     <div class="flex gap-2">
                         <button class="w-10 h-10 rounded-lg border border-neutral-200 flex items-center justify-center text-neutral-700 hover:bg-primary hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed" id="prevPage" disabled>
-                            <<i class="fa fa-chevron-left"></</i>
+                            <<<i class="fa fa-chevron-left"></</</i>
                         </button>
                         <button class="w-10 h-10 rounded-lg border border-neutral-200 flex items-center justify-center text-neutral-700 hover:bg-primary hover:text-white transition-all bg-primary text-white" id="page1">1</button>
                         <button class="w-10 h-10 rounded-lg border border-neutral-200 flex items-center justify-center text-neutral-700 hover:bg-primary hover:text-white transition-all" id="page2">2</button>
                         <button class="w-10 h-10 rounded-lg border border-neutral-200 flex items-center justify-center text-neutral-700 hover:bg-primary hover:text-white transition-all" id="page3">3</button>
                         <button class="w-10 h-10 rounded-lg border border-neutral-200 flex items-center justify-center text-neutral-700 hover:bg-primary hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed" id="nextPage">
-                            <<i class="fa fa-chevron-right"></</i>
+                            <<<i class="fa fa-chevron-right"></</</i>
                         </button>
                     </div>
                 </div>
@@ -342,7 +342,7 @@
                 tableBody.innerHTML = `
                     <tr class="border-b border-neutral-100">
                         <td colspan="6" class="py-8 text-center text-neutral-400">
-                            <<i class="fa fa-inbox text-3xl mb-2"></</i>
+                            <<<i class="fa fa-inbox text-3xl mb-2"></</</i>
                             <p>暫無訂單數據</p>
                         </td>
                     </tr>
@@ -377,7 +377,7 @@
                     </td>
                     <td class="py-4 px-4 text-center">
                         <button class="text-primary hover:text-primary/80 transition-colors">
-                            <<i class="fa fa-eye"></</i>
+                            <<<i class="fa fa-eye"></</</i>
                         </button>
                     </td>
                 `;
@@ -491,7 +491,7 @@
                 }
                 
                 // 模擬查詢效果
-                this.innerHTML = '<<i class="fa fa-spinner fa-spin"></</i><span>查詢中...</span>';
+                this.innerHTML = '<<<i class="fa fa-spinner fa-spin"></</</i><span>查詢中...</span>';
                 this.disabled = true;
                 
                 setTimeout(() => {
@@ -502,7 +502,7 @@
                     
                     renderOrderTable(filteredOrders);
                     
-                    this.innerHTML = '<<i class="fa fa-search"></</i><span>查詢</span>';
+                    this.innerHTML = '<<<i class="fa fa-search"></</</i><span>查詢</span>';
                     this.disabled = false;
                 }, 800);
             });
@@ -514,11 +514,11 @@
 
             // 刷新按鈕
             document.getElementById('refreshBtn').addEventListener('click', function() {
-                this.innerHTML = '<<i class="fa fa-spinner fa-spin"></</i><span>刷新中...</span>';
+                this.innerHTML = '<<<i class="fa fa-spinner fa-spin"></</</i><span>刷新中...</span>';
                 
                 setTimeout(() => {
                     renderOrderTable(mockOrders);
-                    this.innerHTML = '<<i class="fa fa-refresh"></</i><span>刷新</span>';
+                    this.innerHTML = '<<<i class="fa fa-refresh"></</</i><span>刷新</span>';
                 }, 600);
             });
 

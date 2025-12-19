@@ -2,6 +2,7 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LINE多元化搭車管理員 - 司機管理</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
@@ -70,6 +71,7 @@
     .main-content {
       flex: 1;
       padding: 24px;
+      max-width: calc(100vw - 200px);
     }
     /* 卡片組件 */
     .card {
@@ -78,6 +80,7 @@
       box-shadow: 0 1px 2px rgba(0,0,0,0.05);
       padding: 24px;
       margin-bottom: 20px;
+      width: 100%;
     }
     .card-title {
       font-size: 18px;
@@ -111,17 +114,18 @@
       width: 100%;
       border-collapse: collapse;
       font-size: 14px;
+      min-width: 600px;
     }
     .data-table th {
       background: #fafafa;
       color: #666;
-      padding: 12px 10px;
+      padding: 12px 15px;
       text-align: left;
       border-bottom: 1px solid #e6e6e6;
       font-weight: 600;
     }
     .data-table td {
-      padding: 12px 10px;
+      padding: 12px 15px;
       border-bottom: 1px solid #f0f0f0;
       color: #333;
     }
@@ -181,22 +185,22 @@
 </head>
 <body>
   <div class="app-container">
-    <!-- 側邊欄（新增報表統計，修正路徑） -->
+    <!-- 側邊欄（修正區域管理連結） -->
     <div class="sidebar">
       <div class="sidebar-logo">LINE多元化搭車管理員</div>
       <ul class="sidebar-menu">
         <li><a href="index.html"><<i class="fa fa-home"></</i>首頁</a></li>
-        <li><a href="area-management.html"><<i class="fa fa-map-marker"></</i>區域管理</a></li>
+        <!-- 修正：區域管理連結到當前目錄的admin-area.html -->
+        <li><a href="admin-area.html"><<i class="fa fa-map-marker"></</i>區域管理</a></li>
         <li><a href="admin-driver.html" class="active"><<i class="fa fa-car"></</i>司機管理</a></li>
         <li><a href="admin-order.html"><<i class="fa fa-list"></</i>訂單管理</a></li>
         <li><a href="finance-management.html"><<i class="fa fa-money"></</i>財務管理</a></li>
-        <!-- 新增：報表統計，連結對應admin/admin-report.html -->
-        <li><a href="admin/admin-report.html"><<i class="fa fa-bar-chart"></</i>報表統計</a></li>
+        <li><a href="admin-report.html"><<i class="fa fa-bar-chart"></</i>報表統計</a></li>
         <li><a href="../managerindex.html"><<i class="fa fa-sign-out"></</i>退出登入</a></li>
       </ul>
     </div>
 
-    <!-- 主內容區 (與order頁版面完全一致) -->
+    <!-- 主內容區（優化排版） -->
     <div class="main-content">
       <div class="card">
         <div class="card-title">司機管理</div>

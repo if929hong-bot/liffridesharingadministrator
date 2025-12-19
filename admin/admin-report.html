@@ -2,14 +2,11 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LINE多元化搭車管理員 - 報表統計</title>
-  <!-- 統一版本依賴，避免兼容性問題 -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-  <!-- 明確指定 Chart.js 4.4.8 版本（與儀表板一致） -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
-  
+  <!-- 引入圖表庫 -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     /* 全局重置 */
     * {
@@ -21,22 +18,18 @@
       background-color: #f5f5f5;
       font-family: "Microsoft JhengHei", "PingFang SC", sans-serif;
       color: #333;
-      min-height: 100vh;
     }
     /* 布局容器 */
     .app-container {
       display: flex;
       min-height: 100vh;
     }
-    /* 側邊欄 (與order頁完全一致，修正路徑) */
+    /* 側邊欄 (與order頁完全一致) */
     .sidebar {
       width: 200px;
       background: #fff;
       border-right: 1px solid #e6e6e6;
       padding: 20px 0;
-      height: 100vh;
-      position: sticky;
-      top: 0;
     }
     .sidebar-logo {
       padding: 0 20px;
@@ -72,11 +65,10 @@
       width: 16px;
       text-align: center;
     }
-    /* 主內容區 (優化滾動和間距) */
+    /* 主內容區 (與order頁版面完全一致) */
     .main-content {
       flex: 1;
       padding: 24px;
-      overflow-y: auto;
     }
     /* 卡片組件 (與order頁一致) */
     .card {
@@ -120,25 +112,11 @@
       gap: 16px;
       margin-bottom: 24px;
     }
-    @media (max-width: 1024px) {
-      .stat-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-    @media (max-width: 640px) {
-      .stat-grid {
-        grid-template-columns: 1fr;
-      }
-    }
     .stat-card {
       padding: 16px;
       border-radius: 6px;
       background-color: #fafafa;
       border: 1px solid #f0f0f0;
-      transition: all 0.2s ease;
-    }
-    .stat-card:hover {
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
     .stat-title {
       font-size: 14px;
@@ -150,7 +128,7 @@
       font-weight: 700;
       color: #333;
     }
-    /* 圖表容器 (優化響應式) */
+    /* 圖表容器 */
     .chart-container {
       height: 300px;
       margin-top: 16px;
@@ -173,7 +151,7 @@
 </head>
 <body>
   <div class="app-container">
-    <!-- 側邊欄 (修正路徑：財務管理指向單獨頁面，避免重複) -->
+    <!-- 側邊欄 (修正財務管理連結) -->
     <div class="sidebar">
       <div class="sidebar-logo">LINE多元化搭車管理員</div>
       <ul class="sidebar-menu">
@@ -181,15 +159,14 @@
         <li><a href="admin-area.html"><i class="fa fa-map-marker"></i>區域管理</a></li>
         <li><a href="admin-driver.html"><i class="fa fa-car"></i>司機管理</a></li>
         <li><a href="admin-order.html"><i class="fa fa-list"></i>訂單管理</a></li>
-        <!-- 修正：財務管理指向單獨的財務頁面 -->
-        <li><a href="admin-finance.html"><i class="fa fa-money"></i>財務管理</a></li>
-        <!-- 報表統計保持當前頁，標記為active -->
+        <!-- 修正：財務管理連結到當前目錄的finance-management.html -->
+        <li><a href="finance-management.html"><i class="fa fa-money"></i>財務管理</a></li>
         <li><a href="admin-report.html" class="active"><i class="fa fa-bar-chart"></i>報表統計</a></li>
-        <li><a href="../managerindex.html" id="logoutLink"><i class="fa fa-sign-out"></i>退出登入</a></li>
+        <li><a href="../managerindex.html"><i class="fa fa-sign-out"></i>退出登入</a></li>
       </ul>
     </div>
 
-    <!-- 主內容區 (優化交互和響應式) -->
+    <!-- 主內容區 (與order頁版面完全一致) -->
     <div class="main-content">
       <div class="card">
         <div class="card-title">報表統計</div>
@@ -266,13 +243,6 @@
   </div>
 
   <script>
-    // 解決退出登入跳轉問題（阻止默認行為，確保穩定跳轉）
-    document.getElementById('logoutLink').addEventListener('click', function(e) {
-      e.preventDefault();
-      localStorage.removeItem('currentFleetManager');
-      window.location.href = this.href;
-    });
-
     // 時間週期數據（模擬）
     const periodData = {
       day: {
@@ -310,157 +280,96 @@
       }
     };
 
-    // 切換時間週期（增加異常處理）
+    // 切換時間週期
     function switchPeriod(period, element) {
-      try {
-        // 驗證數據存在性
-        if (!periodData[period]) {
-          console.warn('無效的時間週期:', period);
-          return;
-        }
-        const data = periodData[period];
-        
-        // 更新數據
-        document.getElementById('totalOrders').textContent = data.totalOrders;
-        document.getElementById('completedOrders').textContent = data.completedOrders;
-        document.getElementById('cancelledOrders').textContent = data.cancelledOrders;
-        document.getElementById('driverOrders').textContent = data.driverOrders;
-        document.getElementById('totalIncome').textContent = data.totalIncome;
-        document.getElementById('cashIncome').textContent = data.cashIncome;
-        document.getElementById('ePayIncome').textContent = data.ePayIncome;
+      // 更新數據
+      const data = periodData[period];
+      document.getElementById('totalOrders').textContent = data.totalOrders;
+      document.getElementById('completedOrders').textContent = data.completedOrders;
+      document.getElementById('cancelledOrders').textContent = data.cancelledOrders;
+      document.getElementById('driverOrders').textContent = data.driverOrders;
+      document.getElementById('totalIncome').textContent = data.totalIncome;
+      document.getElementById('cashIncome').textContent = data.cashIncome;
+      document.getElementById('ePayIncome').textContent = data.ePayIncome;
 
-        // 更新訂單趨勢圖
-        updateOrderTrendChart(data.trendLabels, data.trendData);
+      // 更新訂單趨勢圖
+      updateOrderTrendChart(data.trendLabels, data.trendData);
 
-        // 更新選中狀態
-        document.querySelectorAll('.period-tab').forEach(tab => tab.classList.remove('active'));
-        if (element) {
-          element.classList.add('active');
-        }
-      } catch (error) {
-        console.error('切換時間週期出錯:', error);
+      // 更新選中狀態
+      document.querySelectorAll('.period-tab').forEach(tab => tab.classList.remove('active'));
+      if (element) {
+        element.classList.add('active');
       }
     }
-
-    // 初始化圖表（確保DOM加載完成後執行）
-    let incomeRatioChart = null;
-    let orderTrendChart = null;
 
     // 初始化收入佔比圖
-    function initIncomeRatioChart() {
-      try {
-        const incomeRatioCtx = document.getElementById('incomeRatioChart').getContext('2d');
-        incomeRatioChart = new Chart(incomeRatioCtx, {
-          type: 'doughnut',
-          data: {
-            labels: ['現金', '電子支付'],
-            datasets: [{
-              data: [32100, 55420],
-              backgroundColor: ['#faad14', '#00C300'],
-              borderWidth: 0,
-              cutout: '70%'
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { 
-              legend: { display: false },
-              tooltip: {
-                callbacks: {
-                  label: function(context) {
-                    const value = context.raw;
-                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                    const percentage = ((value / total) * 100).toFixed(1) + '%';
-                    return `${context.label}: NT$${value.toLocaleString()} (${percentage})`;
-                  }
-                }
-              }
-            }
-          }
-        });
-      } catch (error) {
-        console.error('初始化收入佔比圖出錯:', error);
+    const incomeRatioCtx = document.getElementById('incomeRatioChart').getContext('2d');
+    new Chart(incomeRatioCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['現金', '電子支付'],
+        datasets: [{
+          data: [32100, 55420],
+          backgroundColor: ['#faad14', '#00C300'],
+          borderWidth: 0,
+          cutout: '70%'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } }
       }
-    }
+    });
 
-    // 更新訂單趨勢圖（優化性能，避免重複創建）
+    // 初始化訂單趨勢圖
+    let orderTrendChart;
     function updateOrderTrendChart(labels, data) {
-      try {
-        // 銷毀舊圖表
-        if (orderTrendChart) {
-          orderTrendChart.destroy();
-        }
-        
-        const trendCtx = document.getElementById('orderTrendChart').getContext('2d');
-        orderTrendChart = new Chart(trendCtx, {
-          type: 'line',
-          data: {
-            labels: labels,
-            datasets: [{
-              label: '訂單數量',
-              data: data,
-              borderColor: '#00C300',
-              backgroundColor: 'rgba(0, 195, 0, 0.1)',
-              fill: true,
-              tension: 0.4,
-              pointBackgroundColor: '#00C300',
-              pointRadius: 4,
-              pointHoverRadius: 6
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { 
-              legend: { display: false },
-              tooltip: {
-                backgroundColor: 'rgba(0,0,0,0.7)',
-                padding: 10,
-                cornerRadius: 6
-              }
+      if (orderTrendChart) orderTrendChart.destroy();
+      const trendCtx = document.getElementById('orderTrendChart').getContext('2d');
+      orderTrendChart = new Chart(trendCtx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: '訂單數量',
+            data: data,
+            borderColor: '#00C300',
+            backgroundColor: 'rgba(0, 195, 0, 0.1)',
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#00C300'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { 
+              beginAtZero: true, 
+              grid: { color: 'rgba(0,0,0,0.05)' },
+              ticks: { font: { size: 12 } }
             },
-            scales: {
-              y: { 
-                beginAtZero: true, 
-                grid: { color: 'rgba(0,0,0,0.05)' },
-                ticks: { 
-                  font: { size: 12 },
-                  callback: function(value) {
-                    return value.toLocaleString();
-                  }
-                }
-              },
-              x: { 
-                grid: { display: false },
-                ticks: { font: { size: 12 } }
-              }
-            },
-            animation: {
-              duration: 500,
-              easing: 'easeOutQuart'
+            x: { 
+              grid: { display: false },
+              ticks: { font: { size: 12 } }
             }
           }
-        });
-      } catch (error) {
-        console.error('更新訂單趨勢圖出錯:', error);
-      }
+        }
+      });
     }
 
-    // 頁面載入初始化（確保DOM完全加載）
-    document.addEventListener('DOMContentLoaded', function() {
-      // 校驗登入狀態（友好提示）
+    // 頁面載入初始化
+    window.onload = () => {
+      updateOrderTrendChart(periodData.day.trendLabels, periodData.day.trendData);
+      
+      // 校驗登入狀態
       const currentManager = JSON.parse(localStorage.getItem('currentFleetManager') || 'null');
       if (!currentManager) {
-        alert('請先登入管理員帳號！');
         window.location.href = '../managerindex.html';
-        return;
       }
-
-      // 初始化圖表
-      initIncomeRatioChart();
-      updateOrderTrendChart(periodData.day.trendLabels, periodData.day.trendData);
-    });
+    };
   </script>
 </body>
 </html>
