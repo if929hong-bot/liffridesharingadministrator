@@ -9,6 +9,9 @@
     <script src='https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js'></script>
     <link href='https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css' rel='stylesheet'>
     <script>
+        // 替換為指定的Mapbox Token
+        mapboxgl.accessToken = 'pk.eyJ1IjoiaWY5Mjlob25nIiwiYSI6ImNtamQxczU2cjAweDMzZnM1Z3BvY2JkejgifQ.q-GNcs0rqWrZ3HtjhmysEQ';
+        
         tailwind.config = {
             theme: {
                 extend: {
@@ -103,7 +106,6 @@
             }
 
             try {
-                mapboxgl.accessToken = 'pk.eyJ1IjoiaWY5Mjlob25nIiwiYSI6ImNtajJ2bTRibTB4eXAzZXM4ZXphcXVhcXkifQ.uGR1UwaA6kLyWe3BGKODww';
                 map = new mapboxgl.Map({
                     container: 'passengerMap',
                     style: 'mapbox://styles/mapbox/streets-v12',

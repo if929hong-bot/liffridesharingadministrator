@@ -8,6 +8,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 Font Awesome 圖標 -->
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- 引入 Mapbox GL JS -->
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel='stylesheet'>
+    <script src='https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js'></script>
     <!-- 引入 html2canvas 實現截圖功能 -->
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
@@ -81,7 +84,18 @@
             from { opacity: 1; }
             to { opacity: 0.8; }
         }
+        /* Mapbox地圖樣式 */
+        #ride-map {
+            width: 100%;
+            height: 200px;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
     </style>
+    <script>
+        // 配置Mapbox Token
+        mapboxgl.accessToken = 'pk.eyJ1IjoiaWY5Mjlob25nIiwiYSI6ImNtamQxczU2cjAweDMzZnM1Z3BvY2JkejgifQ.q-GNcs0rqWrZ3HtjhmysEQ';
+    </script>
 </head>
 <body class="min-h-screen">
     <!-- 頁頭 -->
@@ -127,6 +141,12 @@
                     <p class="text-gray-600">抵達時間：<span id="arrive-time"></span></p>
                     <p class="text-gray-600 mt-1">乘車開始時間：<span id="ride-start-time" class="text-red-500">未開始</span></p>
                 </div>
+            </div>
+            
+            <!-- 新增行程地圖 -->
+            <div class="mt-4">
+                <p class="text-gray-600 mb-1">行程地圖：</p>
+                <div id="ride-map"></div>
             </div>
         </div>
 
@@ -216,6 +236,7 @@
         const DRIVER_ORDER_KEY = 'driverOrders';
         const DRIVER_LOGIN_KEY = 'driverLoggedIn';
         let currentOrder = null; // 當前訂單數據
+        let rideMap = null; // Mapbox地圖實例
         
         // 計費相關變量
         let rideStarted = false;        // 是否開始乘車
@@ -260,6 +281,44 @@
         const screenshotLoading = document.getElementById('screenshot-loading');
         const meterPage = document.getElementById('meter-page'); // 截圖區域
 
+        // 初始化行程地圖
+        function initRideMap(pickupAddr, dropoffAddr) {
+            // 默認坐標（台北）
+            const pickup = [121.5654, 25.0330];
+            const dropoff = [121.5700, 25.0400];
+
+            // 創建地圖
+            rideMap = new mapboxgl.Map({
+                container: 'ride-map',
+                style: 'mapbox://styles/mapbox/streets-v12',
+                center: pickup,
+                zoom: 14
+            });
+
+            // 添加導航控件
+            rideMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+            // 地圖加載完成
+            rideMap.on('load', () => {
+                // 上車點標記
+                new mapboxgl.Marker({ color: '#00C300' })
+                    .setLngLat(pickup)
+                    .setPopup(new mapboxgl.Popup().setHTML(`<b>上車地點</b><br>${pickupAddr}`))
+                    .addTo(rideMap)
+                    .togglePopup();
+
+                // 下車點標記
+                new mapboxgl.Marker({ color: '#EF4444' })
+                    .setLngLat(dropoff)
+                    .setPopup(new mapboxgl.Popup().setHTML(`<b>下車地點</b><br>${dropoffAddr}`))
+                    .addTo(rideMap);
+
+                // 調整視野
+                const bounds = new mapboxgl.LngLatBounds().extend(pickup).extend(dropoff);
+                rideMap.fitBounds(bounds, { padding: 50 });
+            });
+        }
+
         // 初始化頁面
         window.addEventListener('load', () => {
             // 1. 驗證司機登錄狀態
@@ -303,6 +362,9 @@
             pickupLocationEl.textContent = currentOrder.pickup || '-';
             dropoffLocationEl.textContent = currentOrder.dropoff || '-';
             arriveTimeEl.textContent = currentOrder.arriveTime || '未記錄';
+            
+            // 初始化行程地圖
+            initRideMap(currentOrder.pickup || '未知地點', currentOrder.dropoff || '未知地點');
             
             // 設置初始金額（起步價）
             currentAmount = FARE_RULES.startPrice;
@@ -385,6 +447,42 @@
             if (elapsedSeconds % 10 === 0) {
                 currentMileage += 0.1;
                 rideMileageEl.textContent = `${currentMileage.toFixed(1)} KM`;
+                
+                // 更新地圖視角（模擬移動）
+                if (rideMap && rideStarted) {
+                    const currentLng = 121.5654 + (currentMileage * 0.001);
+                    const currentLat = 25.0330 + (currentMileage * 0.001);
+                    rideMap.panTo([currentLng, currentLat]);
+                    
+                    // 添加移動軌跡
+                    if (rideMap.getSource('track')) {
+                        const trackSource = rideMap.getSource('track');
+                        const trackData = trackSource._data;
+                        trackData.geometry.coordinates.push([currentLng, currentLat]);
+                        trackSource.setData(trackData);
+                    } else {
+                        rideMap.addSource('track', {
+                            type: 'geojson',
+                            data: {
+                                type: 'Feature',
+                                geometry: {
+                                    type: 'LineString',
+                                    coordinates: [[121.5654, 25.0330], [currentLng, currentLat]]
+                                }
+                            }
+                        });
+                        rideMap.addLayer({
+                            id: 'track',
+                            type: 'line',
+                            source: 'track',
+                            paint: {
+                                'line-color': '#3b82f6',
+                                'line-width': 4,
+                                'line-opacity': 0.7
+                            }
+                        });
+                    }
+                }
             }
             
             // 計算並更新金額

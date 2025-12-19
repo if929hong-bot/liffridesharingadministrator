@@ -8,6 +8,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 Font Awesome 圖標 -->
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- 引入 Mapbox GL JS -->
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel='stylesheet'>
+    <script src='https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js'></script>
     <style>
         body {
             font-family: 'Noto Sans TC', sans-serif;
@@ -22,7 +25,18 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
         }
+        /* 新增Mapbox地图样式 */
+        #order-map {
+            width: 100%;
+            height: 250px;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
     </style>
+    <script>
+        // 配置Mapbox Token
+        mapboxgl.accessToken = 'pk.eyJ1IjoiaWY5Mjlob25nIiwiYSI6ImNtamQxczU2cjAweDMzZnM1Z3BvY2JkejgifQ.q-GNcs0rqWrZ3HtjhmysEQ';
+    </script>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <!-- 頁頭 -->
@@ -105,6 +119,15 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- 新增Mapbox地图展示區 -->
+            <div class="mt-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
+                    <i class="fa fa-map text-green-500"></i>
+                    行程地圖
+                </h3>
+                <div id="order-map"></div>
+            </div>
         </div>
 
         <!-- 費用信息 -->
@@ -153,6 +176,7 @@
         const DRIVER_ORDER_KEY = 'driverOrders';
         const DRIVER_LOGIN_KEY = 'driverLoggedIn';
         let currentOrder = null; // 當前訂單數據
+        let orderMap = null; // Mapbox地圖實例
 
         // DOM 元素獲取
         const driverNameEl = document.getElementById('driver-name');
@@ -199,6 +223,72 @@
             loadOrderData(orderId);
         });
 
+        // 初始化Mapbox地圖
+        function initOrderMap(pickupAddr, dropoffAddr) {
+            // 默認坐標（台北）
+            const defaultPickup = [121.5654, 25.0330];
+            const defaultDropoff = [121.5700, 25.0400];
+
+            // 創建地圖
+            orderMap = new mapboxgl.Map({
+                container: 'order-map',
+                style: 'mapbox://styles/mapbox/streets-v12',
+                center: defaultPickup,
+                zoom: 14
+            });
+
+            // 添加導航控件
+            orderMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+            // 地圖加載完成後添加標記
+            orderMap.on('load', () => {
+                // 上車點標記（綠色）
+                new mapboxgl.Marker({ color: '#00A86B' })
+                    .setLngLat(defaultPickup)
+                    .setPopup(new mapboxgl.Popup().setHTML(`<b>上車地點</b><br>${pickupAddr}`))
+                    .addTo(orderMap)
+                    .togglePopup();
+
+                // 下車點標記（紅色）
+                new mapboxgl.Marker({ color: '#EF4444' })
+                    .setLngLat(defaultDropoff)
+                    .setPopup(new mapboxgl.Popup().setHTML(`<b>下車地點</b><br>${dropoffAddr}`))
+                    .addTo(orderMap);
+
+                // 繪製路線
+                orderMap.addSource('route', {
+                    type: 'geojson',
+                    data: {
+                        type: 'Feature',
+                        geometry: {
+                            type: 'LineString',
+                            coordinates: [defaultPickup, defaultDropoff]
+                        }
+                    }
+                });
+
+                orderMap.addLayer({
+                    id: 'route',
+                    type: 'line',
+                    source: 'route',
+                    layout: {
+                        'line-join': 'round',
+                        'line-cap': 'round'
+                    },
+                    paint: {
+                        'line-color': '#00A86B',
+                        'line-width': 3
+                    }
+                });
+
+                // 調整視野包含兩個點
+                const bounds = new mapboxgl.LngLatBounds()
+                    .extend(defaultPickup)
+                    .extend(defaultDropoff);
+                orderMap.fitBounds(bounds, { padding: 50 });
+            });
+        }
+
         // 加載訂單數據
         function loadOrderData(orderId) {
             const orders = JSON.parse(localStorage.getItem(DRIVER_ORDER_KEY) || '[]');
@@ -220,6 +310,9 @@
             orderTimeEl.textContent = currentOrder.orderTime || '未設定';
             acceptTimeEl.textContent = currentOrder.startTime || '未記錄';
             orderAmountEl.textContent = `NT$ ${currentOrder.amount || 0}`;
+
+            // 初始化地圖
+            initOrderMap(currentOrder.pickup || '未知地點', currentOrder.dropoff || '未知地點');
 
             // 更新訂單狀態顯示
             updateOrderStatusDisplay();
