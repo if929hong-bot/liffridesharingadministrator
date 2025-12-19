@@ -8,6 +8,10 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- 引入 Font Awesome -->
   <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <!-- 引入高德地圖 API（替換成自己的 key） -->
+  <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=你的高德地圖Key"></script>
+  <!-- 引入高德地圖拾取器插件 -->
+  <script type="text/javascript" src="https://webapi.amap.com/ui/1.0/main.js?v=1.0.11"></script>
   
   <!-- 自定義配置 -->
   <script>
@@ -15,9 +19,8 @@
       theme: {
         extend: {
           colors: {
-            primary: '#00A86B', // 綠色主色
-            secondary: '#F5F5F5', // 淺灰色背景
-            dark: '#333333', // 深灰色文字
+            primary: '#00A86B', 
+            dark: '#333333',
           },
           fontFamily: {
             sans: ['Helvetica Neue', 'Arial', 'sans-serif'],
@@ -29,9 +32,6 @@
   
   <style type="text/tailwindcss">
     @layer utilities {
-      .content-auto {
-        content-visibility: auto;
-      }
       .btn-primary {
         @apply bg-primary text-white py-3 px-6 rounded-lg font-medium transition-all duration-300 hover:bg-primary/90 active:scale-95 shadow-md;
       }
@@ -44,18 +44,27 @@
       .map-btn {
         @apply w-full bg-gray-100 text-gray-600 py-2 px-4 rounded-lg mt-1 flex items-center justify-center gap-2 cursor-pointer hover:bg-gray-200 transition-colors;
       }
+      /* 地圖彈窗樣式 */
+      .map-modal {
+        @apply fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden;
+      }
+      .map-modal-content {
+        @apply bg-white rounded-xl p-4 w-[90%] max-w-[800px] h-[70vh] mx-4;
+      }
+      .map-close-btn {
+        @apply absolute top-4 right-4 bg-white/80 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer hover:bg-gray-200;
+      }
     }
   </style>
 </head>
-<body class="bg-gray-50 font-sans text-dark min-h-screen">
-  <!-- 頂部導航欄（刪除了右上角的乘客/司機/管理員鏈接） -->
+<body class="bg-gray-50 font-sans text-dark min-h-screen relative">
+  <!-- 頂部導航欄 -->
   <header class="bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
     <div class="container mx-auto px-4 py-3 flex justify-between items-center">
       <div class="flex items-center space-x-2">
         <i class="fa fa-car text-primary text-2xl"></i>
         <h1 class="text-xl font-bold">搭車自由</h1>
       </div>
-      <!-- 徹底刪除右上角導航鏈接 -->
     </div>
   </header>
 
@@ -84,21 +93,21 @@
                 <input type="tel" class="input-field" placeholder="輸入您的聯絡電話" required>
               </div>
               
-              <!-- 上車地點（修正 icon 標籤） -->
+              <!-- 上車地點 -->
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">上車地點</label>
-                <input type="text" class="input-field" placeholder="輸入您的位置" required>
-                <button type="button" class="map-btn">
+                <input type="text" id="pickup-location" class="input-field" placeholder="輸入您的位置" required>
+                <button type="button" class="map-btn" onclick="openMap('pickup-location')">
                   <i class="fa fa-map-marker"></i>
                   <span>開啟地圖選擇</span>
                 </button>
               </div>
               
-              <!-- 下車地點（修正 icon 標籤） -->
+              <!-- 下車地點 -->
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">下車地點</label>
-                <input type="text" class="input-field" placeholder="輸入目的地" required>
-                <button type="button" class="map-btn">
+                <input type="text" id="dropoff-location" class="input-field" placeholder="輸入目的地" required>
+                <button type="button" class="map-btn" onclick="openMap('dropoff-location')">
                   <i class="fa fa-map-marker"></i>
                   <span>開啟地圖選擇</span>
                 </button>
@@ -124,5 +133,84 @@
       </div>
     </section>
   </main>
+
+  <!-- 地圖彈窗 -->
+  <div id="mapModal" class="map-modal">
+    <div class="map-modal-content relative">
+      <div class="map-close-btn" onclick="closeMap()">
+        <i class="fa fa-times"></i>
+      </div>
+      <!-- 地圖容器 -->
+      <div id="mapContainer" class="w-full h-full rounded-lg"></div>
+    </div>
+  </div>
+
+  <script>
+    let currentInputId = ''; // 當前要回填的輸入框ID
+    let map = null; // 地圖實例
+
+    // 打開地圖選擇器
+    function openMap(inputId) {
+      currentInputId = inputId;
+      const modal = document.getElementById('mapModal');
+      modal.classList.remove('hidden');
+      
+      // 初始化地圖（只初始化一次）
+      if (!map) {
+        map = new AMap.Map('mapContainer', {
+          zoom: 15, // 默認縮放級別
+          center: [121.4737, 31.2304], // 默認定位到上海（可替換為使用者所在城市）
+          resizeEnable: true
+        });
+        
+        // 添加定位控件
+        map.addControl(new AMap.Geolocation({
+          enableHighAccuracy: true, // 高精度定位
+          timeout: 10000,
+          buttonPosition: 'RB' // 按鈕位置：右下
+        }));
+        
+        // 添加點擊選取位置功能
+        map.on('click', function(e) {
+          const lnglat = e.lnglat;
+          // 逆地理編碼：經緯度轉地址
+          AMap.plugin('AMap.Geocoder', function() {
+            const geocoder = new AMap.Geocoder({
+              radius: 1000,
+              extensions: 'all'
+            });
+            
+            geocoder.getAddress(lnglat, function(status, result) {
+              if (status === 'complete' && result.info === 'OK') {
+                const address = result.regeocode.formattedAddress;
+                // 回填到對應輸入框
+                document.getElementById(currentInputId).value = address;
+                // 關閉地圖彈窗
+                closeMap();
+              }
+            });
+          });
+          
+          // 添加標記點
+          map.clearMap(); // 清除原有標記
+          new AMap.Marker({
+            position: lnglat,
+            map: map
+          });
+        });
+      }
+    }
+
+    // 關閉地圖彈窗
+    function closeMap() {
+      document.getElementById('mapModal').classList.add('hidden');
+    }
+
+    // 表單提交阻止默認行為
+    document.querySelector('form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      alert('叫車申請已提交！司機將盡快聯繫您');
+    });
+  </script>
 </body>
 </html>
