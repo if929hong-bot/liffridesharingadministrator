@@ -219,12 +219,16 @@
       <button class="search-btn" id="save-price">儲存價格設定</button>
     </section>
 
-    <!-- 2. 銀行帳戶設定面板 -->
+    <!-- 2. 銀行帳戶設定面板（新增銀行分行欄位） -->
     <section id="bank-setting" class="panel card">
       <h3>銀行帳戶設定</h3>
       <div class="form-group" style="margin-bottom:1.5rem;">
         <label style="display:block; margin-bottom:0.5rem; font-size:1rem;">銀行名稱 <span style="color:red">*</span></label>
         <input type="text" id="bank-name" class="search-input" placeholder="請輸入銀行名稱" required>
+      </div>
+      <div class="form-group" style="margin-bottom:1.5rem;">
+        <label style="display:block; margin-bottom:0.5rem; font-size:1rem;">銀行分行 <span style="color:red">*</span></label>
+        <input type="text" id="bank-branch" class="search-input" placeholder="請輸入銀行分行（例如：台北信義分行）" required>
       </div>
       <div class="form-group" style="margin-bottom:1.5rem;">
         <label style="display:block; margin-bottom:0.5rem; font-size:1rem;">戶名 <span style="color:red">*</span></label>
@@ -247,9 +251,9 @@
       <table class="table">
         <thead>
           <tr>
-            <<<th>車隊名稱</</</th>
-            <<<th>繳費週期</</</th>
-            <<<th>總金額（NT$）</</</th>
+            <th>車隊名稱</th>
+            <th>繳費週期</th>
+            <th>總金額（NT$）</th>
           </tr>
         </thead>
         <tbody id="payment-records-list">
@@ -267,12 +271,12 @@
       <table class="table">
         <thead>
           <tr>
-            <<<th>車隊名稱</</</th>
-            <<<th>管理員姓名</</</th>
-            <<<th>聯繫電話</</</th>
-            <<<th>信箱</</</th>
-            <<<th>帳號</</</th>
-            <<<th>操作</</</th>
+            <th>車隊名稱</th>
+            <th>管理員姓名</th>
+            <th>聯繫電話</th>
+            <th>信箱</th>
+            <th>帳號</th>
+            <th>操作</th>
           </tr>
         </thead>
         <tbody id="register-apply-list">
@@ -295,14 +299,14 @@
       <table class="table">
         <thead>
           <tr>
-            <<<th>車隊名稱</</</th>
-            <<<th>管理員姓名</</</th>
-            <<<th>聯繫電話</</</th>
-            <<<th>信箱</</</th>
-            <<<th>帳號</</</th>
-            <<<th>密碼</</</th>
-            <<<th>狀態</</</th>
-            <<<th>操作</</</th>
+            <th>車隊名稱</th>
+            <th>管理員姓名</th>
+            <th>聯繫電話</th>
+            <th>信箱</th>
+            <th>帳號</th>
+            <th>密碼</th>
+            <th>狀態</th>
+            <th>操作</th>
           </tr>
         </thead>
         <tbody id="fleet-manager-list">
@@ -321,10 +325,10 @@
       <table class="table">
         <thead>
           <tr>
-            <<<th>車隊名稱</</</th>
-            <<<th>繳費紀錄檔案</</</th>
-            <<<th>上傳時間</</</th>
-            <<<th>操作</</</th>
+            <th>車隊名稱</th>
+            <th>繳費紀錄檔案</th>
+            <th>上傳時間</th>
+            <th>操作</th>
           </tr>
         </thead>
         <tbody>
@@ -368,16 +372,25 @@
       alert('租金價格已儲存！');
     });
 
-    // 3. 銀行帳戶設定
+    // 3. 銀行帳戶設定（新增分行欄位處理）
     document.getElementById('save-bank').addEventListener('click', () => {
       const bankName = document.getElementById('bank-name').value.trim();
+      const bankBranch = document.getElementById('bank-branch').value.trim(); // 新增分行欄位
       const accountName = document.getElementById('bank-account-name').value.trim();
       const accountNumber = document.getElementById('bank-account-number').value.trim();
-      if (!bankName || !accountName || !accountNumber) {
-        alert('請完整填寫銀行名稱、戶名與銀行帳號！');
+      
+      // 驗證所有必填欄位
+      if (!bankName || !bankBranch || !accountName || !accountNumber) {
+        alert('請完整填寫銀行名稱、銀行分行、戶名與銀行帳號！');
         return;
       }
-      const bankData = { bankName, accountName, accountNumber };
+      
+      const bankData = { 
+        bankName, 
+        bankBranch, // 新增分行資訊
+        accountName, 
+        accountNumber 
+      };
       localStorage.setItem(BANK_KEY, JSON.stringify(bankData));
       alert('銀行帳戶已儲存！');
     });
@@ -552,7 +565,7 @@
     // 9. 搜尋註冊申請
     document.getElementById('search-register-apply').addEventListener('input', loadRegisterApply);
 
-    // 10. 載入既有設定
+    // 10. 載入既有設定（新增分行欄位還原）
     window.addEventListener('load', () => {
       const storedPrice = JSON.parse(localStorage.getItem(PRICE_KEY) || '{}');
       document.getElementById('monthly-price').value = storedPrice.monthly || 9500;
@@ -562,6 +575,7 @@
 
       const storedBank = JSON.parse(localStorage.getItem(BANK_KEY) || '{}');
       document.getElementById('bank-name').value = storedBank.bankName || '';
+      document.getElementById('bank-branch').value = storedBank.bankBranch || ''; // 還原分行資訊
       document.getElementById('bank-account-name').value = storedBank.accountName || '';
       document.getElementById('bank-account-number').value = storedBank.accountNumber || '';
 
