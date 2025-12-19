@@ -28,6 +28,9 @@
       background: #fff;
       border-right: 1px solid #e6e6e6;
       padding: 20px 0;
+      height: 100vh;
+      position: sticky;
+      top: 0;
     }
     .sidebar-logo {
       padding: 0 20px;
@@ -178,16 +181,18 @@
 </head>
 <body>
   <div class="app-container">
-    <!-- 側邊欄 (刪除系統設置，與order頁風格統一) -->
+    <!-- 側邊欄（新增報表統計，修正路徑） -->
     <div class="sidebar">
       <div class="sidebar-logo">LINE多元化搭車管理員</div>
       <ul class="sidebar-menu">
-        <li><a href="index.html"><i class="fa fa-home"></i>首頁</a></li>
-        <li><a href="area-management.html"><i class="fa fa-map-marker"></i>區域管理</a></li>
-        <li><a href="admin-driver.html" class="active"><i class="fa fa-car"></i>司機管理</a></li>
-        <li><a href="admin-order.html"><i class="fa fa-list"></i>訂單管理</a></li>
-        <li><a href="finance-management.html"><i class="fa fa-money"></i>財務管理</a></li>
-        <li><a href="../managerindex.html"><i class="fa fa-sign-out"></i>退出登入</a></li>
+        <li><a href="index.html"><<i class="fa fa-home"></</i>首頁</a></li>
+        <li><a href="area-management.html"><<i class="fa fa-map-marker"></</i>區域管理</a></li>
+        <li><a href="admin-driver.html" class="active"><<i class="fa fa-car"></</i>司機管理</a></li>
+        <li><a href="admin-order.html"><<i class="fa fa-list"></</i>訂單管理</a></li>
+        <li><a href="finance-management.html"><<i class="fa fa-money"></</i>財務管理</a></li>
+        <!-- 新增：報表統計，連結對應admin/admin-report.html -->
+        <li><a href="admin/admin-report.html"><<i class="fa fa-bar-chart"></</i>報表統計</a></li>
+        <li><a href="../managerindex.html"><<i class="fa fa-sign-out"></</i>退出登入</a></li>
       </ul>
     </div>
 
@@ -209,12 +214,12 @@
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>申請人</th>
-                  <th>帳號</th>
-                  <th>車牌號碼</th>
-                  <th>車型</th>
-                  <th>申請時間</th>
-                  <th>操作</th>
+                  <<th>申請人</</th>
+                  <<th>帳號</</th>
+                  <<th>車牌號碼</</th>
+                  <<th>車型</</th>
+                  <<th>申請時間</</th>
+                  <<th>操作</</th>
                 </tr>
               </thead>
               <tbody>
@@ -262,12 +267,12 @@
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>司機姓名</th>
-                  <th>帳號</th>
-                  <th>車牌號碼</th>
-                  <th>車型</th>
-                  <th>通過時間</th>
-                  <th>操作</th>
+                  <<th>司機姓名</</th>
+                  <<th>帳號</</th>
+                  <<th>車牌號碼</</th>
+                  <<th>車型</</th>
+                  <<th>通過時間</</th>
+                  <<th>操作</</th>
                 </tr>
               </thead>
               <tbody>
@@ -304,11 +309,11 @@
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>申請人</th>
-                  <th>帳號</th>
-                  <th>車牌號碼</th>
-                  <th>拒絕時間</th>
-                  <th>操作</th>
+                  <<th>申請人</</th>
+                  <<th>帳號</</th>
+                  <<th>車牌號碼</</th>
+                  <<th>拒絕時間</</th>
+                  <<th>操作</</th>
                 </tr>
               </thead>
               <tbody>
