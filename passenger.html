@@ -6,14 +6,13 @@
   <title>搭車自由 - 乘客入口</title>
   <!-- 引入 Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- 引入 Font Awesome -->
+  <!-- 只保留必要的 Font Awesome 核心（避免多餘 icon） -->
   <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-  <!-- 引入高德地圖 API（替換成自己的 key） -->
+  <!-- 引入高德地圖 API（替換成自己的 Key，免費申請） -->
   <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=你的高德地圖Key"></script>
-  <!-- 引入高德地圖拾取器插件 -->
+  <!-- 高德地址自動補全插件 -->
   <script type="text/javascript" src="https://webapi.amap.com/ui/1.0/main.js?v=1.0.11"></script>
   
-  <!-- 自定義配置 -->
   <script>
     tailwind.config = {
       theme: {
@@ -41,24 +40,18 @@
       .card {
         @apply bg-white rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg;
       }
-      .map-btn {
-        @apply w-full bg-gray-100 text-gray-600 py-2 px-4 rounded-lg mt-1 flex items-center justify-center gap-2 cursor-pointer hover:bg-gray-200 transition-colors;
+      /* 內嵌地圖選擇的輸入框容器 */
+      .location-input-wrapper {
+        @apply relative;
       }
-      /* 地圖彈窗樣式 */
-      .map-modal {
-        @apply fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden;
-      }
-      .map-modal-content {
-        @apply bg-white rounded-xl p-4 w-[90%] max-w-[800px] h-[70vh] mx-4;
-      }
-      .map-close-btn {
-        @apply absolute top-4 right-4 bg-white/80 rounded-full w-8 h-8 flex items-center justify-center cursor-pointer hover:bg-gray-200;
+      .location-icon {
+        @apply absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 cursor-pointer hover:text-primary transition-colors;
       }
     }
   </style>
 </head>
-<body class="bg-gray-50 font-sans text-dark min-h-screen relative">
-  <!-- 頂部導航欄 -->
+<body class="bg-gray-50 font-sans text-dark min-h-screen">
+  <!-- 頂部導航欄（僅保留必要元素，無多餘 icon） -->
   <header class="bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
     <div class="container mx-auto px-4 py-3 flex justify-between items-center">
       <div class="flex items-center space-x-2">
@@ -68,7 +61,7 @@
     </div>
   </header>
 
-  <!-- 主要內容區域 -->
+  <!-- 主要內容區域（布局徹底優化） -->
   <main class="container mx-auto px-4 pt-24 pb-16">
     <section>
       <div class="max-w-md mx-auto">
@@ -78,9 +71,9 @@
             <p class="text-gray-600">無需登錄，立即叫車</p>
           </div>
           
-          <!-- 叫車表單 -->
+          <!-- 叫車表單（徹底清理多餘元素） -->
           <form>
-            <div class="space-y-4">
+            <div class="space-y-5">
               <!-- 姓名 -->
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">姓名</label>
@@ -93,24 +86,22 @@
                 <input type="tel" class="input-field" placeholder="輸入您的聯絡電話" required>
               </div>
               
-              <!-- 上車地點 -->
+              <!-- 上車地點（內嵌地圖選擇） -->
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">上車地點</label>
-                <input type="text" id="pickup-location" class="input-field" placeholder="輸入您的位置" required>
-                <button type="button" class="map-btn" onclick="openMap('pickup-location')">
-                  <i class="fa fa-map-marker"></i>
-                  <span>開啟地圖選擇</span>
-                </button>
+                <div class="location-input-wrapper">
+                  <input type="text" id="pickup-location" class="input-field pr-10" placeholder="輸入您的位置" required>
+                  <i class="fa fa-map-marker location-icon" onclick="chooseLocation('pickup-location')"></i>
+                </div>
               </div>
               
-              <!-- 下車地點 -->
+              <!-- 下車地點（內嵌地圖選擇） -->
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">下車地點</label>
-                <input type="text" id="dropoff-location" class="input-field" placeholder="輸入目的地" required>
-                <button type="button" class="map-btn" onclick="openMap('dropoff-location')">
-                  <i class="fa fa-map-marker"></i>
-                  <span>開啟地圖選擇</span>
-                </button>
+                <div class="location-input-wrapper">
+                  <input type="text" id="dropoff-location" class="input-field pr-10" placeholder="輸入目的地" required>
+                  <i class="fa fa-map-marker location-icon" onclick="chooseLocation('dropoff-location')"></i>
+                </div>
               </div>
               
               <!-- 乘客人數 -->
@@ -125,7 +116,7 @@
               </div>
             </div>
             
-            <button type="submit" class="btn-primary w-full mt-6">
+            <button type="submit" class="btn-primary w-full mt-8">
               我要叫車
             </button>
           </form>
@@ -134,79 +125,65 @@
     </section>
   </main>
 
-  <!-- 地圖彈窗 -->
-  <div id="mapModal" class="map-modal">
-    <div class="map-modal-content relative">
-      <div class="map-close-btn" onclick="closeMap()">
-        <i class="fa fa-times"></i>
-      </div>
-      <!-- 地圖容器 -->
-      <div id="mapContainer" class="w-full h-full rounded-lg"></div>
-    </div>
-  </div>
-
   <script>
-    let currentInputId = ''; // 當前要回填的輸入框ID
-    let map = null; // 地圖實例
+    // 初始化高德地址自動補全（頁面加載完成後執行）
+    window.onload = function() {
+      // 初始化上車地點補全
+      initAddressAutoComplete('pickup-location');
+      // 初始化下車地點補全
+      initAddressAutoComplete('dropoff-location');
+    };
 
-    // 打開地圖選擇器
-    function openMap(inputId) {
-      currentInputId = inputId;
-      const modal = document.getElementById('mapModal');
-      modal.classList.remove('hidden');
-      
-      // 初始化地圖（只初始化一次）
-      if (!map) {
-        map = new AMap.Map('mapContainer', {
-          zoom: 15, // 默認縮放級別
-          center: [121.4737, 31.2304], // 默認定位到上海（可替換為使用者所在城市）
-          resizeEnable: true
+    // 地址自動補全初始化函數
+    function initAddressAutoComplete(inputId) {
+      const input = document.getElementById(inputId);
+      // 加載高德地址補全插件
+      AMapUI.load(['ui/geo/DistrictSearch', 'ui/input/AddressInput'], function(DistrictSearch, AddressInput) {
+        // 創建地址輸入框實例
+        const addressInput = new AddressInput({
+          input: input,
+          searchRadius: 5000,
+          // 默認定位到台灣（可根據需要調整）
+          districtSearch: new DistrictSearch({
+            level: 'city',
+            subdistrict: 3
+          })
         });
         
-        // 添加定位控件
-        map.addControl(new AMap.Geolocation({
-          enableHighAccuracy: true, // 高精度定位
-          timeout: 10000,
-          buttonPosition: 'RB' // 按鈕位置：右下
-        }));
-        
-        // 添加點擊選取位置功能
-        map.on('click', function(e) {
-          const lnglat = e.lnglat;
-          // 逆地理編碼：經緯度轉地址
-          AMap.plugin('AMap.Geocoder', function() {
-            const geocoder = new AMap.Geocoder({
-              radius: 1000,
-              extensions: 'all'
-            });
-            
-            geocoder.getAddress(lnglat, function(status, result) {
-              if (status === 'complete' && result.info === 'OK') {
-                const address = result.regeocode.formattedAddress;
-                // 回填到對應輸入框
-                document.getElementById(currentInputId).value = address;
-                // 關閉地圖彈窗
-                closeMap();
-              }
-            });
-          });
-          
-          // 添加標記點
-          map.clearMap(); // 清除原有標記
-          new AMap.Marker({
-            position: lnglat,
-            map: map
-          });
+        // 選擇地址後的回調
+        addressInput.on('selected', function(result) {
+          input.value = result.address;
         });
-      }
+      });
     }
 
-    // 關閉地圖彈窗
-    function closeMap() {
-      document.getElementById('mapModal').classList.add('hidden');
+    // 點擊地圖icon選擇位置（喚醒定位並回填）
+    function chooseLocation(inputId) {
+      const input = document.getElementById(inputId);
+      // 創建高德定位實例
+      const geolocation = new AMap.Geolocation({
+        enableHighAccuracy: true, // 高精度定位
+        timeout: 10000,
+        buttonPosition: 'RB'
+      });
+
+      // 執行定位
+      geolocation.getCurrentPosition(function(status, result) {
+        if (status === 'complete') {
+          // 定位成功，逆地理編碼獲取地址
+          const geocoder = new AMap.Geocoder();
+          geocoder.getAddress(result.position, function(status, res) {
+            if (status === 'complete') {
+              input.value = res.regeocode.formattedAddress;
+            }
+          });
+        } else {
+          alert('定位失敗，請手動輸入地址');
+        }
+      });
     }
 
-    // 表單提交阻止默認行為
+    // 表單提交阻止默認行為（避免頁面刷新）
     document.querySelector('form').addEventListener('submit', function(e) {
       e.preventDefault();
       alert('叫車申請已提交！司機將盡快聯繫您');
