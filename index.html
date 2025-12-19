@@ -8,6 +8,12 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- 引入 Font Awesome -->
   <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <!-- 引入 Leaflet 地圖庫 -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- 引入地址解析插件 -->
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
   
   <!-- 自定義配置 -->
   <script>
@@ -58,6 +64,13 @@
       }
       .modal-content {
         @apply bg-white rounded-xl p-8 max-w-md w-full mx-4 text-center;
+      }
+      /* 地圖容器樣式 */
+      .map-container {
+        @apply w-full h-[300px] mt-2 rounded-lg border border-gray-200 hidden;
+      }
+      .map-btn {
+        @apply w-full py-2 mt-1 bg-gray-100 text-dark rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium;
       }
     }
   </style>
@@ -113,13 +126,23 @@
                 <label class="block text-left text-sm font-medium text-gray-700 mb-1">電話</label>
                 <input type="tel" class="input-field" name="passenger-phone" placeholder="輸入您的聯絡電話" required>
               </div>
+              <!-- 上車地點（地圖選擇） -->
               <div>
                 <label class="block text-left text-sm font-medium text-gray-700 mb-1">上車地點</label>
-                <input type="text" class="input-field" name="pickup-location" placeholder="輸入您的位置" required>
+                <input type="text" class="input-field" id="pickup-location" name="pickup-location" placeholder="從地圖選擇位置" required>
+                <button type="button" class="map-btn" onclick="openMap('pickup')">
+                  <i class="fa fa-map-marker mr-2"></i>開啟地圖選擇
+                </button>
+                <div id="pickupMap" class="map-container"></div>
               </div>
+              <!-- 下車地點（地圖選擇） -->
               <div>
                 <label class="block text-left text-sm font-medium text-gray-700 mb-1">下車地點</label>
-                <input type="text" class="input-field" name="dropoff-location" placeholder="輸入目的地" required>
+                <input type="text" class="input-field" id="dropoff-location" name="dropoff-location" placeholder="從地圖選擇位置" required>
+                <button type="button" class="map-btn" onclick="openMap('dropoff')">
+                  <i class="fa fa-map-marker mr-2"></i>開啟地圖選擇
+                </button>
+                <div id="dropoffMap" class="map-container"></div>
               </div>
               <div>
                 <label class="block text-left text-sm font-medium text-gray-700 mb-1">乘客人數</label>
@@ -441,6 +464,87 @@
 
   <!-- JavaScript -->
   <script>
+    // ===== 地圖選擇功能 =====
+    let currentMapTarget = ''; // 當前選擇的是上車/下車地圖
+    let mapInstances = {};     // 儲存地圖實例
+    let markers = {};          // 儲存地圖標記
+    
+    // 開啟地圖選擇器
+    function openMap(target) {
+      currentMapTarget = target;
+      const mapDiv = document.getElementById(`${target}Map`);
+      
+      // 隱藏其他地圖，顯示當前地圖
+      document.querySelectorAll('.map-container').forEach(div => {
+        div.classList.add('hidden');
+      });
+      mapDiv.classList.remove('hidden');
+      
+      // 初始化地圖（僅初始化一次）
+      if (!mapInstances[target]) {
+        // 建立地圖實例（預設定位到台北）
+        mapInstances[target] = L.map(mapDiv).setView([25.0330, 121.5654], 15);
+        
+        // 載入 OpenStreetMap 地圖圖層
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(mapInstances[target]);
+        
+        // 添加地址搜尋控件
+        L.Control.geocoder({
+          defaultMarkGeocode: false,
+          placeholder: '搜尋地址...'
+        }).on('markgeocode', function(e) {
+          const latlng = e.geocode.center;
+          placeMarker(latlng, target); // 搜尋地址後標記位置
+        }).addTo(mapInstances[target]);
+        
+        // 點擊地圖任意位置選擇
+        mapInstances[target].on('click', function(e) {
+          placeMarker(e.latlng, target);
+        });
+      }
+    }
+    
+    // 在地圖上標記位置並解析地址
+    function placeMarker(latlng, target) {
+      // 移除舊標記
+      if (markers[target]) {
+        mapInstances[target].removeLayer(markers[target]);
+      }
+      
+      // 添加新標記
+      markers[target] = L.marker(latlng).addTo(mapInstances[target]);
+      mapInstances[target].panTo(latlng); // 地圖自動平移到標記點
+      
+      // 透過 Nominatim 將座標轉換為地址
+      fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}&zoom=18&addressdetails=1&accept-language=zh-TW`)
+        .then(res => res.json())
+        .then(data => {
+          // 組合易讀的地址
+          let address = '';
+          if (data.address) {
+            address = [
+              data.address.city || data.address.town || '',
+              data.address.road || '',
+              data.address.house_number || ''
+            ].filter(Boolean).join('');
+          }
+          // 若解析失敗則顯示座標
+          if (!address) {
+            address = `(${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)})`;
+          }
+          
+          // 填入對應的輸入框
+          document.getElementById(`${target}-location`).value = address;
+        })
+        .catch(err => {
+          // 錯誤處理：顯示座標
+          document.getElementById(`${target}-location`).value = `(${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)})`;
+        });
+    }
+
+    // ===== 原有頁面功能 =====
     // 移動菜單切換
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
     const mobileMenu = document.getElementById('mobile-menu');
