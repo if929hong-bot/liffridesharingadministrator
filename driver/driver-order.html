@@ -1,394 +1,206 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>司機訂單管理 - 多元化乘車管理系統</title>
-    <!-- 引入 Tailwind CSS 簡化樣式 -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 引入 Font Awesome 圖標 -->
-    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Noto Sans TC', sans-serif;
-        }
-        .order-card {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
-        }
-        .order-card:hover {
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-        }
-        .refresh-animation {
-            animation: rotate 1s linear infinite;
-        }
-        @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>搭車自由 - 司機端</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <!-- Leaflet OSM -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#00A86B',
+            dark: '#333333',
+            light: '#F5F5F5'
+          },
+          fontFamily: {
+            sans: ['Helvetica Neue', 'Arial', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .btn-primary { @apply bg-primary text-white py-3 px-6 rounded-lg font-medium transition-all duration-300 hover:bg-primary/90 active:scale-95 shadow-md; }
+      .card { @apply bg-white rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg; }
+      .order-item { @apply border border-gray-200 rounded-lg p-4 mb-3 bg-white shadow-sm hover:border-primary cursor-pointer; }
+      #driver-map { @apply w-full h-[250px] rounded-lg mb-4; }
+    }
+  </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
-    <!-- 頁頭 -->
-    <header class="bg-green-600 text-white py-4 px-6 shadow-md">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <i class="fa fa-car text-2xl"></i>
-                <h1 class="text-xl font-bold">司機訂單管理系統</h1>
-            </div>
-            <div class="flex items-center gap-4">
-                <span id="driver-name" class="hidden md:inline-block">您好，司機</span>
-                <button id="logout-btn" class="bg-white text-green-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2">
-                    <i class="fa fa-sign-out"></i>
-                    <span>退出登錄</span>
-                </button>
-            </div>
-        </div>
-    </header>
-
-    <!-- 主要內容 -->
-    <main class="max-w-7xl mx-auto px-4 py-8">
-        <!-- 訂單刷新按鈕 -->
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-xl font-semibold text-gray-800">訂單列表</h2>
-            <button id="refresh-btn" class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
-                <i class="fa fa-refresh" id="refresh-icon"></i>
-                <span>刷新訂單</span>
-            </button>
-        </div>
-
-        <!-- 待接訂單區域 -->
-        <section class="mb-8">
-            <div class="bg-white rounded-xl p-6 order-card">
-                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <i class="fa fa-clock-o text-yellow-500"></i>
-                    待接訂單
-                </h3>
-                <div id="pending-orders-container">
-                    <!-- 待接訂單加載中 -->
-                    <div class="flex justify-center items-center py-8 text-gray-500">
-                        <i class="fa fa-spinner refresh-animation mr-2"></i>
-                        <span>加載待接訂單中...</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 進行中訂單區域 -->
-        <section>
-            <div class="bg-white rounded-xl p-6 order-card">
-                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <i class="fa fa-hourglass-half text-blue-500"></i>
-                    進行中訂單
-                </h3>
-                <div id="active-orders-container">
-                    <!-- 進行中訂單加載中 -->
-                    <div class="flex justify-center items-center py-8 text-gray-500">
-                        <i class="fa fa-spinner refresh-animation mr-2"></i>
-                        <span>加載進行中訂單中...</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <!-- 訂單詳情彈窗（僅用於待接訂單確認） -->
-    <div id="order-detail-modal" class="fixed inset-0 bg-black/50 flex justify-center items-center z-50 hidden">
-        <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4">
-            <div class="flex justify-between items-center mb-4">
-                <h4 class="text-lg font-bold text-gray-800">訂單詳情</h4>
-                <button id="close-modal-btn" class="text-gray-500 hover:text-gray-700">
-                    <i class="fa fa-times text-xl"></i>
-                </button>
-            </div>
-            <div id="order-detail-content" class="space-y-3">
-                <!-- 訂單詳情內容動態生成 -->
-            </div>
-            <div class="flex gap-3 mt-6">
-                <button id="cancel-detail-btn" class="flex-1 bg-gray-200 hover:bg-gray-300 py-2 rounded-lg transition-colors">
-                    關閉
-                </button>
-                <button id="accept-order-btn" class="flex-1 bg-green-600 text-white hover:bg-green-700 py-2 rounded-lg transition-colors hidden">
-                    確認接單
-                </button>
-            </div>
-        </div>
+<body class="bg-light font-sans text-dark min-h-screen">
+  <!-- 頂部導航 -->
+  <header class="bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
+    <div class="container mx-auto px-4 py-3 flex items-center">
+      <i class="fa fa-car text-primary text-2xl mr-2"></i>
+      <h1 class="text-xl font-bold">搭車自由 - 司機端</h1>
     </div>
+  </header>
 
-    <script>
-        // 核心常量定義（與乘客訂單頁、司機登入頁同步）
-        const DRIVER_ORDER_KEY = 'driverOrders';      // 司機訂單池
-        const DRIVER_LOGIN_KEY = 'driverLoggedIn';    // 司機登錄狀態
-        let currentOrderId = '';                      // 當前操作的訂單ID
+  <!-- 主要內容 -->
+  <main class="container mx-auto px-4 pt-24 pb-16">
+    <div class="max-w-md mx-auto">
+      <div class="card">
+        <h2 class="text-xl font-bold mb-6 text-center">待接訂單</h2>
+        
+        <!-- 司機信息填寫（接單時使用） -->
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-700 mb-1">你的姓名</label>
+          <input type="text" id="driver-name" class="input-field w-full" placeholder="輸入司機姓名" required>
+          
+          <label class="block text-sm font-medium text-gray-700 mb-1 mt-3">你的電話</label>
+          <input type="tel" id="driver-phone" class="input-field w-full" placeholder="輸入聯繫電話" required>
+        </div>
+        
+        <!-- 訂單列表 -->
+        <div id="orders-list">
+          <p class="text-gray-500 text-center">監聽中，等待乘客訂單...</p>
+        </div>
+        
+        <!-- 訂單地圖 -->
+        <div id="driver-map" class="hidden"></div>
+      </div>
+    </div>
+  </main>
 
-        // DOM 元素獲取
-        const driverNameEl = document.getElementById('driver-name');
-        const logoutBtn = document.getElementById('logout-btn');
-        const refreshBtn = document.getElementById('refresh-btn');
-        const refreshIcon = document.getElementById('refresh-icon');
-        const pendingOrdersContainer = document.getElementById('pending-orders-container');
-        const activeOrdersContainer = document.getElementById('active-orders-container');
-        const orderDetailModal = document.getElementById('order-detail-modal');
-        const orderDetailContent = document.getElementById('order-detail-content');
-        const closeModalBtn = document.getElementById('close-modal-btn');
-        const cancelDetailBtn = document.getElementById('cancel-detail-btn');
-        const acceptOrderBtn = document.getElementById('accept-order-btn');
+  <script>
+    // ==================== 1. Firebase 配置（與乘客頁一致） ====================
+    const firebaseConfig = {
+      apiKey: "替換為你的API Key",
+      authDomain: "替換為你的Auth Domain",
+      databaseURL: "替換為你的Database URL",
+      projectId: "替換為你的Project ID",
+      storageBucket: "替換為你的Storage Bucket",
+      messagingSenderId: "替換為你的Sender ID",
+      appId: "替換為你的App ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-        // 初始化頁面
-        window.addEventListener('load', () => {
-            // 驗證司機登錄狀態
-            const loggedInDriver = JSON.parse(localStorage.getItem(DRIVER_LOGIN_KEY));
-            if (!loggedInDriver) {
-                alert('請先登錄司機賬號！');
-                window.location.href = 'driver-login.html';
-                return;
-            }
+    // ==================== 2. 實時監聽乘客訂單 ====================
+    let driverMap = null;
+    let activeOrderId = '';
 
-            // 顯示司機姓名
-            driverNameEl.textContent = `您好，${loggedInDriver.name || '司機'}`;
+    // 初始化地圖
+    function initDriverMap() {
+      driverMap = L.map('driver-map').setView([25.0330, 121.5654], 14);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+      }).addTo(driverMap);
+    }
 
-            // 加載訂單數據
-            loadAllOrders();
+    // 實時監聽Firebase中的活躍訂單
+    db.ref('activeOrders').on('value', function(snapshot) {
+      const orders = snapshot.val();
+      const ordersListEl = document.getElementById('orders-list');
+      
+      if (!orders) {
+        ordersListEl.innerHTML = '<p class="text-gray-500 text-center">暫無待接訂單</p>';
+        document.getElementById('driver-map').classList.add('hidden');
+        return;
+      }
 
-            // 設置定時自動刷新（每20秒）
-            setInterval(loadAllOrders, 20000);
+      // 過濾出「待接單」的訂單
+      const pendingOrders = Object.keys(orders).filter(key => orders[key].status === '待接單');
+      
+      if (pendingOrders.length === 0) {
+        ordersListEl.innerHTML = '<p class="text-gray-500 text-center">暫無待接訂單</p>';
+        document.getElementById('driver-map').classList.add('hidden');
+        return;
+      }
+
+      // 渲染待接訂單列表
+      let html = '';
+      pendingOrders.forEach(orderId => {
+        const order = orders[orderId];
+        html += `
+          <div class="order-item" onclick="selectOrder('${orderId}', ${JSON.stringify(order)})">
+            <div class="flex justify-between mb-1">
+              <span class="font-medium">訂單ID：${order.orderId}</span>
+              <span class="text-primary text-xs">待接單</span>
+            </div>
+            <div class="text-sm mb-1"><i class="fa fa-map-marker mr-1"></i> 上車：${order.pickup}</div>
+            <div class="text-sm mb-1"><i class="fa fa-flag mr-1"></i> 下車：${order.dropoff}</div>
+            <div class="text-sm text-gray-500"><i class="fa fa-clock-o mr-1"></i> 提交時間：${order.createTime}</div>
+            <button onclick="acceptOrder('${orderId}')" class="btn-primary w-full mt-2 py-2 text-sm">接此訂單</button>
+          </div>
+        `;
+      });
+      
+      ordersListEl.innerHTML = html;
+    });
+
+    // ==================== 3. 選擇訂單顯示地圖 ====================
+    function selectOrder(orderId, order) {
+      activeOrderId = orderId;
+      // 顯示地圖
+      document.getElementById('driver-map').classList.remove('hidden');
+      
+      // 初始化地圖（首次）
+      if (!driverMap) initDriverMap();
+      
+      // 標記訂單位置
+      const pickupPoint = [25.0330, 121.5654];
+      const dropoffPoint = [25.0400, 121.5700];
+      
+      driverMap.setView(pickupPoint, 14);
+      // 清空原有標記
+      driverMap.eachLayer(layer => {
+        if (layer instanceof L.Marker) driverMap.removeLayer(layer);
+      });
+      
+      // 上車點標記
+      L.marker(pickupPoint)
+        .addTo(driverMap)
+        .bindPopup(`<b>乘客上車點</b><br>${order.pickup}`)
+        .openPopup();
+      
+      // 下車點標記
+      L.marker(dropoffPoint, { icon: L.divIcon({ 
+        className: 'custom-dropoff-marker',
+        html: '<i class="fa fa-flag text-red-500 text-xl"></i>',
+        iconSize: [24, 24]
+      })})
+        .addTo(driverMap)
+        .bindPopup(`<b>乘客下車點</b><br>${order.dropoff}`);
+    }
+
+    // ==================== 4. 司機接單（更新訂單狀態，同步給乘客） ====================
+    function acceptOrder(orderId) {
+      const driverName = document.getElementById('driver-name').value.trim();
+      const driverPhone = document.getElementById('driver-phone').value.trim();
+      
+      if (!driverName || !driverPhone) {
+        alert('請先填寫你的姓名和電話！');
+        return;
+      }
+      
+      if (confirm('確定要接此訂單嗎？')) {
+        // 更新Firebase訂單狀態（實時同步給乘客）
+        db.ref(`activeOrders/${orderId}`).update({
+          status: '已接單',
+          driverName: driverName,
+          driverPhone: driverPhone,
+          acceptTime: new Date().toLocaleString('zh-TW')
+        }).then(() => {
+          alert('接單成功！請聯繫乘客：' + orders[orderId].phone);
+        }).catch(err => {
+          alert('接單失敗：' + err.message);
         });
-
-        // 加載所有訂單
-        function loadAllOrders() {
-            // 顯示加載動畫
-            refreshIcon.classList.add('refresh-animation');
-            
-            // 加載待接訂單和進行中訂單
-            loadPendingOrders();
-            loadActiveOrders();
-
-            // 隱藏加載動畫
-            setTimeout(() => {
-                refreshIcon.classList.remove('refresh-animation');
-            }, 800);
-        }
-
-        // 加載待接訂單
-        function loadPendingOrders() {
-            const orders = JSON.parse(localStorage.getItem(DRIVER_ORDER_KEY) || '[]');
-            const pendingOrders = orders.filter(order => order.status === 'pending');
-
-            if (pendingOrders.length === 0) {
-                pendingOrdersContainer.innerHTML = `
-                    <div class="text-center py-8 text-gray-500">
-                        <i class="fa fa-inbox text-4xl mb-2"></i>
-                        <p>暫無待接訂單，請稍後刷新</p>
-                    </div>
-                `;
-                return;
-            }
-
-            // 渲染待接訂單列表（點擊彈窗確認接單）
-            let html = '<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">';
-            pendingOrders.forEach(order => {
-                html += `
-                    <div class="border border-gray-200 rounded-lg p-4 hover:border-green-500 transition-colors cursor-pointer" onclick="showOrderDetail('${order.id}', 'pending')">
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">待接單</span>
-                            <span class="text-sm text-gray-500">${order.id}</span>
-                        </div>
-                        <div class="mb-1">
-                            <span class="text-gray-600">乘客：</span>
-                            <span class="font-medium">${order.passengerName}</span>
-                        </div>
-                        <div class="mb-1">
-                            <span class="text-gray-600">上車：</span>
-                            <span>${order.pickup}</span>
-                        </div>
-                        <div class="mb-1">
-                            <span class="text-gray-600">下車：</span>
-                            <span>${order.dropoff}</span>
-                        </div>
-                        <div class="mb-1">
-                            <span class="text-gray-600">預計金額：</span>
-                            <span class="text-green-600 font-bold">NT$ ${order.amount}</span>
-                        </div>
-                        <div class="text-xs text-gray-500 mt-2">
-                            訂單時間：${order.createTime || '未知'}
-                        </div>
-                    </div>
-                `;
-            });
-            html += '</div>';
-            pendingOrdersContainer.innerHTML = html;
-        }
-
-        // 加載進行中訂單（點擊直接跳轉詳情頁）
-        function loadActiveOrders() {
-            const orders = JSON.parse(localStorage.getItem(DRIVER_ORDER_KEY) || '[]');
-            const activeOrders = orders.filter(order => order.status === 'active');
-
-            if (activeOrders.length === 0) {
-                activeOrdersContainer.innerHTML = `
-                    <div class="text-center py-8 text-gray-500">
-                        <i class="fa fa-road text-4xl mb-2"></i>
-                        <p>暫無進行中訂單</p>
-                    </div>
-                `;
-                return;
-            }
-
-            // 渲染進行中訂單列表（點擊跳轉詳情頁）
-            let html = '<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">';
-            activeOrders.forEach(order => {
-                html += `
-                    <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-500 transition-colors cursor-pointer" onclick="goToOrderDetail('${order.id}')">
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">進行中</span>
-                            <span class="text-sm text-gray-500">${order.id}</span>
-                        </div>
-                        <div class="mb-1">
-                            <span class="text-gray-600">乘客：</span>
-                            <span class="font-medium">${order.passengerName}</span>
-                        </div>
-                        <div class="mb-1">
-                            <span class="text-gray-600">聯繫電話：</span>
-                            <span>${order.passengerPhone}</span>
-                        </div>
-                        <div class="mb-1">
-                            <span class="text-gray-600">上車：</span>
-                            <span>${order.pickup}</span>
-                        </div>
-                        <div class="mb-1">
-                            <span class="text-gray-600">下車：</span>
-                            <span>${order.dropoff}</span>
-                        </div>
-                        <div class="mb-1">
-                            <span class="text-gray-600">接單時間：</span>
-                            <span>${order.startTime || '未知'}</span>
-                        </div>
-                        <div class="text-xs text-gray-500 mt-2">
-                            預計乘車：${order.orderTime || '未知'}
-                        </div>
-                    </div>
-                `;
-            });
-            html += '</div>';
-            activeOrdersContainer.innerHTML = html;
-        }
-
-        // 跳轉到訂單詳情頁
-        function goToOrderDetail(orderId) {
-            // 將訂單ID通過URL參數傳遞到詳情頁
-            window.location.href = `driver-order-detail.html?orderId=${orderId}`;
-        }
-
-        // 顯示待接訂單詳情彈窗
-        function showOrderDetail(orderId, orderType) {
-            currentOrderId = orderId;
-            const orders = JSON.parse(localStorage.getItem(DRIVER_ORDER_KEY) || '[]');
-            const order = orders.find(item => item.id === orderId);
-
-            if (!order) {
-                alert('訂單信息不存在！');
-                return;
-            }
-
-            // 渲染訂單詳情
-            orderDetailContent.innerHTML = `
-                <div class="border-b pb-2">
-                    <span class="font-bold">訂單編號：</span>
-                    <span>${order.id}</span>
-                </div>
-                <div>
-                    <span class="font-bold">乘客信息：</span>
-                    <span>${order.passengerName}（${order.passengerPhone}）</span>
-                </div>
-                <div>
-                    <span class="font-bold">乘車信息：</span>
-                    <div class="ml-2 mt-1">
-                        <p>上車地點：${order.pickup}</p>
-                        <p>下車地點：${order.dropoff}</p>
-                        <p>預計乘車時間：${order.orderTime || '未設定'}</p>
-                        <p>乘客人數：${order.passengerCount || '1人'}</p>
-                    </div>
-                </div>
-                <div>
-                    <span class="font-bold">費用信息：</span>
-                    <span class="text-green-600 font-bold">NT$ ${order.amount}</span>
-                </div>
-                <div>
-                    <span class="font-bold">訂單狀態：</span>
-                    <span class="text-yellow-600 font-medium">待接單</span>
-                </div>
-                <div class="text-xs text-gray-500 mt-2">
-                    訂單創建時間：${order.createTime || '未知'}
-                </div>
-            `;
-
-            // 顯示接單按鈕
-            acceptOrderBtn.classList.remove('hidden');
-
-            // 顯示彈窗
-            orderDetailModal.classList.remove('hidden');
-        }
-
-        // 接單操作（成功後跳轉詳情頁）
-        acceptOrderBtn.addEventListener('click', () => {
-            if (!currentOrderId) return;
-
-            if (confirm('確認接此訂單嗎？接單後請及時聯繫乘客！')) {
-                const orders = JSON.parse(localStorage.getItem(DRIVER_ORDER_KEY) || '[]');
-                const loggedInDriver = JSON.parse(localStorage.getItem(DRIVER_LOGIN_KEY));
-                
-                // 更新訂單狀態
-                const orderIndex = orders.findIndex(item => item.id === currentOrderId);
-                if (orderIndex !== -1) {
-                    orders[orderIndex].status = 'active';
-                    orders[orderIndex].startTime = new Date().toLocaleString('zh-TW');
-                    orders[orderIndex].driverName = loggedInDriver.name;
-                    orders[orderIndex].driverPhone = loggedInDriver.phone;
-                    
-                    // 保存更新後的訂單
-                    localStorage.setItem(DRIVER_ORDER_KEY, JSON.stringify(orders));
-                    
-                    // 關閉彈窗
-                    orderDetailModal.classList.add('hidden');
-                    
-                    // 跳轉到訂單詳情頁
-                    goToOrderDetail(currentOrderId);
-                }
-            }
-        });
-
-        // 手動刷新訂單
-        refreshBtn.addEventListener('click', loadAllOrders);
-
-        // 退出登錄
-        logoutBtn.addEventListener('click', () => {
-            if (confirm('確認退出登錄嗎？')) {
-                localStorage.removeItem(DRIVER_LOGIN_KEY);
-                window.location.href = 'driver-login.html';
-            }
-        });
-
-        // 關閉彈窗
-        closeModalBtn.addEventListener('click', () => {
-            orderDetailModal.classList.add('hidden');
-        });
-        cancelDetailBtn.addEventListener('click', () => {
-            orderDetailModal.classList.add('hidden');
-        });
-
-        // 點擊彈窗外層關閉
-        orderDetailModal.addEventListener('click', (e) => {
-            if (e.target === orderDetailModal) {
-                orderDetailModal.classList.add('hidden');
-            }
-        });
-
-        // ESC 鍵關閉彈窗
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                orderDetailModal.classList.add('hidden');
-            }
-        });
-    </script>
+      }
+    }
+  </script>
 </body>
 </html>
