@@ -6,14 +6,17 @@
   <title>搭車自由 - 我的訂單</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-  <!-- Leaflet OSM -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Mapbox 核心库（替换 Leaflet/OSM） -->
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js"></script>
 
   <script>
+    // 配置 Mapbox Token
+    mapboxgl.accessToken = 'pk.eyJ1IjoiaWY5Mjlob25nIiwiYSI6ImNtamQxczU2cjAweDMzZnM1Z3BvY2JkejgifQ.q-GNcs0rqWrZ3HtjhmysEQ';
+    
     tailwind.config = {
       theme: {
         extend: {
@@ -36,6 +39,21 @@
       .card { @apply bg-white rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg; }
       .order-card { @apply border border-gray-200 rounded-lg p-4 mb-4 bg-white shadow-sm; }
       #order-map { @apply w-full h-[250px] rounded-lg mb-4; }
+      /* Mapbox 自定义标记样式 */
+      .mapbox-marker-pickup {
+        background-color: #00A86B;
+        border-radius: 50%;
+        width: 16px;
+        height: 16px;
+        border: 2px solid white;
+      }
+      .mapbox-marker-dropoff {
+        background-color: #EF4444;
+        border-radius: 50%;
+        width: 16px;
+        height: 16px;
+        border: 2px solid white;
+      }
     }
   </style>
 </head>
@@ -93,7 +111,7 @@
     const db = firebase.database();
 
     // ==================== 2. 頁面初始化 ====================
-    let orderMap = null;
+    let mapboxOrderMap = null;
     let currentOrderId = localStorage.getItem('currentOrderId');
     let currentOrder = JSON.parse(localStorage.getItem('currentOrder'));
 
@@ -130,37 +148,82 @@
       `;
     }
 
-    // ==================== 4. 初始化訂單地圖 ====================
+    // ==================== 4. 初始化 Mapbox 訂單地圖 ====================
     function initOrderMap() {
-      orderMap = L.map('order-map').setView([25.0330, 121.5654], 14);
-      
-      // OSM瓦片層
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        maxZoom: 19,
-        attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
-      }).addTo(orderMap);
+      // 初始化 Mapbox 地圖（注意：Mapbox 坐标是 [經度, 緯度]）
+      mapboxOrderMap = new mapboxgl.Map({
+        container: 'order-map',
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: [121.5654, 25.0330], // 台北坐標（經度在前）
+        zoom: 14
+      });
 
-      // 標記上車/下車點（模擬經緯度，實際可從地址解析）
-      const pickupPoint = [25.0330, 121.5654]; // 上車點
-      const dropoffPoint = [25.0400, 121.5700]; // 下車點
-      
-      // 上車點標記
-      L.marker(pickupPoint)
-        .addTo(orderMap)
-        .bindPopup(`<b>上車地點</b><br>${currentOrder.pickup}`)
-        .openPopup();
-      
-      // 下車點標記
-      L.marker(dropoffPoint, { icon: L.divIcon({ 
-        className: 'custom-dropoff-marker',
-        html: '<i class="fa fa-flag text-red-500 text-xl"></i>',
-        iconSize: [24, 24]
-      })})
-        .addTo(orderMap)
-        .bindPopup(`<b>下車地點</b><br>${currentOrder.dropoff}`);
-      
-      // 畫出路線（簡化版）
-      L.polyline([pickupPoint, dropoffPoint], { color: '#00A86B', weight: 3 }).addTo(orderMap);
+      // 添加導航控件（縮放、指南針）
+      mapboxOrderMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+      // 地圖加載完成後添加標記和路線
+      mapboxOrderMap.on('load', function() {
+        // 模擬上車/下車點坐標（實際可從地址解析）
+        const pickupPoint = [121.5654, 25.0330]; // 上車點（經度, 緯度）
+        const dropoffPoint = [121.5700, 25.0400]; // 下車點（經度, 緯度）
+
+        // 1. 添加上車點標記
+        new mapboxgl.Marker({
+          element: document.createElement('div'),
+          className: 'mapbox-marker-pickup'
+        })
+        .setLngLat(pickupPoint)
+        .setPopup(new mapboxgl.Popup({ offset: 25 })
+          .setHTML(`<b>上車地點</b><br>${currentOrder.pickup}`))
+        .addTo(mapboxOrderMap)
+        .togglePopup(); // 默認打開彈窗
+
+        // 2. 添加下車點標記
+        new mapboxgl.Marker({
+          element: document.createElement('div'),
+          className: 'mapbox-marker-dropoff'
+        })
+        .setLngLat(dropoffPoint)
+        .setPopup(new mapboxgl.Popup({ offset: 25 })
+          .setHTML(`<b>下車地點</b><br>${currentOrder.dropoff}`))
+        .addTo(mapboxOrderMap);
+
+        // 3. 添加上車→下車的路線
+        mapboxOrderMap.addSource('route', {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            properties: {},
+            geometry: {
+              type: 'LineString',
+              coordinates: [pickupPoint, dropoffPoint]
+            }
+          }
+        });
+
+        mapboxOrderMap.addLayer({
+          id: 'route',
+          type: 'line',
+          source: 'route',
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          paint: {
+            'line-color': '#00A86B',
+            'line-width': 3
+          }
+        });
+
+        // 調整地圖視圖，同時顯示兩個標記
+        const bounds = new mapboxgl.LngLatBounds()
+          .extend(pickupPoint)
+          .extend(dropoffPoint);
+        mapboxOrderMap.fitBounds(bounds, {
+          padding: 50, // 邊距
+          maxZoom: 16
+        });
+      });
     }
 
     // ==================== 5. 實時監聽訂單狀態（司機接單後同步） ====================
