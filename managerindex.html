@@ -103,7 +103,7 @@
         );
 
         if (validManager) {
-          // 登入成功：存儲用戶信息（僅存必要字段，避免敏感信息過多）
+          // 登入成功：存儲用戶信息 + 標記已驗證
           const loginUserInfo = {
             id: validManager.id,
             fleetName: validManager.fleetName,
@@ -113,11 +113,12 @@
             email: validManager.email
           };
           localStorage.setItem(CURRENT_MANAGER_KEY, JSON.stringify(loginUserInfo));
+          localStorage.setItem('isAdminAuthenticated', 'true'); // 新增：標記已驗證
 
-          // 移除提示彈窗，直接跳轉後台
+          // 跳轉後台
           window.location.href = DASHBOARD_URL;
         } else {
-          // 登錄失敗：模糊提示（避免洩露帳號是否存在）
+          // 登錄失敗：模糊提示
           errorTip.textContent = '帳號/密碼錯誤，或帳號未審核/已停權！';
           errorTip.style.display = 'block';
           document.getElementById('loginPassword').value = ''; // 清空密碼框
@@ -130,7 +131,7 @@
       }
     });
 
-    // 2. 忘記密碼功能（基於帳號查詢密碼/信箱）
+    // 2. 忘記密碼功能
     document.getElementById('forgotPasswordBtn').addEventListener('click', function() {
       const inputAccount = prompt('請輸入您的登入帳號，我們將提示密碼信息（測試模式）：');
       if (!inputAccount) return;
@@ -139,7 +140,6 @@
       const manager = adminList.find(item => item.account === inputAccount);
       
       if (manager) {
-        // 測試環境：直接提示密碼（正式環境需替換為郵件發送邏輯）
         const tipContent = manager.email 
           ? `📧 您的綁定信箱：${manager.email}\n🔑 您的登錄密碼：${manager.password}`
           : `🔑 您的登錄密碼：${manager.password}\n⚠️ 未綁定信箱，請聯繫超級管理員`;
@@ -149,27 +149,27 @@
       }
     });
 
-    // 3. 頁面加載時：檢查是否已登入，避免重複登錄（移除提示彈窗，直接跳轉）
+    // 3. 頁面加載時：若已登入，跳轉後台（但需保留輸入帳密的流程）
     window.addEventListener('load', function() {
       const currentManager = JSON.parse(localStorage.getItem(CURRENT_MANAGER_KEY) || 'null');
-      if (currentManager) {
-        // 已登入：直接跳轉後台，不彈提示
+      const isAuthenticated = localStorage.getItem('isAdminAuthenticated') === 'true';
+      
+      // 已登入且已驗證：跳轉後台
+      if (currentManager && isAuthenticated) {
         window.location.href = DASHBOARD_URL;
       }
     });
 
-    // 4. 防呆：檢查跳轉路徑是否合法（避免相對路徑錯誤）
+    // 4. 防呆：檢查跳轉路徑是否合法
     function checkDashboardPath() {
       const isLocalEnv = window.location.protocol === 'file:' || window.location.hostname === 'localhost';
-      if (isLocalEnv) return; // 本地開發環境跳過檢查
+      if (isLocalEnv) return;
       
-      // 模擬檢查路徑是否存在（正式環境可替換為後端接口驗證）
       fetch(DASHBOARD_URL, { method: 'HEAD' })
         .catch(err => {
           console.warn(`⚠️ 跳轉目標頁面 ${DASHBOARD_URL} 可能不存在，請檢查路徑！`, err);
         });
     }
-    // 頁面加載完成後檢查路徑
     window.addEventListener('DOMContentLoaded', checkDashboardPath);
   </script>
 </body>
