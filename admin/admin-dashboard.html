@@ -56,7 +56,7 @@
             <h1 class="text-xl font-bold text-text-dark" id="systemTitle">LINE多元化搭車管理員登入系統</h1>
             <div class="flex items-center space-x-4">
                 <button class="text-text-light hover:text-primary">
-                    <<i class="fa fa-bell text-lg"></</i>
+                    <i class="fa fa-bell text-lg"></i>
                 </button>
                 <div class="flex items-center space-x-2">
                     <img src="https://via.placeholder.com/32" alt="管理員頭像" class="w-8 h-8 rounded-full">
@@ -72,25 +72,25 @@
         <aside class="sidebar w-56 bg-white shadow-sm p-4">
             <nav class="space-y-1">
                 <a href="admin-dashboard.html" class="block py-2 px-3 rounded-md menu-active font-medium">
-                    <<i class="fa fa-home mr-2"></</i>首頁
+                    <i class="fa fa-home mr-2"></i>首頁
                 </a>
                 <a href="admin-area.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
-                    <<i class="fa fa-map-marker mr-2"></</i>區域管理
+                    <i class="fa fa-map-marker mr-2"></i>區域管理
                 </a>
                 <a href="admin-driver.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
-                    <<i class="fa fa-car mr-2"></</i>司機管理
+                    <i class="fa fa-car mr-2"></i>司機管理
                 </a>
                 <a href="admin-order.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
-                    <<i class="fa fa-users mr-2"></</i>訂單管理
+                    <i class="fa fa-users mr-2"></i>訂單管理
                 </a>
                 <a href="admin-report.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
-                    <<i class="fa fa-money mr-2"></</i>財務管理
+                    <i class="fa fa-money mr-2"></i>財務管理
                 </a>
                 <a href="admin-report.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
-                    <<i class="fa fa-bar-chart mr-2"></</i>報表統計
+                    <i class="fa fa-bar-chart mr-2"></i>報表統計
                 </a>
                 <a href="../managerindex.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all mt-4" id="logoutLink">
-                    <<i class="fa fa-sign-out mr-2"></</i>退出登入
+                    <i class="fa fa-sign-out mr-2"></i>退出登入
                 </a>
             </nav>
         </aside>
@@ -119,22 +119,87 @@
                         <p class="text-base text-text-dark font-medium mt-4">
                             應繳金額：<span id="totalPayAmount" class="text-primary font-bold text-lg">NT$ 0</span>
                         </p>
+                        
+                        <!-- 新增價格設定欄位 -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                            <div>
+                                <label class="block text-sm text-text-dark mb-2">起步價格 (NT$)</label>
+                                <input type="number" id="startPrice" class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" 
+                                       value="80" min="0" step="1">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-text-dark mb-2">距離費用 (每km/NT$)</label>
+                                <input type="number" id="distancePrice" class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" 
+                                       value="5" min="0" step="0.1">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-text-dark mb-2">時間費用 (每min/NT$)</label>
+                                <input type="number" id="timePrice" class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" 
+                                       value="1.5" min="0" step="0.1">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-text-dark mb-2">固定回給 (NT$)</label>
+                                <input type="number" id="fixedRebate" class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" 
+                                       value="20" min="0" step="1">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm text-text-dark mb-2">百回金額 (NT$)</label>
+                                <input type="number" id="hundredRebate" class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" 
+                                       value="1000" min="0" step="10">
+                            </div>
+                        </div>
+                        
+                        <!-- 保存價格設定按鈕 -->
+                        <div class="mt-4 flex justify-end">
+                            <button id="savePriceSettings" class="px-6 py-2 bg-primary text-white rounded-md text-sm hover:bg-secondary transition-all">
+                                保存價格設定
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <!-- 銀行資訊區域 -->
+                <!-- 超級管理員租金及銀行資訊區域 -->
                 <div class="mb-8">
-                    <h3 class="text-lg font-medium text-text-dark mb-4">繳費銀行資訊</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <h3 class="text-lg font-medium text-text-dark mb-4">超級管理員租金及銀行資訊</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- 租金資訊 -->
+                        <div class="bg-white rounded-lg p-5 border border-gray-200">
+                            <div class="flex items-center mb-3">
+                                <i class="fa fa-money text-primary text-xl mr-3"></i>
+                                <p class="font-semibold text-text-dark text-base">租金資訊</p>
+                            </div>
+                            <div class="space-y-3 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-text-light">超管月租金：</span>
+                                    <span class="text-text-dark font-medium">NT$ 15,000</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-text-light">租金繳納截止日：</span>
+                                    <span class="text-text-dark font-medium">每月5日</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-text-light">當前欠繳：</span>
+                                    <span class="text-red-500 font-medium">NT$ 0</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-text-light">繳納狀態：</span>
+                                    <span class="text-green-600 font-medium">已繳納</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 銀行資訊 -->
                         <div class="bank-info-card bg-white rounded-lg p-5 border border-gray-200">
                             <div class="flex items-center mb-3">
-                                <<i class="fa fa-bank text-primary text-xl mr-3"></</i>
-                                <p class="font-semibold text-text-dark text-base">中國信託</p>
+                                <i class="fa fa-bank text-primary text-xl mr-3"></i>
+                                <p class="font-semibold text-text-dark text-base">超管收款銀行資訊</p>
                             </div>
                             <div class="space-y-2 text-sm">
-                                <p><span class="text-text-light">戶名：</span>洪語涵</p>
-                                <p><span class="text-text-light">帳號：</span>901566141052</p>
-                                <p><span class="text-text-light">分行：</span>台北信義分行</p>
+                                <p><span class="text-text-light">戶名：</span>LINE多元化搭車平台</p>
+                                <p><span class="text-text-light">帳號：</span>8221234567890</p>
+                                <p><span class="text-text-light">銀行：</span>台灣銀行 總行</p>
+                                <p><span class="text-text-light">代碼：</span>004</p>
+                                <p><span class="text-text-light">備註：</span>繳納租金時請備註車隊編號</p>
                             </div>
                         </div>
                     </div>
@@ -175,7 +240,7 @@
                                 <input type="file" id="receiptUpload" accept="image/*,.pdf" class="hidden" required>
                                 <label for="receiptUpload" class="cursor-pointer">
                                     <div class="flex flex-col items-center">
-                                        <<i class="fa fa-cloud-upload text-2xl text-text-light mb-3"></</i>
+                                        <i class="fa fa-cloud-upload text-2xl text-text-light mb-3"></i>
                                         <p class="text-sm text-text-dark mb-1">點擊上傳繳費憑證</p>
                                         <p class="text-xs text-text-light">支援格式：JPG、PNG、PDF (最大5MB)</p>
                                     </div>
@@ -212,21 +277,21 @@
                 <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
                     <div class="flex items-center justify-between mb-3">
                         <p class="text-text-light text-sm">線上司機人數</p>
-                        <<i class="fa fa-car text-primary text-xl"></</i>
+                        <i class="fa fa-car text-primary text-xl"></i>
                     </div>
                     <p class="text-2xl font-bold text-text-dark" id="onlineDriverCount">12人</p>
                 </div>
                 <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
                     <div class="flex items-center justify-between mb-3">
                         <p class="text-text-light text-sm">今日訂單</p>
-                        <<i class="fa fa-shopping-cart text-primary text-xl"></</i>
+                        <i class="fa fa-shopping-cart text-primary text-xl"></i>
                     </div>
                     <p class="text-2xl font-bold text-text-dark" id="todayOrderCount">36單</p>
                 </div>
                 <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
                     <div class="flex items-center justify-between mb-3">
                         <p class="text-text-light text-sm">今日收入</p>
-                        <<i class="fa fa-yen text-primary text-xl"></</i>
+                        <i class="fa fa-yen text-primary text-xl"></i>
                     </div>
                     <p class="text-2xl font-bold text-text-dark" id="todayIncome">8,560元</p>
                 </div>
@@ -278,12 +343,12 @@
                     <table class="min-w-full">
                         <thead>
                             <tr class="border-b border-gray-200 bg-gray-50">
-                                <<th class="text-left py-3 px-4 text-sm text-text-light">訂單編號</</th>
-                                <<th class="text-left py-3 px-4 text-sm text-text-light">司機</</th>
-                                <<th class="text-left py-3 px-4 text-sm text-text-light">乘客</</th>
-                                <<th class="text-left py-3 px-4 text-sm text-text-light">金額</</th>
-                                <<th class="text-left py-3 px-4 text-sm text-text-light">狀態</</th>
-                                <<th class="text-left py-3 px-4 text-sm text-text-light">操作</</th>
+                                <th class="text-left py-3 px-4 text-sm text-text-light">訂單編號</th>
+                                <th class="text-left py-3 px-4 text-sm text-text-light">司機</th>
+                                <th class="text-left py-3 px-4 text-sm text-text-light">乘客</th>
+                                <th class="text-left py-3 px-4 text-sm text-text-light">金額</th>
+                                <th class="text-left py-3 px-4 text-sm text-text-light">狀態</th>
+                                <th class="text-left py-3 px-4 text-sm text-text-light">操作</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -372,6 +437,36 @@
             
             document.getElementById('totalPayAmount').textContent = `NT$ ${Number(totalAmount).toLocaleString()}`;
         });
+
+        // 保存價格設定
+        document.getElementById('savePriceSettings').addEventListener('click', function() {
+            const priceSettings = {
+                startPrice: document.getElementById('startPrice').value,
+                distancePrice: document.getElementById('distancePrice').value,
+                timePrice: document.getElementById('timePrice').value,
+                fixedRebate: document.getElementById('fixedRebate').value,
+                hundredRebate: document.getElementById('hundredRebate').value
+            };
+            
+            // 儲存到 localStorage
+            localStorage.setItem('priceSettings', JSON.stringify(priceSettings));
+            
+            // 顯示成功提示
+            alert('價格設定已成功保存！');
+        });
+
+        // 加載保存的價格設定
+        function loadPriceSettings() {
+            const savedSettings = localStorage.getItem('priceSettings');
+            if (savedSettings) {
+                const settings = JSON.parse(savedSettings);
+                document.getElementById('startPrice').value = settings.startPrice || 80;
+                document.getElementById('distancePrice').value = settings.distancePrice || 5;
+                document.getElementById('timePrice').value = settings.timePrice || 1.5;
+                document.getElementById('fixedRebate').value = settings.fixedRebate || 20;
+                document.getElementById('hundredRebate').value = settings.hundredRebate || 1000;
+            }
+        }
 
         // 繳費憑證上傳預覽功能
         document.getElementById('receiptUpload').addEventListener('change', function(e) {
@@ -552,6 +647,7 @@
         // 頁面加載初始化
         window.onload = () => {
             loadSystemInfo();
+            loadPriceSettings();
             initCharts();
             simulateRealTimeData();
             initLogout();
