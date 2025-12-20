@@ -17,7 +17,7 @@
           colors: {
             primary: '#00A86B',    // 乘客主色
             fleet: '#FF6B00',      // 車隊管理員主色
-            super: '#8A2BE2',      // 超管主色（保留但隱藏）
+            super: '#8A2BE2',      // 超管主色
           },
         },
       }
@@ -68,7 +68,7 @@
         <button id="nav-passenger" class="text-primary font-medium hover:underline transition-colors">乘客</button>
         <button id="nav-driver" class="text-gray-600 hover:text-primary transition-colors">司機</button>
         <button id="nav-fleet-admin" class="text-gray-600 hover:text-primary transition-colors">車隊管理員</button>
-        <!-- 隱藏超管導航項 -->
+        <button id="nav-super-admin" class="text-gray-600 hover:text-super transition-colors">超級管理員</button>
       </nav>
     </div>
   </header>
@@ -164,7 +164,7 @@
         <h2 class="text-2xl font-bold text-fleet mb-2">管理員登錄</h2>
         <p class="text-gray-600 text-sm mb-6">管理所屬車隊與訂單</p>
         
-        <!-- 移除超級管理員選項，僅保留車隊管理員 -->
+        <!-- 車隊管理員選項 -->
         <div class="mb-4">
           <label class="inline-flex items-center">
             <input type="radio" name="adminType" value="fleet" checked class="text-fleet">
@@ -187,7 +187,7 @@
           </button>
         </form>
         
-        <!-- 後台功能快速連結（移除超級管理員專屬按鈕） -->
+        <!-- 後台功能快速連結 -->
         <div class="mt-8 pt-6 border-t border-gray-100">
           <h3 class="text-sm font-semibold text-gray-500 mb-4">後台功能快速連結</h3>
           <div class="grid grid-cols-2 gap-3">
@@ -210,6 +210,37 @@
         </div>
       </div>
     </section>
+
+    <!-- 4. 超級管理員區塊 (默認隱藏) -->
+    <section id="super-admin-section" class="max-w-md mx-auto section-hidden">
+      <div class="bg-white rounded-xl shadow-md p-8 text-center border border-super/20">
+        <h2 class="text-2xl font-bold text-super mb-2">超級管理員登錄</h2>
+        <p class="text-gray-600 text-sm mb-6">管理所有車隊與系統設定</p>
+        
+        <!-- 超級管理員選項 -->
+        <div class="mb-4">
+          <label class="inline-flex items-center">
+            <input type="radio" name="adminType" value="super" checked class="text-super">
+            <span class="ml-2 text-super font-medium">超級管理員</span>
+          </label>
+        </div>
+        
+        <!-- 超級管理員登錄表單 -->
+        <form id="super-admin-login-form" class="space-y-4">
+          <div class="text-left">
+            <label class="block text-sm font-medium text-gray-700 mb-1">超管帳號</label>
+            <input type="text" class="input-field input-field-super" id="super-username" placeholder="輸入超管帳號" required>
+          </div>
+          <div class="text-left">
+            <label class="block text-sm font-medium text-gray-700 mb-1">超管密碼</label>
+            <input type="password" class="input-field input-field-super" id="super-password" placeholder="輸入超管密碼" required>
+          </div>
+          <button type="submit" class="btn-super">
+            登錄超級管理員後台
+          </button>
+        </form>
+      </div>
+    </section>
   </main>
 
   <footer class="w-full text-center text-gray-500 text-sm py-6 border-t border-gray-200">
@@ -230,10 +261,10 @@
       fleetAdmins: [
         { username: '0975521219', password: 'fffishau', redirect: 'fleet-admin-dashboard.html' }
       ],
-      // 超管帳號配置（保留但隱藏）
+      // 超管帳號配置 - 修改跳轉為 administrator.html
       superAdmins: [
-        { username: '0975521219', password: 'fffishau', redirect: 'super-admin-dashboard.html' },
-        { username: 'admin123', password: 'ccc456789', redirect: 'super-admin-dashboard.html' }
+        { username: '0975521219', password: 'fffishau', redirect: 'administrator.html' },
+        { username: 'admin123', password: 'ccc456789', redirect: 'administrator.html' }
       ],
       // 初始化所有功能
       init: function() {
@@ -247,12 +278,14 @@
         const sections = {
           passenger: document.getElementById('passenger-section'),
           driver: document.getElementById('driver-section'),
-          fleetAdmin: document.getElementById('fleet-admin-section')
+          fleetAdmin: document.getElementById('fleet-admin-section'),
+          superAdmin: document.getElementById('super-admin-section')
         };
         const navButtons = {
           passenger: document.getElementById('nav-passenger'),
           driver: document.getElementById('nav-driver'),
-          fleetAdmin: document.getElementById('nav-fleet-admin')
+          fleetAdmin: document.getElementById('nav-fleet-admin'),
+          superAdmin: document.getElementById('nav-super-admin')
         };
 
         // 重置所有區塊顯示狀態
@@ -261,7 +294,7 @@
             section.classList.add('section-hidden');
           });
           Object.values(navButtons).forEach(btn => {
-            btn.classList.remove('text-primary', 'font-medium');
+            btn.classList.remove('text-primary', 'text-super', 'font-medium');
             btn.classList.add('text-gray-600');
           });
         };
@@ -288,6 +321,14 @@
           sections.fleetAdmin.classList.remove('section-hidden');
           navButtons.fleetAdmin.classList.remove('text-gray-600');
           navButtons.fleetAdmin.classList.add('text-primary', 'font-medium');
+        });
+
+        // 超級管理員導航
+        navButtons.superAdmin.addEventListener('click', () => {
+          resetSections();
+          sections.superAdmin.classList.remove('section-hidden');
+          navButtons.superAdmin.classList.remove('text-gray-600');
+          navButtons.superAdmin.classList.add('text-super', 'font-medium');
         });
 
         // 司機頁面切換到車隊管理員
@@ -384,6 +425,26 @@
             alert('車隊管理員帳號或密碼錯誤！');
             document.getElementById('fleet-password').value = '';
             document.getElementById('fleet-password').focus();
+          }
+        });
+
+        // 4. 超級管理員登錄表單
+        document.getElementById('super-admin-login-form')?.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const username = document.getElementById('super-username').value.trim();
+          const password = document.getElementById('super-password').value.trim();
+          
+          const matchedAdmin = this.superAdmins.find(admin => 
+            admin.username === username && admin.password === password
+          );
+          
+          if (matchedAdmin) {
+            localStorage.setItem('currentSuperAdmin', JSON.stringify(matchedAdmin));
+            window.location.href = matchedAdmin.redirect; // 跳轉到 administrator.html
+          } else {
+            alert('超級管理員帳號或密碼錯誤！');
+            document.getElementById('super-password').value = '';
+            document.getElementById('super-password').focus();
           }
         });
       }
