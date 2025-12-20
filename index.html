@@ -107,7 +107,11 @@
       <nav class="hidden md:flex space-x-6">
         <button id="nav-passenger" class="text-primary font-medium">乘客</button>
         <button id="nav-driver" class="text-gray-600 hover:text-primary transition-colors">司機</button>
-        <button id="nav-admin" class="text-gray-600 hover:text-primary transition-colors">管理員</button>
+        <button id="nav-admin" class="text-gray-600 hover:text-primary transition-colors">車隊管理員</button>
+        <!-- 新增：超級管理員獨立入口 -->
+        <button id="nav-super-admin" class="text-super hover:text-super/80 transition-colors font-medium">
+          <i class="fa fa-crown mr-1"></i>超級管理員
+        </button>
       </nav>
       <button id="mobile-menu-btn" class="md:hidden text-dark">
         <i class="fa fa-bars text-xl"></i>
@@ -118,7 +122,11 @@
       <div class="container mx-auto px-4 py-2 flex flex-col space-y-3">
         <button id="mobile-passenger" class="text-primary font-medium py-2 border-b border-gray-100">乘客</button>
         <button id="mobile-driver" class="text-gray-600 hover:text-primary transition-colors py-2 border-b border-gray-100">司機</button>
-        <button id="mobile-admin" class="text-gray-600 hover:text-primary transition-colors py-2">管理員</button>
+        <button id="mobile-admin" class="text-gray-600 hover:text-primary transition-colors py-2 border-b border-gray-100">車隊管理員</button>
+        <!-- 新增：手機版超級管理員入口 -->
+        <button id="mobile-super-admin" class="text-super hover:text-super/80 transition-colors py-2">
+          <i class="fa fa-crown mr-1"></i>超級管理員
+        </button>
       </div>
     </div>
   </header>
@@ -486,8 +494,9 @@
               <a href="admin-report.html" class="flex items-center justify-center p-3 border border-gray-200 rounded-lg hover:border-primary hover:bg-gray-50 transition-colors col-span-2">
                 <span class="text-sm">報表統計</span>
               </a>
-              <a href="administrator.html" id="super-admin-link" class="flex items-center justify-center p-3 border border-gray-200 rounded-lg hover:border-super hover:bg-gray-50 transition-colors col-span-2 hidden">
-                <span class="text-sm"><i class="fa fa-crown mr-1 text-super"></i>超管專屬功能</span>
+              <!-- 強化：超管按鈕預設顯示，並直接連結到administrator.html -->
+              <a href="administrator.html" id="super-admin-link" class="flex items-center justify-center p-3 border border-super/30 bg-super/5 rounded-lg hover:border-super hover:bg-super/10 transition-colors col-span-2">
+                <span class="text-sm text-super"><i class="fa fa-crown mr-1"></i>超級管理員專屬後台</span>
               </a>
             </div>
           </div>
@@ -495,6 +504,43 @@
         
         <div class="mt-6 text-center text-gray-500 text-sm">
           <p>僅限授權管理員使用</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 新增：超級管理員快速登錄區塊 -->
+    <section id="super-admin-section" class="hidden">
+      <div class="max-w-md mx-auto">
+        <div class="card border border-super/20">
+          <div class="text-center mb-6">
+            <h2 class="text-2xl font-bold text-super">超級管理員專屬入口</h2>
+            <p class="text-gray-600 mt-2">管理所有車隊與系統設定</p>
+          </div>
+          
+          <!-- 超級管理員快速登錄表單 -->
+          <form id="super-admin-login-form">
+            <div class="space-y-4 mb-6">
+              <div>
+                <label class="block text-left text-sm font-medium text-gray-700 mb-1">超管帳號</label>
+                <input type="text" class="input-field" name="super-username" placeholder="輸入超級管理員帳號" value="superadmin" required>
+              </div>
+              <div>
+                <label class="block text-left text-sm font-medium text-gray-700 mb-1">超管密碼</label>
+                <input type="password" class="input-field" name="super-password" placeholder="輸入超級管理員密碼" value="super123" required>
+              </div>
+            </div>
+            
+            <button type="submit" id="super-admin-login-btn" class="btn-super w-full">
+              <i class="fa fa-crown mr-2"></i>登錄超級管理員後台
+            </button>
+            
+            <!-- 直接跳轉按鈕 -->
+            <div class="mt-4 text-center">
+              <a href="administrator.html" class="text-super hover:underline text-sm">
+                <i class="fa fa-arrow-right mr-1"></i>直接進入超級管理員後台
+              </a>
+            </div>
+          </form>
         </div>
       </div>
     </section>
@@ -655,10 +701,9 @@
           superAdminLink.classList.remove('hidden');
           adminLoginBtn.classList.remove('btn-fleet');
           adminLoginBtn.classList.add('btn-super');
-          adminLoginBtn.innerHTML = '<span>登錄超級管理員後台</span>';
+          adminLoginBtn.innerHTML = '<span><i class="fa fa-crown mr-1"></i>登錄超級管理員後台</span>';
         } else {
-          // 車隊管理員 - 隱藏超管按鈕，恢復按鈕樣式
-          superAdminLink.classList.add('hidden');
+          // 車隊管理員 - 保留超管按鈕可見，僅更換登錄按鈕樣式
           adminLoginBtn.classList.remove('btn-super');
           adminLoginBtn.classList.add('btn-fleet');
           adminLoginBtn.innerHTML = '<span>登錄車隊管理員後台</span>';
@@ -749,6 +794,41 @@
       }
     });
 
+    // 新增：超級管理員單獨登錄驗證
+    document.getElementById('super-admin-login-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const username = this.querySelector('input[name="super-username"]').value.trim();
+      const password = this.querySelector('input[name="super-password"]').value.trim();
+      
+      // 驗證超級管理員帳號
+      const superAdmin = ACCOUNT_SYSTEM.superAdmins.find(a => 
+        a.username === username && a.password === password
+      );
+      
+      if (superAdmin) {
+        // 儲存超管資訊
+        localStorage.setItem('currentUser', JSON.stringify({
+          type: 'super_admin',
+          info: superAdmin,
+          managedFleets: ACCOUNT_SYSTEM.fleetAdmins
+        }));
+        
+        // 顯示提示並跳轉到 administrator.html
+        showPermissionModal(
+          '超級管理員登錄成功',
+          '您已獲取最高管理權限，將跳轉到超管後台',
+          () => {
+            window.location.href = 'administrator.html';
+          }
+        );
+      } else {
+        alert('超級管理員帳號或密碼錯誤！');
+        this.querySelector('input[name="super-password"]').value = '';
+        this.querySelector('input[name="super-password"]').focus();
+      }
+    });
+
     // 車隊管理員快速入口
     document.getElementById('goto-fleet-admin').addEventListener('click', function(e) {
       e.preventDefault();
@@ -795,14 +875,15 @@
       mobileMenu.classList.toggle('hidden');
     });
     
-    // 導航切換功能
+    // 導航切換功能 - 擴展包含超級管理員
     const navButtons = [
       { desktop: 'nav-passenger', mobile: 'mobile-passenger', section: 'passenger-section' },
       { desktop: 'nav-driver', mobile: 'mobile-driver', section: 'driver-section' },
-      { desktop: 'nav-admin', mobile: 'mobile-admin', section: 'admin-section' }
+      { desktop: 'nav-admin', mobile: 'mobile-admin', section: 'admin-section' },
+      { desktop: 'nav-super-admin', mobile: 'mobile-super-admin', section: 'super-admin-section' } // 新增
     ];
     
-    const sections = ['passenger-section', 'driver-section', 'admin-section'];
+    const sections = ['passenger-section', 'driver-section', 'admin-section', 'super-admin-section']; // 新增
     const navItems = document.querySelectorAll('nav button, #mobile-menu button');
     
     function switchSection(targetSection) {
@@ -816,7 +897,7 @@
       
       // 重置所有導航按鈕樣式
       navItems.forEach(item => {
-        item.classList.remove('text-primary', 'font-medium', 'border-b-2', 'border-primary');
+        item.classList.remove('text-primary', 'font-medium', 'border-b-2', 'border-primary', 'text-super');
         item.classList.add('text-gray-600');
       });
       
@@ -828,12 +909,21 @@
           
           if (desktopBtn) {
             desktopBtn.classList.remove('text-gray-600');
-            desktopBtn.classList.add('text-primary', 'font-medium');
+            // 超級管理員按鈕單獨樣式
+            if (btn.desktop === 'nav-super-admin') {
+              desktopBtn.classList.add('text-super', 'font-medium');
+            } else {
+              desktopBtn.classList.add('text-primary', 'font-medium');
+            }
           }
           
           if (mobileBtn) {
             mobileBtn.classList.remove('text-gray-600');
-            mobileBtn.classList.add('text-primary', 'font-medium');
+            if (btn.mobile === 'mobile-super-admin') {
+              mobileBtn.classList.add('text-super', 'font-medium');
+            } else {
+              mobileBtn.classList.add('text-primary', 'font-medium');
+            }
           }
         }
       });
