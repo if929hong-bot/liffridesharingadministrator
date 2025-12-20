@@ -37,7 +37,8 @@
         }
         /* 繳費表單樣式優化 */
         .payment-form input:focus,
-        .payment-form select:focus {
+        .payment-form select:focus,
+        .payment-form textarea:focus {
             outline: 2px solid #00C300;
             outline-offset: 1px;
         }
@@ -91,7 +92,7 @@
         </div>
     </div>
 
-    <!-- 頁首（標題支援後續修改） -->
+    <!-- 頁首 -->
     <header class="bg-white shadow-sm py-3 px-4 fixed top-0 w-full z-10">
         <div class="flex justify-between items-center">
             <h1 class="text-xl font-bold text-text-dark" id="systemTitle">LINE多元化搭車管理員登入系統</h1>
@@ -101,7 +102,7 @@
                 </button>
                 <div class="flex items-center space-x-2">
                     <img src="https://via.placeholder.com/32" alt="管理員頭像" class="w-8 h-8 rounded-full">
-                    <span class="text-text-dark" id="currentManagerName">管理員</span>
+                    <span class="text-text-dark" id="currentManagerName">王小明</span>
                 </div>
             </div>
         </div>
@@ -109,7 +110,7 @@
 
     <!-- 主容器 -->
     <div class="pt-16 flex">
-        <!-- 側邊菜單（新增administrator.html跳轉） -->
+        <!-- 側邊菜單（修正重複連結及icon） -->
         <aside class="sidebar w-56 bg-white shadow-sm p-4">
             <nav class="space-y-1">
                 <a href="admin-dashboard.html" class="block py-2 px-3 rounded-md menu-active font-medium text-white">
@@ -125,9 +126,9 @@
                     <i class="fa fa-car mr-2"></i>司機管理
                 </a>
                 <a href="admin-order.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
-                    <i class="fa fa-users mr-2"></i>訂單管理
+                    <i class="fa fa-list-alt mr-2"></i>訂單管理
                 </a>
-                <a href="admin-report.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
+                <a href="admin-finance.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
                     <i class="fa fa-money mr-2"></i>財務管理
                 </a>
                 <a href="admin-report.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
@@ -141,181 +142,6 @@
 
         <!-- 主內容區 -->
         <main class="flex-1 p-6 max-w-7xl mx-auto">
-            <!-- 繳費欄目（頁面頂部） -->
-            <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-100 mb-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xl font-bold text-text-dark">車隊繳費管理</h2>
-                    <span class="text-sm text-text-light">最後更新：2025-12-19</span>
-                </div>
-                
-                <!-- 價格設定區域（補全指定欄位） -->
-                <div class="mb-8">
-                    <h3 class="text-lg font-medium text-text-dark mb-4">價格設定</h3>
-                    <div class="bg-gray-50 rounded-lg p-5 border border-gray-200">
-                        <label for="paymentCycle" class="block text-sm text-text-dark mb-2">選擇繳費週期 <span class="text-red-500">*</span></label>
-                        <select id="paymentCycle" name="paymentCycle" class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" required>
-                            <option value="">請選擇繳費週期</option>
-                            <option value="monthly" data-price="9500">月繳 (NT$ 9,500)</option>
-                            <option value="quarterly" data-price="9000">季繳 (NT$ 9,000/月)</option>
-                            <option value="halfYearly" data-price="9500">半年繳 (NT$ 9,500/月)</option>
-                            <option value="yearly" data-price="8500">年繳 (NT$ 8,500/月)</option>
-                        </select>
-                        <p class="text-base text-text-dark font-medium mt-4">
-                            應繳金額：<span id="totalPayAmount" class="text-primary font-bold text-lg">NT$ 0</span>
-                        </p>
-                        
-                        <!-- 完整價格設定欄位（嚴格對應要求：起步金額、里程金額、時間費用、固定回給、百回金額） -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                            <div>
-                                <label for="startPrice" class="block text-sm text-text-dark mb-2">起步金額 (NT$)</label>
-                                <input type="number" id="startPrice" name="startPrice" class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" 
-                                       value="80" min="0" step="1">
-                            </div>
-                            <div>
-                                <label for="distancePrice" class="block text-sm text-text-dark mb-2">里程金額 (每公里/NT$)</label>
-                                <input type="number" id="distancePrice" name="distancePrice" class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" 
-                                       value="5" min="0" step="0.1">
-                            </div>
-                            <div>
-                                <label for="timePrice" class="block text-sm text-text-dark mb-2">時間費用 (每分/NT$)</label>
-                                <input type="number" id="timePrice" name="timePrice" class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" 
-                                       value="1.5" min="0" step="0.1">
-                            </div>
-                            <div>
-                                <label for="fixedRebate" class="block text-sm text-text-dark mb-2">固定回給 (NT$)</label>
-                                <input type="number" id="fixedRebate" name="fixedRebate" class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" 
-                                       value="20" min="0" step="1">
-                            </div>
-                            <div class="md:col-span-2">
-                                <label for="hundredRebate" class="block text-sm text-text-dark mb-2">百回金額 (NT$)</label>
-                                <input type="number" id="hundredRebate" name="hundredRebate" class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" 
-                                       value="1000" min="0" step="10">
-                            </div>
-                        </div>
-                        
-                        <!-- 保存價格設定按鈕 -->
-                        <div class="mt-4 flex justify-end">
-                            <button type="button" id="savePriceSettings" class="px-6 py-2 bg-primary text-white rounded-md text-sm hover:bg-secondary transition-all">
-                                保存價格設定
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 超級管理員租金及銀行資訊區域 -->
-                <div class="mb-8">
-                    <h3 class="text-lg font-medium text-text-dark mb-4">超級管理員租金及銀行資訊</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- 租金資訊 -->
-                        <div class="bg-white rounded-lg p-5 border border-gray-200">
-                            <div class="flex items-center mb-3">
-                                <i class="fa fa-money text-primary text-xl mr-3"></i>
-                                <p class="font-semibold text-text-dark text-base">租金資訊</p>
-                            </div>
-                            <div class="space-y-3 text-sm">
-                                <div class="flex justify-between">
-                                    <span class="text-text-light">超管月租金：</span>
-                                    <span class="text-text-dark font-medium">NT$ 15,000</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-text-light">租金繳納截止日：</span>
-                                    <span class="text-text-dark font-medium">每月5日</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-text-light">當前欠繳：</span>
-                                    <span class="text-red-500 font-medium">NT$ 0</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-text-light">繳納狀態：</span>
-                                    <span class="text-green-600 font-medium">已繳納</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- 銀行資訊 -->
-                        <div class="bank-info-card bg-white rounded-lg p-5 border border-gray-200">
-                            <div class="flex items-center mb-3">
-                                <i class="fa fa-bank text-primary text-xl mr-3"></i>
-                                <p class="font-semibold text-text-dark text-base">超管收款銀行資訊</p>
-                            </div>
-                            <div class="space-y-2 text-sm">
-                                <p><span class="text-text-light">戶名：</span>LINE多元化搭車平台</p>
-                                <p><span class="text-text-light">帳號：</span>8221234567890</p>
-                                <p><span class="text-text-light">銀行：</span>台灣銀行 總行</p>
-                                <p><span class="text-text-light">代碼：</span>004</p>
-                                <p><span class="text-text-light">備註：</span>繳納租金時請備註車隊編號</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 繳費表單 -->
-                <div class="payment-form bg-gray-50 rounded-lg p-6 border border-gray-200">
-                    <h3 class="text-lg font-medium text-text-dark mb-5">繳費資訊填寫</h3>
-                    <form id="paymentForm" class="space-y-5">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <!-- 繳費日期 -->
-                            <div>
-                                <label for="paymentDate" class="block text-sm text-text-dark mb-2">繳費日期 <span class="text-red-500">*</span></label>
-                                <input type="date" id="paymentDate" name="paymentDate" class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" required>
-                            </div>
-                            <!-- 匯款後五碼 -->
-                            <div>
-                                <label for="accountLastFive" class="block text-sm text-text-dark mb-2">匯款帳號後五碼 <span class="text-red-500">*</span></label>
-                                <input type="text" id="accountLastFive" name="accountLastFive" placeholder="請輸入匯款帳號後五碼" 
-                                       class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" 
-                                       pattern="[0-9]{5}" 
-                                       title="請輸入數字且長度為5位"
-                                       required>
-                            </div>
-                            <!-- 聯繫電話 -->
-                            <div>
-                                <label for="contactPhone" class="block text-sm text-text-dark mb-2">聯繫電話</label>
-                                <input type="tel" id="contactPhone" name="contactPhone" placeholder="請輸入聯繫電話" 
-                                       class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" 
-                                       pattern="[0-9]{2,4}-?[0-9]{3,4}-?[0-9]{3,4}">
-                            </div>
-                        </div>
-                        
-                        <!-- 繳費憑證上傳 -->
-                        <div>
-                            <label for="receiptUpload" class="block text-sm text-text-dark mb-2">繳費憑證上傳 <span class="text-red-500">*</span></label>
-                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary transition-all">
-                                <input type="file" id="receiptUpload" name="receiptUpload" accept="image/*,.pdf" class="hidden" required>
-                                <label for="receiptUpload" class="cursor-pointer">
-                                    <div class="flex flex-col items-center">
-                                        <i class="fa fa-cloud-upload text-2xl text-text-light mb-3"></i>
-                                        <p class="text-sm text-text-dark mb-1">點擊上傳繳費憑證</p>
-                                        <p class="text-xs text-text-light">支援格式：JPG、PNG、PDF (最大5MB)</p>
-                                    </div>
-                                </label>
-                                <div id="uploadPreview" class="mt-4 hidden">
-                                    <img id="previewImage" src="#" alt="繳費憑證預覽" class="max-h-48 mx-auto rounded-md border border-gray-200">
-                                    <p id="fileName" class="text-xs text-text-dark mt-3"></p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- 備註 -->
-                        <div>
-                            <label for="paymentNote" class="block text-sm text-text-dark mb-2">備註</label>
-                            <textarea id="paymentNote" name="paymentNote" class="w-full p-3 border border-gray-200 rounded-md text-sm h-24 resize-none focus:outline-none focus:ring-2 focus:ring-primary/50" 
-                                      placeholder="請輸入其他需要說明的事項（選填）"></textarea>
-                        </div>
-                        
-                        <!-- 提交按鈕 -->
-                        <div class="flex justify-end space-x-3">
-                            <button type="button" class="px-5 py-2 bg-gray-200 text-text-dark rounded-md text-sm hover:bg-gray-300 transition-all">
-                                儲存草稿
-                            </button>
-                            <button type="submit" class="px-6 py-2 bg-primary text-white rounded-md text-sm hover:bg-secondary transition-all">
-                                提交繳費資訊
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
             <!-- 數據統計卡片 -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
@@ -462,7 +288,7 @@
     </div>
 
     <script>
-        // 管理員身份驗證（與managerindex.html同步帳號體系）
+        // 管理員身份驗證
         const VALID_ADMINS = [
             { account: "admin001", password: "admin123" },
             { account: "superadmin", password: "super123" }
@@ -474,16 +300,13 @@
             const password = document.getElementById('authPassword').value.trim();
             const errorEl = document.getElementById('authError');
 
-            // 驗證帳號密碼
             const validAdmin = VALID_ADMINS.find(admin => admin.account === account && admin.password === password);
             
             if (validAdmin) {
-                // 驗證通過：隱藏遮罩，保存登入狀態
                 localStorage.setItem('isAdminAuthenticated', 'true');
                 document.getElementById('authOverlay').style.display = 'none';
                 errorEl.classList.add('hidden');
             } else {
-                // 驗證失敗：顯示錯誤提示
                 errorEl.classList.remove('hidden');
             }
         });
@@ -497,91 +320,11 @@
         });
 
         // 退出登入時清除驗證狀態
-        document.getElementById('logoutLink').addEventListener('click', function() {
+        document.getElementById('logoutLink').addEventListener('click', function(e) {
+            e.preventDefault();
             localStorage.removeItem('isAdminAuthenticated');
             localStorage.removeItem('currentFleetManager');
-        });
-
-        // 繳費週期選擇後計算應繳金額
-        document.getElementById('paymentCycle').addEventListener('change', function() {
-            const selectedOption = this.options[this.selectedIndex];
-            const price = selectedOption.getAttribute('data-price');
-            const cycleText = selectedOption.text.split(' ')[0];
-            
-            let totalAmount = 0;
-            if (cycleText === '月繳') {
-                totalAmount = price;
-            } else if (cycleText === '季繳') {
-                totalAmount = price * 3;
-            } else if (cycleText === '半年繳') {
-                totalAmount = price * 6;
-            } else if (cycleText === '年繳') {
-                totalAmount = price * 12;
-            }
-            
-            document.getElementById('totalPayAmount').textContent = `NT$ ${Number(totalAmount).toLocaleString()}`;
-        });
-
-        // 保存價格設定
-        document.getElementById('savePriceSettings').addEventListener('click', function() {
-            const priceSettings = {
-                startPrice: document.getElementById('startPrice').value,
-                distancePrice: document.getElementById('distancePrice').value,
-                timePrice: document.getElementById('timePrice').value,
-                fixedRebate: document.getElementById('fixedRebate').value,
-                hundredRebate: document.getElementById('hundredRebate').value
-            };
-            
-            // 儲存到 localStorage
-            localStorage.setItem('priceSettings', JSON.stringify(priceSettings));
-            
-            // 顯示成功提示
-            alert('價格設定已成功保存！');
-        });
-
-        // 加載保存的價格設定
-        function loadPriceSettings() {
-            const savedSettings = localStorage.getItem('priceSettings');
-            if (savedSettings) {
-                const settings = JSON.parse(savedSettings);
-                document.getElementById('startPrice').value = settings.startPrice || 80;
-                document.getElementById('distancePrice').value = settings.distancePrice || 5;
-                document.getElementById('timePrice').value = settings.timePrice || 1.5;
-                document.getElementById('fixedRebate').value = settings.fixedRebate || 20;
-                document.getElementById('hundredRebate').value = settings.hundredRebate || 1000;
-            }
-        }
-
-        // 繳費憑證上傳預覽功能
-        document.getElementById('receiptUpload').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const preview = document.getElementById('uploadPreview');
-                const previewImg = document.getElementById('previewImage');
-                const fileName = document.getElementById('fileName');
-                
-                preview.classList.remove('hidden');
-                fileName.textContent = file.name;
-                
-                if (file.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        previewImg.src = e.target.result;
-                    }
-                    reader.readAsDataURL(file);
-                } else {
-                    previewImg.src = 'https://via.placeholder.com/200x150?text=PDF文件';
-                }
-            }
-        });
-
-        // 繳費表單提交處理
-        document.getElementById('paymentForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            alert('繳費資訊提交成功！我們將盡快核對您的繳費憑證。');
-            this.reset();
-            document.getElementById('uploadPreview').classList.add('hidden');
-            document.getElementById('totalPayAmount').textContent = 'NT$ 0';
+            window.location.href = this.href;
         });
 
         // 動態加載系統標題與當前管理員信息
@@ -589,10 +332,8 @@
             const savedTitle = localStorage.getItem('systemTitle') || 'LINE多元化搭車管理員登入系統';
             document.getElementById('systemTitle').textContent = savedTitle;
             
-            const currentManager = JSON.parse(localStorage.getItem('currentFleetManager') || '{}');
-            if (currentManager.managerName) {
-                document.getElementById('currentManagerName').textContent = currentManager.managerName;
-            }
+            // 直接設置管理員名稱（與頁面截圖一致）
+            document.getElementById('currentManagerName').textContent = '王小明';
             
             window.addEventListener('storage', (e) => {
                 if (e.key === 'systemTitle') {
@@ -603,7 +344,7 @@
 
         // 初始化圖表
         function initCharts() {
-            // 訂單趨勢圖
+            // 訂單趨勢圖（與截圖一致）
             const trendCtx = document.getElementById('trendChart').getContext('2d');
             const trendChart = new Chart(trendCtx, {
                 type: 'line',
@@ -611,7 +352,7 @@
                     labels: ['08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00'],
                     datasets: [{
                         label: '訂單數',
-                        data: [5, 12, 18, 15, 22, 28, 16],
+                        data: [5, 10, 10, 10, 10, 10, 10],
                         borderColor: '#00C300',
                         backgroundColor: 'rgba(0, 195, 0, 0.1)',
                         tension: 0.4,
@@ -627,13 +368,13 @@
                         legend: { display: false }
                     },
                     scales: {
-                        y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' } },
+                        y: { beginAtZero: true, max: 10, grid: { color: 'rgba(0, 0, 0, 0.05)' } },
                         x: { grid: { display: false } }
                     }
                 }
             });
 
-            // 收入統計圖
+            // 收入統計圖（與截圖一致）
             const incomeCtx = document.getElementById('incomeChart').getContext('2d');
             const incomeChart = new Chart(incomeCtx, {
                 type: 'bar',
@@ -641,7 +382,7 @@
                     labels: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
                     datasets: [{
                         label: '收入（元）',
-                        data: [1200, 1800, 1500, 2100, 2500, 3200, 2800],
+                        data: [1000, 1300, 1300, 1300, 1300, 1300, 1300],
                         backgroundColor: '#00C300',
                         borderRadius: 4,
                         barPercentage: 0.6
@@ -654,7 +395,7 @@
                         legend: { display: false }
                     },
                     scales: {
-                        y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' } },
+                        y: { beginAtZero: true, max: 1300, grid: { color: 'rgba(0, 0, 0, 0.05)' } },
                         x: { grid: { display: false } }
                     }
                 }
@@ -663,45 +404,53 @@
             // 圖表時間範圍切換
             document.getElementById('trendTimeRange').addEventListener('change', (e) => {
                 const value = e.target.value;
-                let labels, data;
+                let labels, data, maxY;
                 switch(value) {
                     case 'today':
                         labels = ['08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00'];
-                        data = [5, 12, 18, 15, 22, 28, 16];
+                        data = [5, 10, 10, 10, 10, 10, 10];
+                        maxY = 10;
                         break;
                     case 'week':
                         labels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
                         data = [35, 48, 42, 55, 68, 82, 65];
+                        maxY = 82;
                         break;
                     case 'month':
                         labels = ['1日', '5日', '10日', '15日', '20日', '25日', '30日'];
                         data = [120, 180, 150, 220, 280, 320, 350];
+                        maxY = 350;
                         break;
                 }
                 trendChart.data.labels = labels;
                 trendChart.data.datasets[0].data = data;
+                trendChart.options.scales.y.max = maxY;
                 trendChart.update();
             });
 
             document.getElementById('incomeTimeRange').addEventListener('change', (e) => {
                 const value = e.target.value;
-                let labels, data;
+                let labels, data, maxY;
                 switch(value) {
                     case 'week':
                         labels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-                        data = [1200, 1800, 1500, 2100, 2500, 3200, 2800];
+                        data = [1000, 1300, 1300, 1300, 1300, 1300, 1300];
+                        maxY = 1300;
                         break;
                     case 'month':
                         labels = ['1周', '2周', '3周', '4周'];
                         data = [8500, 9200, 10500, 12800];
+                        maxY = 12800;
                         break;
                     case 'quarter':
                         labels = ['1月', '2月', '3月'];
                         data = [35000, 38000, 42000];
+                        maxY = 42000;
                         break;
                 }
                 incomeChart.data.labels = labels;
                 incomeChart.data.datasets[0].data = data;
+                incomeChart.options.scales.y.max = maxY;
                 incomeChart.update();
             });
         }
@@ -719,27 +468,15 @@
             }, 300000); // 5分鐘更新一次
         }
 
-        // 退出登入邏輯
-        function initLogout() {
-            document.getElementById('logoutLink').addEventListener('click', function(e) {
-                e.preventDefault();
-                localStorage.removeItem('currentFleetManager');
-                window.location.href = this.href;
-            });
-        }
-
         // 頁面加載初始化
         window.onload = () => {
             loadSystemInfo();
-            loadPriceSettings();
             initCharts();
             simulateRealTimeData();
-            initLogout();
             
-            const currentManager = JSON.parse(localStorage.getItem('currentFleetManager') || 'null');
-            if (!currentManager && localStorage.getItem('isAdminAuthenticated') !== 'true') {
-                // 未登入且未驗證：強制跳轉到登入頁
-                window.location.href = '../managerindex.html';
+            const isAuthenticated = localStorage.getItem('isAdminAuthenticated') === 'true';
+            if (!isAuthenticated) {
+                document.getElementById('authOverlay').style.display = 'flex';
             }
         };
     </script>
