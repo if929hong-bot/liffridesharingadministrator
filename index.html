@@ -3,32 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>搭車自由 - LIFF 應用</title>
-  <!-- 引入 Tailwind CSS -->
+  <title>搭車自由 - 一站式叫車服務平台</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- 引入 Font Awesome -->
   <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-  <!-- 引入 Leaflet 地圖庫 -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- 引入地址解析插件 -->
-  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+  <!-- Mapbox 地圖庫 -->
+  <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+  <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet'>
   
-  <!-- 自定義配置 -->
   <script>
     tailwind.config = {
       theme: {
         extend: {
           colors: {
-            primary: '#00A86B', // 綠色主色
-            secondary: '#F5F5F5', // 淺灰色背景
-            dark: '#333333', // 深灰色文字
-            super: '#8A2BE2', // 超級管理員紫色
-            fleet: '#FF6B00', // 車隊管理員橙色
-          },
-          fontFamily: {
-            sans: ['Helvetica Neue', 'Arial', 'sans-serif'],
+            primary: '#00A86B',    // 乘客主色
+            fleet: '#FF6B00',      // 車隊管理員主色
+            super: '#8A2BE2',      // 超管主色（保留但隱藏）
           },
         },
       }
@@ -37,1038 +26,372 @@
   
   <style type="text/tailwindcss">
     @layer utilities {
-      .content-auto {
-        content-visibility: auto;
+      .input-field {
+        @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none transition-all;
+      }
+      .input-field-primary {
+        @apply focus:ring-2 focus:ring-primary/50 focus:border-primary;
+      }
+      .input-field-fleet {
+        @apply focus:ring-2 focus:ring-fleet/50 focus:border-fleet;
+      }
+      .input-field-super {
+        @apply focus:ring-2 focus:ring-super/50 focus:border-super;
       }
       .btn-primary {
-        @apply bg-primary text-white py-3 px-6 rounded-lg font-medium transition-all duration-300 hover:bg-primary/90 active:scale-95 shadow-md;
-      }
-      .btn-secondary {
-        @apply bg-white text-primary border border-primary py-3 px-6 rounded-lg font-medium transition-all duration-300 hover:bg-gray-50 active:scale-95;
-      }
-      .btn-super {
-        @apply bg-super text-white py-3 px-6 rounded-lg font-medium transition-all duration-300 hover:bg-super/90 active:scale-95 shadow-md;
+        @apply bg-primary text-white py-3 px-6 rounded-lg font-medium transition-all duration-300 hover:bg-primary/90 active:scale-95 shadow-md w-full;
       }
       .btn-fleet {
-        @apply bg-fleet text-white py-3 px-6 rounded-lg font-medium transition-all duration-300 hover:bg-fleet/90 active:scale-95 shadow-md;
+        @apply bg-fleet text-white py-3 px-6 rounded-lg font-medium transition-all duration-300 hover:bg-fleet/90 active:scale-95 shadow-md w-full;
       }
-      .input-field {
-        @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all;
+      .btn-super {
+        @apply bg-super text-white py-3 px-6 rounded-lg font-medium transition-all duration-300 hover:bg-super/90 active:scale-95 shadow-md w-full;
       }
-      .card {
-        @apply bg-white rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg;
-      }
-      .file-upload {
-        @apply w-full border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer;
-      }
-      .radio-group {
-        @apply flex space-x-6;
-      }
-      .radio-label {
-        @apply flex items-center space-x-2 cursor-pointer;
-      }
-      .modal {
-        @apply fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden;
-      }
-      .modal-content {
-        @apply bg-white rounded-xl p-8 max-w-md w-full mx-4 text-center;
-      }
-      /* 地圖容器樣式 */
       .map-container {
-        @apply w-full h-[300px] mt-2 rounded-lg border border-gray-200 hidden;
+        @apply w-full h-48 rounded-lg border border-gray-200 mt-2;
       }
-      .map-btn {
-        @apply w-full py-2 mt-1 bg-gray-100 text-dark rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium;
-      }
-      /* 權限標籤樣式 */
-      .role-badge {
-        @apply inline-block px-2 py-1 rounded-full text-xs font-medium;
-      }
-      .role-super {
-        @apply bg-super/10 text-super;
-      }
-      .role-fleet {
-        @apply bg-fleet/10 text-fleet;
-      }
-      .role-driver {
-        @apply bg-primary/10 text-primary;
+      .section-hidden {
+        @apply hidden;
       }
     }
   </style>
 </head>
-<body class="bg-gray-50 font-sans text-dark min-h-screen">
-  <!-- 頂部導航欄 -->
-  <header class="bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
-    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-      <div class="flex items-center space-x-2">
-        <i class="fa fa-car text-primary text-2xl"></i>
+<body class="bg-gray-50 font-sans min-h-screen">
+  <!-- 頁頭導航 -->
+  <header class="w-full max-w-6xl mx-auto px-4 py-6">
+    <div class="flex items-center justify-between flex-wrap">
+      <div class="flex items-center">
+        <i class="fa fa-car text-primary text-2xl mr-2"></i>
         <h1 class="text-xl font-bold">搭車自由</h1>
       </div>
-      <nav class="hidden md:flex space-x-6">
-        <button id="nav-passenger" class="text-primary font-medium">乘客</button>
+      <nav class="flex space-x-6 mt-4 md:mt-0">
+        <button id="nav-passenger" class="text-primary font-medium hover:underline transition-colors">乘客</button>
         <button id="nav-driver" class="text-gray-600 hover:text-primary transition-colors">司機</button>
-        <button id="nav-admin" class="text-gray-600 hover:text-primary transition-colors">車隊管理員</button>
-        <!-- 新增：超級管理員獨立入口 -->
-        <button id="nav-super-admin" class="text-super hover:text-super/80 transition-colors font-medium">
-          <i class="fa fa-crown mr-1"></i>超級管理員
-        </button>
+        <button id="nav-fleet-admin" class="text-gray-600 hover:text-primary transition-colors">車隊管理員</button>
+        <!-- 隱藏超管導航項 -->
       </nav>
-      <button id="mobile-menu-btn" class="md:hidden text-dark">
-        <i class="fa fa-bars text-xl"></i>
-      </button>
-    </div>
-    <!-- 手機導航菜單 -->
-    <div id="mobile-menu" class="hidden md:hidden bg-white shadow-lg absolute w-full">
-      <div class="container mx-auto px-4 py-2 flex flex-col space-y-3">
-        <button id="mobile-passenger" class="text-primary font-medium py-2 border-b border-gray-100">乘客</button>
-        <button id="mobile-driver" class="text-gray-600 hover:text-primary transition-colors py-2 border-b border-gray-100">司機</button>
-        <button id="mobile-admin" class="text-gray-600 hover:text-primary transition-colors py-2 border-b border-gray-100">車隊管理員</button>
-        <!-- 新增：手機版超級管理員入口 -->
-        <button id="mobile-super-admin" class="text-super hover:text-super/80 transition-colors py-2">
-          <i class="fa fa-crown mr-1"></i>超級管理員
-        </button>
-      </div>
     </div>
   </header>
 
-  <!-- 主要內容區域 -->
-  <main class="container mx-auto px-4 pt-24 pb-16">
-    <!-- 乘客介面 -->
-    <section id="passenger-section" class="block">
-      <div class="max-w-md mx-auto">
-        <div class="card text-center">
-          <div class="mb-8">
-            <h2 class="text-2xl font-bold mb-2">乘客叫車</h2>
-            <p class="text-gray-600">無需登錄，立即叫車</p>
+  <main class="w-full max-w-6xl mx-auto px-4 pb-12">
+    <!-- 1. 乘客叫車區塊 (默認顯示) -->
+    <section id="passenger-section" class="max-w-md mx-auto">
+      <div class="bg-white rounded-xl shadow-md p-8 text-center">
+        <h2 class="text-2xl font-bold text-primary mb-2">乘客叫車</h2>
+        <p class="text-gray-600 text-sm mb-6">無需登錄，立即叫車</p>
+        
+        <form id="passenger-order-form" class="space-y-4">
+          <div class="text-left">
+            <label class="block text-sm font-medium text-gray-700 mb-1">姓名</label>
+            <input type="text" class="input-field input-field-primary" placeholder="輸入您的姓名" required>
+          </div>
+          <div class="text-left">
+            <label class="block text-sm font-medium text-gray-700 mb-1">電話</label>
+            <input type="tel" class="input-field input-field-primary" placeholder="輸入您的聯絡電話" required>
           </div>
           
-          <!-- 乘客叫車表單 - 提交至 passenger-order.html -->
-          <form id="passenger-order-form" action="passenger-order.html" method="GET">
-            <div class="space-y-4 mb-8">
-              <!-- 姓名欄位 -->
-              <div>
-                <label class="block text-left text-sm font-medium text-gray-700 mb-1">姓名</label>
-                <input type="text" class="input-field" name="passenger-name" placeholder="輸入您的姓名" required>
-              </div>
-              <!-- 電話欄位 -->
-              <div>
-                <label class="block text-left text-sm font-medium text-gray-700 mb-1">電話</label>
-                <input type="tel" class="input-field" name="passenger-phone" placeholder="輸入您的聯絡電話" required>
-              </div>
-              <!-- 上車地點（地圖選擇） -->
-              <div>
-                <label class="block text-left text-sm font-medium text-gray-700 mb-1">上車地點</label>
-                <input type="text" class="input-field" id="pickup-location" name="pickup-location" placeholder="從地圖選擇位置" required>
-                <button type="button" class="map-btn" onclick="openMap('pickup')">
-                  <i class="fa fa-map-marker mr-2"></i>開啟地圖選擇
-                </button>
-                <div id="pickupMap" class="map-container"></div>
-              </div>
-              <!-- 下車地點（地圖選擇） -->
-              <div>
-                <label class="block text-left text-sm font-medium text-gray-700 mb-1">下車地點</label>
-                <input type="text" class="input-field" id="dropoff-location" name="dropoff-location" placeholder="從地圖選擇位置" required>
-                <button type="button" class="map-btn" onclick="openMap('dropoff')">
-                  <i class="fa fa-map-marker mr-2"></i>開啟地圖選擇
-                </button>
-                <div id="dropoffMap" class="map-container"></div>
-              </div>
-              <div>
-                <label class="block text-left text-sm font-medium text-gray-700 mb-1">乘客人數</label>
-                <select class="input-field" name="passenger-count" required>
-                  <option value="1">1 人</option>
-                  <option value="2">2 人</option>
-                  <option value="3">3 人</option>
-                  <option value="4+">4 人以上</option>
-                </select>
-              </div>
-            </div>
-            
-            <!-- 乘客搭車入口按鈕 - 提交表單並跳轉 -->
-            <button type="submit" id="passenger-order" class="btn-primary w-full">
-              <span>我要叫車</span>
-            </button>
-          </form>
-        </div>
-        
-        <div class="mt-6 text-center text-gray-500 text-sm">
-          <p>透過 LINE 帳號快速使用，保護您的隱私安全</p>
-        </div>
+          <!-- 上車地點 (整合Mapbox，無按鈕) -->
+          <div class="text-left">
+            <label class="block text-sm font-medium text-gray-700 mb-1">上車地點</label>
+            <input type="text" class="input-field input-field-primary" id="pickup-location" placeholder="點擊地圖選擇位置" required>
+            <div id="pickup-map" class="map-container"></div>
+          </div>
+          
+          <!-- 下車地點 (整合Mapbox，無按鈕) -->
+          <div class="text-left">
+            <label class="block text-sm font-medium text-gray-700 mb-1">下車地點</label>
+            <input type="text" class="input-field input-field-primary" id="dropoff-location" placeholder="點擊地圖選擇位置" required>
+            <div id="dropoff-map" class="map-container"></div>
+          </div>
+          
+          <div class="text-left">
+            <label class="block text-sm font-medium text-gray-700 mb-1">乘客人數</label>
+            <select class="input-field input-field-primary" required>
+              <option value="1">1 人</option>
+              <option value="2">2 人</option>
+              <option value="3">3 人</option>
+              <option value="4+">4 人以上</option>
+            </select>
+          </div>
+          
+          <button type="submit" class="btn-primary">
+            我要叫車
+          </button>
+        </form>
       </div>
     </section>
 
-    <!-- 司機介面 -->
-    <section id="driver-section" class="hidden">
-      <div class="max-w-md mx-auto">
-        <div class="card">
-          <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold">司機入口</h2>
-            <div class="flex space-x-2">
-              <button id="driver-login-tab" class="text-primary font-medium border-b-2 border-primary pb-1">登錄</button>
-              <button id="driver-register-tab" class="text-gray-500 hover:text-primary transition-colors pb-1">註冊</button>
-            </div>
-          </div>
-          
-          <!-- 司機登錄表單 - 串聯車隊管理員 -->
-          <div id="driver-login-form">
-            <div class="mb-4">
-              <label class="block text-left text-sm font-medium text-gray-700 mb-2">司機類型</label>
-              <div class="radio-group">
-                <label class="radio-label">
-                  <input type="radio" name="driverType" value="individual" checked class="text-primary">
-                  <span>個人司機</span>
-                </label>
-                <label class="radio-label">
-                  <input type="radio" name="driverType" value="fleet" class="text-primary">
-                  <span>車隊司機</span>
-                </label>
-              </div>
-            </div>
-            
-            <!-- 已刪除：車隊編號欄位 -->
-            
-            <div class="space-y-4 mb-6">
-              <div>
-                <label class="block text-left text-sm font-medium text-gray-700 mb-1">帳號 (手機號碼)</label>
-                <input type="tel" id="driver-phone" class="input-field" placeholder="輸入手機號碼" required>
-              </div>
-              <div>
-                <label class="block text-left text-sm font-medium text-gray-700 mb-1">密碼</label>
-                <input type="password" id="driver-password" class="input-field" placeholder="輸入密碼" required>
-              </div>
-              <div class="text-right">
-                <a href="#" class="text-primary text-sm hover:underline">忘記密碼？</a>
-              </div>
-            </div>
-            <button id="driver-login-btn" class="btn-primary w-full">登錄</button>
-            
-            <!-- 車隊管理員快速入口 -->
-            <div class="mt-6 pt-6 border-t border-gray-100">
-              <p class="text-sm text-gray-600 mb-3 text-center">車隊管理員？<a href="#" id="goto-fleet-admin" class="text-fleet hover:underline">點此登錄</a></p>
-            </div>
-          </div>
-          
-          <!-- 司機註冊表單 - 提交至管理員後台司機管理頁面 -->
-          <form id="driver-register-form" class="hidden" action="admin-driver.html" method="POST" enctype="multipart/form-data">
-            <div class="space-y-6 mb-6">
-              <!-- 基本資訊 -->
-              <div class="border-b border-gray-100 pb-4">
-                <h3 class="text-lg font-semibold mb-4 text-gray-800">基本資訊</h3>
-                <div class="space-y-4">
-                  <div>
-                    <label class="block text-left text-sm font-medium text-gray-700 mb-1">姓名</label>
-                    <input type="text" class="input-field" name="driver-name" placeholder="輸入真實姓名" required>
-                  </div>
-                  <div>
-                    <label class="block text-left text-sm font-medium text-gray-700 mb-1">手機號碼</label>
-                    <input type="tel" class="input-field" name="driver-phone" placeholder="輸入手機號碼" required>
-                  </div>
-                  <div>
-                    <label class="block text-left text-sm font-medium text-gray-700 mb-1">目前職業</label>
-                    <input type="text" class="input-field" name="driver-job" placeholder="輸入您的目前職業" required>
-                  </div>
-                  <!-- 車隊資訊 - 串聯車隊管理員 -->
-                  <div>
-                    <label class="block text-left text-sm font-medium text-gray-700 mb-1">車隊名稱</label>
-                    <input type="text" class="input-field" name="fleet-name" placeholder="輸入所屬車隊名稱（無車隊可填寫「個人」）" required>
-                  </div>
-                  <div>
-                    <label class="block text-left text-sm font-medium text-gray-700 mb-1">車隊管理員聯繫方式</label>
-                    <input type="tel" class="input-field" name="fleet-manager-phone" placeholder="輸入車隊管理員電話（無車隊可不填）">
-                  </div>
-                  <div>
-                    <label class="block text-left text-sm font-medium text-gray-700 mb-1">車牌號碼</label>
-                    <input type="text" class="input-field" name="car-license" placeholder="輸入車牌號碼" required>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- 駕駛經驗 -->
-              <div class="border-b border-gray-100 pb-4">
-                <h3 class="text-lg font-semibold mb-4 text-gray-800">駕駛經驗</h3>
-                <div class="space-y-4">
-                  <div>
-                    <label class="block text-left text-sm font-medium text-gray-700 mb-2">有無搭車服務經驗？</label>
-                    <div class="radio-group">
-                      <label class="radio-label">
-                        <input type="radio" name="driving-experience" value="yes" class="text-primary focus:ring-primary" required>
-                        <span>有</span>
-                      </label>
-                      <label class="radio-label">
-                        <input type="radio" name="driving-experience" value="no" class="text-primary focus:ring-primary">
-                        <span>無</span>
-                      </label>
-                    </div>
-                  </div>
-                  <div id="fleet-history-container" class="hidden">
-                    <label class="block text-left text-sm font-medium text-gray-700 mb-1">曾經服務的車隊</label>
-                    <textarea class="input-field h-24" name="fleet-history" placeholder="請列出曾經服務過的車隊名稱，多個請用逗號分隔"></textarea>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- 背景調查 -->
-              <div class="border-b border-gray-100 pb-4">
-                <h3 class="text-lg font-semibold mb-4 text-gray-800">背景調查</h3>
-                <div class="space-y-4">
-                  <div>
-                    <label class="block text-left text-sm font-medium text-gray-700 mb-2">有無犯罪前科？</label>
-                    <div class="radio-group">
-                      <label class="radio-label">
-                        <input type="radio" name="criminal-record" value="yes" class="text-primary focus:ring-primary" required>
-                        <span>有</span>
-                      </label>
-                      <label class="radio-label">
-                        <input type="radio" name="criminal-record" value="no" class="text-primary focus:ring-primary">
-                        <span>無</span>
-                      </label>
-                    </div>
-                  </div>
-                  <div>
-                    <label class="block text-left text-sm font-medium text-gray-700 mb-2">良民證上傳</label>
-                    <label class="file-upload">
-                      <input type="file" class="hidden" name="good-citizen-doc" accept="image/*" required>
-                      <div>
-                        <p class="text-gray-600 mb-1">點擊或拖動文件到這裡上傳</p>
-                        <p class="text-gray-400 text-xs">支援 JPG、PNG 格式，檔案大小不超過 5MB</p>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- 車輛資訊 -->
-              <div class="border-b border-gray-100 pb-4">
-                <h3 class="text-lg font-semibold mb-4 text-gray-800">車輛資訊</h3>
-                <div class="space-y-4">
-                  <div>
-                    <label class="block text-left text-sm font-medium text-gray-700 mb-1">車款</label>
-                    <input type="text" class="input-field" name="car-model" placeholder="例如：豐田 Corolla" required>
-                  </div>
-                  <div>
-                    <label class="block text-left text-sm font-medium text-gray-700 mb-1">車型</label>
-                    <select class="input-field" name="car-type" required>
-                      <option value="">請選擇車型</option>
-                      <option value="sedan">轎車</option>
-                      <option value="hatchback">掀背車</option>
-                      <option value="suv">休旅車</option>
-                      <option value="mpv">MPV</option>
-                      <option value="other">其他</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label class="block text-left text-sm font-medium text-gray-700 mb-1">出廠年份</label>
-                    <input type="number" class="input-field" name="car-year" placeholder="例如：2020" min="1990" max="2025" required>
-                  </div>
-                  <div>
-                    <label class="block text-left text-sm font-medium text-gray-700 mb-2">車輛外觀照片上傳</label>
-                    <label class="file-upload">
-                      <input type="file" class="hidden" name="car-photo" accept="image/*" required>
-                      <div>
-                        <p class="text-gray-600 mb-1">點擊或拖動文件到這裡上傳</p>
-                        <p class="text-gray-400 text-xs">請拍攝清晰的車輛外觀照片，支援 JPG、PNG 格式</p>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- 保險與證件 -->
-              <div>
-                <h3 class="text-lg font-semibold mb-4 text-gray-800">保險與證件</h3>
-                <div class="space-y-4">
-                  <div>
-                    <label class="block text-left text-sm font-medium text-gray-700 mb-2">是否有購買產險？(至少要有乘客險)</label>
-                    <div class="radio-group">
-                      <label class="radio-label">
-                        <input type="radio" name="insurance" value="yes" class="text-primary focus:ring-primary" required>
-                        <span>有</span>
-                      </label>
-                      <label class="radio-label">
-                        <input type="radio" name="insurance" value="no" class="text-primary focus:ring-primary">
-                        <span>無</span>
-                      </label>
-                    </div>
-                  </div>
-                  <div>
-                    <label class="block text-left text-sm font-medium text-gray-700 mb-2">駕照照片上傳</label>
-                    <label class="file-upload">
-                      <input type="file" class="hidden" name="driver-license" accept="image/*" required>
-                      <div>
-                        <p class="text-gray-600 mb-1">點擊或拖動文件到這裡上傳</p>
-                        <p class="text-gray-400 text-xs">請拍攝清晰的駕照正反面照片，支援 JPG、PNG 格式</p>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- 密碼設置 -->
-              <div>
-                <div class="space-y-4">
-                  <div>
-                    <label class="block text-left text-sm font-medium text-gray-700 mb-1">設定密碼</label>
-                    <input type="password" class="input-field" name="driver-password" placeholder="設定密碼（至少8位）" minlength="8" required>
-                  </div>
-                  <div>
-                    <label class="block text-left text-sm font-medium text-gray-700 mb-1">確認密碼</label>
-                    <input type="password" class="input-field" name="driver-password-confirm" placeholder="再次輸入密碼" minlength="8" required>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div class="mb-4">
-              <label class="flex items-start space-x-2 text-sm text-gray-600">
-                <input type="checkbox" class="mt-1 text-primary focus:ring-primary" required>
-                <span>我已閱讀並同意<a href="#" class="text-primary hover:underline">服務條款</a>、<a href="#" class="text-primary hover:underline">隱私政策</a>及<a href="#" class="text-primary hover:underline">司機規章</a></span>
-              </label>
-            </div>
-            
-            <button type="submit" class="btn-primary w-full">提交註冊申請</button>
-          </form>
+    <!-- 2. 司機入口區塊 (默認隱藏) -->
+    <section id="driver-section" class="max-w-md mx-auto section-hidden">
+      <div class="bg-white rounded-xl shadow-md p-8 text-center">
+        <h2 class="text-2xl font-bold text-primary mb-2">司機入口</h2>
+        <div class="flex justify-end mb-6">
+          <a href="#" class="text-gray-500 hover:text-primary transition-colors mr-4">登錄</a>
+          <a href="#" class="text-primary font-medium">註冊</a>
         </div>
         
-        <div class="mt-6 text-center">
-          <p class="text-gray-600">註冊申請提交後，我們將在3個工作天內進行審核</p>
-          <p class="text-gray-500 text-sm mt-2">審核通過後將以簡訊通知您，敬請耐心等候</p>
+        <!-- 移除司機類型欄位 -->
+        <form id="driver-login-form" class="space-y-4">
+          <div class="text-left">
+            <label class="block text-sm font-medium text-gray-700 mb-1">帳號 (手機號碼)</label>
+            <input type="tel" class="input-field input-field-primary" id="driver-phone" value="0912345678" required>
+          </div>
+          <div class="text-left">
+            <label class="block text-sm font-medium text-gray-700 mb-1">密碼</label>
+            <input type="password" class="input-field input-field-primary" id="driver-password" required>
+          </div>
+          <div class="text-right">
+            <a href="#" class="text-primary text-sm hover:underline">忘記密碼？</a>
+          </div>
+          <button type="submit" class="btn-primary">
+            登錄
+          </button>
+        </form>
+        
+        <div class="mt-6 pt-6 border-t border-gray-100">
+          <p class="text-sm text-gray-600">車隊管理員？<button id="switch-to-fleet" class="text-fleet hover:underline">點此登錄</button></p>
         </div>
+      </div>
+      <div class="mt-6 text-center text-gray-500 text-sm">
+        <p>註冊申請提交後，我們將在3個工作天內進行審核</p>
+        <p class="mt-2">審核通過後將以簡訊通知您，敬請耐心等候</p>
       </div>
     </section>
 
-    <!-- 管理員介面 - 整合超級管理員與車隊管理員 -->
-    <section id="admin-section" class="hidden">
-      <div class="max-w-md mx-auto">
-        <div class="card">
-          <div class="text-center mb-6">
-            <h2 class="text-2xl font-bold">管理員登錄</h2>
-            <div class="mt-2">
-              <label class="radio-label justify-center">
-                <input type="radio" name="adminRole" value="fleet" checked class="text-fleet">
-                <span class="role-badge role-fleet mr-2">車隊管理員</span>
-              </label>
-              <label class="radio-label justify-center">
-                <input type="radio" name="adminRole" value="super" class="text-super">
-                <span class="role-badge role-super">超級管理員</span>
-              </label>
-            </div>
-          </div>
-          
-          <!-- 管理員登錄表單 - 串聯超級管理員與車隊管理員 -->
-          <form id="admin-login-form">
-            <!-- 已刪除：車隊編號欄位 -->
-            
-            <div class="space-y-4 mb-6">
-              <div>
-                <label class="block text-left text-sm font-medium text-gray-700 mb-1">管理員帳號</label>
-                <input type="text" class="input-field" name="admin-username" placeholder="輸入管理員帳號" required>
-              </div>
-              <div>
-                <label class="block text-left text-sm font-medium text-gray-700 mb-1">密碼</label>
-                <input type="password" class="input-field" name="admin-password" placeholder="輸入管理員密碼" required>
-              </div>
-            </div>
-            
-            <button type="submit" id="admin-login-btn" class="btn-fleet w-full">
-              <span>登錄車隊管理員後台</span>
-            </button>
-          </form>
-          
-          <!-- 管理員後台快速連結 (根據權限顯示) -->
-          <div class="mt-8 pt-6 border-t border-gray-100">
-            <h3 class="text-sm font-semibold text-gray-500 mb-4 text-center">後台功能快速連結</h3>
-            <div class="grid grid-cols-2 gap-3">
-              <a href="admin-area.html" class="flex items-center justify-center p-3 border border-gray-200 rounded-lg hover:border-primary hover:bg-gray-50 transition-colors">
-                <span class="text-sm">區域管理</span>
-              </a>
-              <a href="admin-driver.html" class="flex items-center justify-center p-3 border border-gray-200 rounded-lg hover:border-primary hover:bg-gray-50 transition-colors">
-                <span class="text-sm">司機管理</span>
-              </a>
-              <a href="admin-order.html" class="flex items-center justify-center p-3 border border-gray-200 rounded-lg hover:border-primary hover:bg-gray-50 transition-colors">
-                <span class="text-sm">訂單管理</span>
-              </a>
-              <a href="admin-system.html" class="flex items-center justify-center p-3 border border-gray-200 rounded-lg hover:border-primary hover:bg-gray-50 transition-colors">
-                <span class="text-sm">系統設置</span>
-              </a>
-              <!-- 超級管理員專屬功能 -->
-              <a href="admin-report.html" class="flex items-center justify-center p-3 border border-gray-200 rounded-lg hover:border-primary hover:bg-gray-50 transition-colors col-span-2">
-                <span class="text-sm">報表統計</span>
-              </a>
-              <!-- 強化：超管按鈕預設顯示，並直接連結到administrator.html -->
-              <a href="administrator.html" id="super-admin-link" class="flex items-center justify-center p-3 border border-super/30 bg-super/5 rounded-lg hover:border-super hover:bg-super/10 transition-colors col-span-2">
-                <span class="text-sm text-super"><i class="fa fa-crown mr-1"></i>超級管理員專屬後台</span>
-              </a>
-            </div>
-          </div>
+    <!-- 3. 車隊管理員區塊 (默認隱藏) -->
+    <section id="fleet-admin-section" class="max-w-md mx-auto section-hidden">
+      <div class="bg-white rounded-xl shadow-md p-8 text-center border border-fleet/20">
+        <h2 class="text-2xl font-bold text-fleet mb-2">管理員登錄</h2>
+        <p class="text-gray-600 text-sm mb-6">管理所屬車隊與訂單</p>
+        
+        <!-- 移除超級管理員選項，僅保留車隊管理員 -->
+        <div class="mb-4">
+          <label class="inline-flex items-center">
+            <input type="radio" name="adminType" value="fleet" checked class="text-fleet">
+            <span class="ml-2 text-fleet font-medium">車隊管理員</span>
+          </label>
         </div>
         
-        <div class="mt-6 text-center text-gray-500 text-sm">
-          <p>僅限授權管理員使用</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- 新增：超級管理員快速登錄區塊 -->
-    <section id="super-admin-section" class="hidden">
-      <div class="max-w-md mx-auto">
-        <div class="card border border-super/20">
-          <div class="text-center mb-6">
-            <h2 class="text-2xl font-bold text-super">超級管理員專屬入口</h2>
-            <p class="text-gray-600 mt-2">管理所有車隊與系統設定</p>
+        <!-- 車隊管理員登錄表單 -->
+        <form id="fleet-admin-login-form" class="space-y-4">
+          <div class="text-left">
+            <label class="block text-sm font-medium text-gray-700 mb-1">管理員帳號</label>
+            <input type="text" class="input-field input-field-fleet" id="fleet-username" value="0975521219" required>
           </div>
-          
-          <!-- 超級管理員快速登錄表單 -->
-          <form id="super-admin-login-form">
-            <div class="space-y-4 mb-6">
-              <div>
-                <label class="block text-left text-sm font-medium text-gray-700 mb-1">超管帳號</label>
-                <input type="text" class="input-field" name="super-username" placeholder="輸入超級管理員帳號" required>
-              </div>
-              <div>
-                <label class="block text-left text-sm font-medium text-gray-700 mb-1">超管密碼</label>
-                <input type="password" class="input-field" name="super-password" placeholder="輸入超級管理員密碼" required>
-              </div>
-            </div>
-            
-            <button type="submit" id="super-admin-login-btn" class="btn-super w-full">
-              <i class="fa fa-crown mr-2"></i>登錄超級管理員後台
-            </button>
-          </form>
+          <div class="text-left">
+            <label class="block text-sm font-medium text-gray-700 mb-1">密碼</label>
+            <input type="password" class="input-field input-field-fleet" id="fleet-password" required>
+          </div>
+          <button type="submit" class="btn-fleet">
+            登錄車隊管理員後台
+          </button>
+        </form>
+        
+        <!-- 後台功能快速連結（移除超級管理員專屬按鈕） -->
+        <div class="mt-8 pt-6 border-t border-gray-100">
+          <h3 class="text-sm font-semibold text-gray-500 mb-4">後台功能快速連結</h3>
+          <div class="grid grid-cols-2 gap-3">
+            <a href="admin-area.html" class="p-3 border border-gray-200 rounded-lg hover:border-fleet hover:bg-gray-50 transition-colors">
+              <span class="text-sm">區域管理</span>
+            </a>
+            <a href="admin-driver.html" class="p-3 border border-gray-200 rounded-lg hover:border-fleet hover:bg-gray-50 transition-colors">
+              <span class="text-sm">司機管理</span>
+            </a>
+            <a href="admin-order.html" class="p-3 border border-gray-200 rounded-lg hover:border-fleet hover:bg-gray-50 transition-colors">
+              <span class="text-sm">訂單管理</span>
+            </a>
+            <a href="admin-system.html" class="p-3 border border-gray-200 rounded-lg hover:border-fleet hover:bg-gray-50 transition-colors">
+              <span class="text-sm">系統設置</span>
+            </a>
+            <a href="admin-report.html" class="p-3 border border-gray-200 rounded-lg hover:border-fleet hover:bg-gray-50 transition-colors col-span-2">
+              <span class="text-sm">報表統計</span>
+            </a>
+          </div>
         </div>
       </div>
     </section>
   </main>
 
-  <!-- 審核中提示彈窗 -->
-  <div id="review-modal" class="modal">
-    <div class="modal-content">
-      <div class="mb-4">
-        <h3 class="text-xl font-bold mb-2">註冊申請已提交</h3>
-      </div>
-      <p class="text-gray-600 mb-6">您的司機註冊申請已順利提交，我們將在3個工作天內進行審核</p>
-      <p class="text-gray-500 text-sm mb-8">審核結果將透過簡訊通知您，敬請耐心等候</p>
-      <button id="close-modal" class="btn-primary w-full">返回首頁</button>
-    </div>
-  </div>
-
-  <!-- 權限提示彈窗 -->
-  <div id="permission-modal" class="modal">
-    <div class="modal-content">
-      <div class="mb-4">
-        <h3 class="text-xl font-bold mb-2" id="permission-title">登錄成功</h3>
-      </div>
-      <p class="text-gray-600 mb-6" id="permission-message">您已成功登錄，將為您跳轉到對應後台</p>
-      <button id="close-permission-modal" class="btn-primary w-full">確認</button>
-    </div>
-  </div>
-
-  <!-- 頁腳 -->
-  <footer class="bg-white border-t border-gray-200 py-6">
-    <div class="container mx-auto px-4 text-center text-gray-500 text-sm">
-      <p>© 2025 搭車自由 LIFF 應用 | 透過 LINE Developer 平台提供服務</p>
-      <div class="mt-2 flex justify-center space-x-4">
-        <a href="#" class="hover:text-primary transition-colors">關於我們</a>
-        <a href="#" class="hover:text-primary transition-colors">服務條款</a>
-        <a href="#" class="hover:text-primary transition-colors">聯絡我們</a>
-      </div>
+  <footer class="w-full text-center text-gray-500 text-sm py-6 border-t border-gray-200">
+    <p>© 2025 搭車自由 LIFF 應用 | 透過 LINE Developer 平台提供服務</p>
+    <div class="mt-2 flex justify-center space-x-4">
+      <a href="#" class="hover:text-primary transition-colors">關於我們</a>
+      <a href="#" class="hover:text-primary transition-colors">服務條款</a>
+      <a href="#" class="hover:text-primary transition-colors">聯絡我們</a>
     </div>
   </footer>
 
-  <!-- JavaScript -->
   <script>
-    // ===== 全域帳號體系設定 =====
-    const ACCOUNT_SYSTEM = {
-      // 司機帳號 (串聯車隊管理員)
-      drivers: [
-        { phone: '0912345678', password: 'driver123', fleetCode: 'F001', fleetName: '安心車隊', managerId: 'admin_fleet_001' },
-        { phone: '0987654321', password: 'driver456', fleetCode: '', fleetName: '個人', managerId: '' }
-      ],
-      // 車隊管理員帳號 (串聯超級管理員)
+    // ========== 全局變量隔離 ==========
+    const APP = {
+      // Mapbox Token
+      mapboxToken: 'pk.eyJ1IjoiaWY5Mjlob25nIiwiYSI6ImNtamQxczU2cjAweDMzZnM1Z3BvY2JkejgifQ.q-GNcs0rqWrZ3HtjhmysEQ',
+      // 車隊管理員帳號配置
       fleetAdmins: [
-        { username: 'fleet001', password: 'fleet123', fleetCode: 'F001', fleetName: '安心車隊', superAdminId: 'admin_super_001' },
-        { username: 'fleet002', password: 'fleet456', fleetCode: 'F002', fleetName: '平安車隊', superAdminId: 'admin_super_001' }
+        { username: '0975521219', password: 'fffishau', redirect: 'fleet-admin-dashboard.html' }
       ],
-      // 超級管理員帳號（新增您指定的兩組，不顯示在頁面）
+      // 超管帳號配置（保留但隱藏）
       superAdmins: [
-        { username: '0975521219', password: 'fffishau', manageFleets: ['all'] },
-        { username: 'admin123', password: 'ccc456789', manageFleets: ['all'] }
+        { username: '0975521219', password: 'fffishau', redirect: 'super-admin-dashboard.html' },
+        { username: 'admin123', password: 'ccc456789', redirect: 'super-admin-dashboard.html' }
       ],
-      // 預設測試帳號（已移除超管測試帳號，避免暴露）
-      testAccounts: {
-        driver: { phone: '0912345678', password: 'driver123' },
-        fleetAdmin: { username: 'fleet001', password: 'fleet123' }
+      // 初始化所有功能
+      init: function() {
+        this.initNavSwitch();      // 導航切換
+        this.initPassengerMap();   // 乘客地圖
+        this.initFormHandlers();   // 表單處理
+      },
+      
+      // ========== 導航切換邏輯 ==========
+      initNavSwitch: function() {
+        const sections = {
+          passenger: document.getElementById('passenger-section'),
+          driver: document.getElementById('driver-section'),
+          fleetAdmin: document.getElementById('fleet-admin-section')
+        };
+        const navButtons = {
+          passenger: document.getElementById('nav-passenger'),
+          driver: document.getElementById('nav-driver'),
+          fleetAdmin: document.getElementById('nav-fleet-admin')
+        };
+
+        // 重置所有區塊顯示狀態
+        const resetSections = () => {
+          Object.values(sections).forEach(section => {
+            section.classList.add('section-hidden');
+          });
+          Object.values(navButtons).forEach(btn => {
+            btn.classList.remove('text-primary', 'font-medium');
+            btn.classList.add('text-gray-600');
+          });
+        };
+
+        // 乘客導航
+        navButtons.passenger.addEventListener('click', () => {
+          resetSections();
+          sections.passenger.classList.remove('section-hidden');
+          navButtons.passenger.classList.remove('text-gray-600');
+          navButtons.passenger.classList.add('text-primary', 'font-medium');
+        });
+
+        // 司機導航
+        navButtons.driver.addEventListener('click', () => {
+          resetSections();
+          sections.driver.classList.remove('section-hidden');
+          navButtons.driver.classList.remove('text-gray-600');
+          navButtons.driver.classList.add('text-primary', 'font-medium');
+        });
+
+        // 車隊管理員導航
+        navButtons.fleetAdmin.addEventListener('click', () => {
+          resetSections();
+          sections.fleetAdmin.classList.remove('section-hidden');
+          navButtons.fleetAdmin.classList.remove('text-gray-600');
+          navButtons.fleetAdmin.classList.add('text-primary', 'font-medium');
+        });
+
+        // 司機頁面切換到車隊管理員
+        document.getElementById('switch-to-fleet')?.addEventListener('click', () => {
+          resetSections();
+          sections.fleetAdmin.classList.remove('section-hidden');
+          navButtons.fleetAdmin.classList.remove('text-gray-600');
+          navButtons.fleetAdmin.classList.add('text-primary', 'font-medium');
+        });
+      },
+      
+      // ========== 乘客地圖初始化 ==========
+      initPassengerMap: function() {
+        if (!mapboxgl) return;
+        
+        mapboxgl.accessToken = this.mapboxToken;
+
+        // 上車地圖
+        const pickupMap = new mapboxgl.Map({
+          container: 'pickup-map',
+          style: 'mapbox://styles/mapbox/streets-v12',
+          center: [121.5654, 25.0330], // 台北經緯度
+          zoom: 15,
+          attributionControl: false // 隱藏版權信息
+        });
+        pickupMap.addControl(new mapboxgl.AttributionControl({ compact: true }));
+        
+        // 上車地圖點擊事件
+        pickupMap.on('click', (e) => {
+          this.getAddressFromLngLat(e.lngLat.lng, e.lngLat.lat, 'pickup-location');
+        });
+
+        // 下車地圖
+        const dropoffMap = new mapboxgl.Map({
+          container: 'dropoff-map',
+          style: 'mapbox://styles/mapbox/streets-v12',
+          center: [121.5654, 25.0330],
+          zoom: 15,
+          attributionControl: false
+        });
+        dropoffMap.addControl(new mapboxgl.AttributionControl({ compact: true }));
+        
+        // 下車地圖點擊事件
+        dropoffMap.on('click', (e) => {
+          this.getAddressFromLngLat(e.lngLat.lng, e.lngLat.lat, 'dropoff-location');
+        });
+      },
+      
+      // 逆地理編碼獲取地址
+      getAddressFromLngLat: function(lng, lat, inputId) {
+        fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${this.mapboxToken}&language=zh-TW`)
+          .then(res => res.json())
+          .then(data => {
+            const address = data.features[0]?.place_name || `(${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+            document.getElementById(inputId).value = address;
+          })
+          .catch(err => {
+            console.error('地址解析失敗:', err);
+            document.getElementById(inputId).value = `(${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+          });
+      },
+      
+      // ========== 表單處理邏輯 ==========
+      initFormHandlers: function() {
+        // 1. 乘客叫車表單
+        document.getElementById('passenger-order-form')?.addEventListener('submit', (e) => {
+          e.preventDefault();
+          alert('叫車請求已發送！司機將盡快與您聯繫');
+          e.target.reset();
+        });
+
+        // 2. 司機登錄表單
+        document.getElementById('driver-login-form')?.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const phone = document.getElementById('driver-phone').value.trim();
+          alert(`司機 ${phone} 登錄成功！`);
+          window.location.href = 'driver-dashboard.html';
+        });
+
+        // 3. 車隊管理員登錄表單
+        document.getElementById('fleet-admin-login-form')?.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const username = document.getElementById('fleet-username').value.trim();
+          const password = document.getElementById('fleet-password').value.trim();
+          
+          const matchedAdmin = this.fleetAdmins.find(admin => 
+            admin.username === username && admin.password === password
+          );
+          
+          if (matchedAdmin) {
+            localStorage.setItem('currentFleetAdmin', JSON.stringify(matchedAdmin));
+            window.location.href = matchedAdmin.redirect;
+          } else {
+            alert('車隊管理員帳號或密碼錯誤！');
+            document.getElementById('fleet-password').value = '';
+            document.getElementById('fleet-password').focus();
+          }
+        });
       }
     };
 
-    // ===== 地圖選擇功能 =====
-    let currentMapTarget = ''; // 當前選擇的是上車/下車地圖
-    let mapInstances = {};     // 儲存地圖實例
-    let markers = {};          // 儲存地圖標記
-    
-    // 開啟地圖選擇器
-    function openMap(target) {
-      currentMapTarget = target;
-      const mapDiv = document.getElementById(`${target}Map`);
-      
-      // 隱藏其他地圖，顯示當前地圖
-      document.querySelectorAll('.map-container').forEach(div => {
-        div.classList.add('hidden');
-      });
-      mapDiv.classList.remove('hidden');
-      
-      // 初始化地圖（僅初始化一次）
-      if (!mapInstances[target]) {
-        // 建立地圖實例（預設定位到台北）
-        mapInstances[target] = L.map(mapDiv).setView([25.0330, 121.5654], 15);
-        
-        // 載入 OpenStreetMap 地圖圖層
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(mapInstances[target]);
-        
-        // 添加地址搜尋控件
-        L.Control.geocoder({
-          defaultMarkGeocode: false,
-          placeholder: '搜尋地址...'
-        }).on('markgeocode', function(e) {
-          const latlng = e.geocode.center;
-          placeMarker(latlng, target); // 搜尋地址後標記位置
-        }).addTo(mapInstances[target]);
-        
-        // 點擊地圖任意位置選擇
-        mapInstances[target].on('click', function(e) {
-          placeMarker(e.latlng, target);
-        });
-      }
-    }
-    
-    // 在地圖上標記位置並解析地址
-    function placeMarker(latlng, target) {
-      // 移除舊標記
-      if (markers[target]) {
-        mapInstances[target].removeLayer(markers[target]);
-      }
-      
-      // 添加新標記
-      markers[target] = L.marker(latlng).addTo(mapInstances[target]);
-      mapInstances[target].panTo(latlng); // 地圖自動平移到標記點
-      
-      // 透過 Nominatim 將座標轉換為地址
-      fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}&zoom=18&addressdetails=1&accept-language=zh-TW`)
-        .then(res => res.json())
-        .then(data => {
-          // 組合易讀的地址
-          let address = '';
-          if (data.address) {
-            address = [
-              data.address.city || data.address.town || '',
-              data.address.road || '',
-              data.address.house_number || ''
-            ].filter(Boolean).join('');
-          }
-          // 若解析失敗則顯示座標
-          if (!address) {
-            address = `(${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)})`;
-          }
-          
-          // 填入對應的輸入框
-          document.getElementById(`${target}-location`).value = address;
-        })
-        .catch(err => {
-          // 錯誤處理：顯示座標
-          document.getElementById(`${target}-location`).value = `(${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)})`;
-        });
-    }
-
-    // ===== 帳號串聯邏輯 =====
-    // 管理員角色切換（車隊/超級）
-    const adminRoleRadios = document.querySelectorAll('input[name="adminRole"]');
-    const superAdminLink = document.getElementById('super-admin-link');
-    const adminLoginBtn = document.getElementById('admin-login-btn');
-    
-    adminRoleRadios.forEach(radio => {
-      radio.addEventListener('change', () => {
-        if (radio.value === 'super') {
-          // 超級管理員 - 顯示超管按鈕，更換按鈕樣式
-          superAdminLink.classList.remove('hidden');
-          adminLoginBtn.classList.remove('btn-fleet');
-          adminLoginBtn.classList.add('btn-super');
-          adminLoginBtn.innerHTML = '<span><i class="fa fa-crown mr-1"></i>登錄超級管理員後台</span>';
-        } else {
-          // 車隊管理員 - 保留超管按鈕可見，僅更換登錄按鈕樣式
-          adminLoginBtn.classList.remove('btn-super');
-          adminLoginBtn.classList.add('btn-fleet');
-          adminLoginBtn.innerHTML = '<span>登錄車隊管理員後台</span>';
-        }
-      });
-    });
-
-    // 司機登錄驗證（串聯到 driver-login.html）
-    document.getElementById('driver-login-btn').addEventListener('click', function() {
-      const driverType = document.querySelector('input[name="driverType"]:checked').value;
-      const phone = document.getElementById('driver-phone').value.trim();
-      const password = document.getElementById('driver-password').value.trim();
-      
-      // 查找司機帳號
-      const driver = ACCOUNT_SYSTEM.drivers.find(d => 
-        d.phone === phone && d.password === password
-      );
-      
-      if (driver) {
-        // 儲存司機資訊到 localStorage
-        localStorage.setItem('currentUser', JSON.stringify({
-          type: 'driver',
-          info: driver,
-          fleetManager: driver.managerId ? ACCOUNT_SYSTEM.fleetAdmins.find(a => a.fleetCode === driver.fleetCode) : null
-        }));
-        
-        // 顯示成功提示
-        showPermissionModal('司機登錄成功', `歡迎回來！${driver.fleetName} - ${phone}`, () => {
-          // 跳轉到司機登錄頁（根目錄 driver-login.html）
-          window.location.href = 'driver-login.html';
-        });
-      } else {
-        alert('司機帳號或密碼錯誤，請重新輸入');
-        document.getElementById('driver-password').value = '';
-        document.getElementById('driver-password').focus();
-      }
-    });
-
-    // 管理員登錄驗證（串聯到指定後台頁面）
-    document.getElementById('admin-login-form').addEventListener('submit', function(e) {
-      e.preventDefault();
-      
-      const adminRole = document.querySelector('input[name="adminRole"]:checked').value;
-      const username = this.querySelector('input[name="admin-username"]').value.trim();
-      const password = this.querySelector('input[name="admin-password"]').value.trim();
-      
-      let admin = null;
-      let redirectUrl = '';
-      
-      if (adminRole === 'super') {
-        // 超級管理員驗證 - 跳轉到 administrator.html
-        admin = ACCOUNT_SYSTEM.superAdmins.find(a => a.username === username && a.password === password);
-        redirectUrl = 'administrator.html';
-      } else {
-        // 車隊管理員驗證 - 跳轉到 admin-dashboard.html
-        admin = ACCOUNT_SYSTEM.fleetAdmins.find(a => 
-          a.username === username && a.password === password
-        );
-        redirectUrl = 'admin-dashboard.html';
-      }
-      
-      if (admin) {
-        // 儲存管理員資訊到 localStorage
-        const userData = {
-          type: adminRole === 'super' ? 'super_admin' : 'fleet_admin',
-          info: admin,
-          // 串聯關係：車隊管理員對應超級管理員，超級管理員管理多個車隊
-          relatedAdmins: adminRole === 'fleet' 
-            ? { superAdmin: ACCOUNT_SYSTEM.superAdmins.find(a => a.manageFleets.includes('all')) }
-            : { managedFleets: ACCOUNT_SYSTEM.fleetAdmins }
-        };
-        
-        localStorage.setItem('currentUser', JSON.stringify(userData));
-        
-        // 顯示成功提示
-        const roleText = adminRole === 'super' ? '超級管理員' : '車隊管理員';
-        showPermissionModal(
-          `${roleText}登錄成功`, 
-          `您已以${roleText}身份登錄，將跳轉到對應後台`, 
-          () => {
-            window.location.href = redirectUrl;
-          }
-        );
-      } else {
-        alert(`${adminRole === 'super' ? '超級' : '車隊'}管理員帳號或密碼錯誤，請重新輸入`);
-        this.querySelector('input[name="admin-password"]').value = '';
-        this.querySelector('input[name="admin-password"]').focus();
-      }
-    });
-
-    // 新增：超級管理員單獨登錄驗證
-    document.getElementById('super-admin-login-form').addEventListener('submit', function(e) {
-      e.preventDefault();
-      
-      const username = this.querySelector('input[name="super-username"]').value.trim();
-      const password = this.querySelector('input[name="super-password"]').value.trim();
-      
-      // 驗證超級管理員帳號
-      const superAdmin = ACCOUNT_SYSTEM.superAdmins.find(a => 
-        a.username === username && a.password === password
-      );
-      
-      if (superAdmin) {
-        // 儲存超管資訊
-        localStorage.setItem('currentUser', JSON.stringify({
-          type: 'super_admin',
-          info: superAdmin,
-          managedFleets: ACCOUNT_SYSTEM.fleetAdmins
-        }));
-        
-        // 顯示提示並跳轉到 administrator.html
-        showPermissionModal(
-          '超級管理員登錄成功',
-          '您已獲取最高管理權限，將跳轉到超管後台',
-          () => {
-            window.location.href = 'administrator.html';
-          }
-        );
-      } else {
-        alert('超級管理員帳號或密碼錯誤！');
-        this.querySelector('input[name="super-password"]').value = '';
-        this.querySelector('input[name="super-password"]').focus();
-      }
-    });
-
-    // 車隊管理員快速入口
-    document.getElementById('goto-fleet-admin').addEventListener('click', function(e) {
-      e.preventDefault();
-      switchSection('admin-section');
-      // 自動選擇車隊管理員角色
-      document.querySelector('input[name="adminRole"][value="fleet"]').checked = true;
-      // 觸發角色切換事件
-      document.querySelector('input[name="adminRole"][value="fleet"]').dispatchEvent(new Event('change'));
-    });
-
-    // 顯示權限提示彈窗
-    function showPermissionModal(title, message, callback) {
-      const modal = document.getElementById('permission-modal');
-      const titleEl = document.getElementById('permission-title');
-      const messageEl = document.getElementById('permission-message');
-      const closeBtn = document.getElementById('close-permission-modal');
-      
-      titleEl.textContent = title;
-      messageEl.textContent = message;
-      modal.classList.remove('hidden');
-      
-      // 關閉按鈕事件
-      closeBtn.onclick = function() {
-        modal.classList.add('hidden');
-        if (typeof callback === 'function') {
-          callback();
-        }
-      };
-      
-      // 點擊外部關閉
-      modal.addEventListener('click', function(e) {
-        if (e.target === modal) {
-          modal.classList.add('hidden');
-        }
-      });
-    }
-
-    // ===== 原有頁面功能 =====
-    // 移動菜單切換
-    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-    const mobileMenu = document.getElementById('mobile-menu');
-    
-    mobileMenuBtn.addEventListener('click', () => {
-      mobileMenu.classList.toggle('hidden');
-    });
-    
-    // 導航切換功能 - 擴展包含超級管理員
-    const navButtons = [
-      { desktop: 'nav-passenger', mobile: 'mobile-passenger', section: 'passenger-section' },
-      { desktop: 'nav-driver', mobile: 'mobile-driver', section: 'driver-section' },
-      { desktop: 'nav-admin', mobile: 'mobile-admin', section: 'admin-section' },
-      { desktop: 'nav-super-admin', mobile: 'mobile-super-admin', section: 'super-admin-section' } // 新增
-    ];
-    
-    const sections = ['passenger-section', 'driver-section', 'admin-section', 'super-admin-section']; // 新增
-    const navItems = document.querySelectorAll('nav button, #mobile-menu button');
-    
-    function switchSection(targetSection) {
-      // 隱藏所有區域
-      sections.forEach(section => {
-        document.getElementById(section).classList.add('hidden');
-      });
-      
-      // 顯示目標區域
-      document.getElementById(targetSection).classList.remove('hidden');
-      
-      // 重置所有導航按鈕樣式
-      navItems.forEach(item => {
-        item.classList.remove('text-primary', 'font-medium', 'border-b-2', 'border-primary', 'text-super');
-        item.classList.add('text-gray-600');
-      });
-      
-      // 設置活躍導航按鈕樣式
-      navButtons.forEach(btn => {
-        if (btn.section === targetSection) {
-          const desktopBtn = document.getElementById(btn.desktop);
-          const mobileBtn = document.getElementById(btn.mobile);
-          
-          if (desktopBtn) {
-            desktopBtn.classList.remove('text-gray-600');
-            // 超級管理員按鈕單獨樣式
-            if (btn.desktop === 'nav-super-admin') {
-              desktopBtn.classList.add('text-super', 'font-medium');
-            } else {
-              desktopBtn.classList.add('text-primary', 'font-medium');
-            }
-          }
-          
-          if (mobileBtn) {
-            mobileBtn.classList.remove('text-gray-600');
-            if (btn.mobile === 'mobile-super-admin') {
-              mobileBtn.classList.add('text-super', 'font-medium');
-            } else {
-              mobileBtn.classList.add('text-primary', 'font-medium');
-            }
-          }
-        }
-      });
-      
-      // 關閉移動菜單
-      mobileMenu.classList.add('hidden');
-    }
-    
-    // 為每個導航按鈕添加點擊事件
-    navButtons.forEach(btn => {
-      const desktopBtn = document.getElementById(btn.desktop);
-      const mobileBtn = document.getElementById(btn.mobile);
-      
-      if (desktopBtn) {
-        desktopBtn.addEventListener('click', () => switchSection(btn.section));
-      }
-      
-      if (mobileBtn) {
-        mobileBtn.addEventListener('click', () => switchSection(btn.section));
-      }
-    });
-    
-    // 司機登錄/註冊標籤切換
-    const loginTab = document.getElementById('driver-login-tab');
-    const registerTab = document.getElementById('driver-register-tab');
-    const loginForm = document.getElementById('driver-login-form');
-    const registerForm = document.getElementById('driver-register-form');
-    
-    loginTab.addEventListener('click', () => {
-      loginForm.classList.remove('hidden');
-      registerForm.classList.add('hidden');
-      
-      loginTab.classList.add('text-primary', 'font-medium', 'border-b-2', 'border-primary');
-      loginTab.classList.remove('text-gray-500');
-      
-      registerTab.classList.remove('text-primary', 'font-medium', 'border-b-2', 'border-primary');
-      registerTab.classList.add('text-gray-500');
-    });
-    
-    registerTab.addEventListener('click', () => {
-      loginForm.classList.add('hidden');
-      registerForm.classList.remove('hidden');
-      
-      registerTab.classList.add('text-primary', 'font-medium', 'border-b-2', 'border-primary');
-      registerTab.classList.remove('text-gray-500');
-      
-      loginTab.classList.remove('text-primary', 'font-medium', 'border-b-2', 'border-primary');
-      loginTab.classList.add('text-gray-500');
-    });
-    
-    // 司機註冊表單 - 經驗選擇邏輯
-    const experienceRadios = document.querySelectorAll('input[name="driving-experience"]');
-    const fleetHistoryContainer = document.getElementById('fleet-history-container');
-    
-    experienceRadios.forEach(radio => {
-      radio.addEventListener('change', () => {
-        if (radio.value === 'yes') {
-          fleetHistoryContainer.classList.remove('hidden');
-          fleetHistoryContainer.querySelector('textarea').required = true;
-        } else {
-          fleetHistoryContainer.classList.add('hidden');
-          fleetHistoryContainer.querySelector('textarea').required = false;
-        }
-      });
-    });
-    
-    // 文件上傳預覽功能
-    const fileInputs = document.querySelectorAll('input[type="file"]');
-    fileInputs.forEach(input => {
-      input.addEventListener('change', function() {
-        if (this.files && this.files[0]) {
-          const fileName = this.files[0].name;
-          const uploadLabel = this.closest('.file-upload');
-          if (uploadLabel) {
-            uploadLabel.classList.add('border-primary');
-          }
-        }
-      });
-    });
-    
-    // 司機註冊表單提交處理
-    const driverRegisterForm = document.getElementById('driver-register-form');
-    const reviewModal = document.getElementById('review-modal');
-    const closeModalBtn = document.getElementById('close-modal');
-    
-    if (driverRegisterForm) {
-      driverRegisterForm.addEventListener('submit', function(e) {
-        e.preventDefault(); // 阻止表單默認提交行為
-        
-        // 在這裡可以添加表單驗證逻辑
-        const password = this.querySelector('input[name="driver-password"]').value;
-        const passwordConfirm = this.querySelector('input[name="driver-password-confirm"]').value;
-        
-        if (password !== passwordConfirm) {
-          alert('兩次輸入的密碼不一致，請重新輸入');
-          return;
-        }
-        
-        // 獲取車隊資訊，建立司機與車隊管理員的串聯
-        const fleetName = this.querySelector('input[name="fleet-name"]').value;
-        const fleetManagerPhone = this.querySelector('input[name="fleet-manager-phone"]').value;
-        
-        // 模擬儲存司機註冊資料，並串聯到對應車隊管理員
-        const newDriver = {
-          phone: this.querySelector('input[name="driver-phone"]').value,
-          password: password,
-          name: this.querySelector('input[name="driver-name"]').value,
-          fleetName: fleetName,
-          fleetCode: fleetName !== '個人' ? 'F' + Math.floor(Math.random() * 1000).toString().padStart(3, '0') : '',
-          managerPhone: fleetManagerPhone
-        };
-        
-        // 將新司機添加到全域帳號體系
-        ACCOUNT_SYSTEM.drivers.push(newDriver);
-        
-        // 模擬表單提交到管理員後台
-        console.log('司機註冊資料已提交至 admin-driver.html', newDriver);
-        
-        // 顯示審核中彈窗
-        reviewModal.classList.remove('hidden');
-      });
-    }
-    
-    // 關閉彈窗並返回首頁（乘客介面）
-    closeModalBtn.addEventListener('click', () => {
-      reviewModal.classList.add('hidden');
-      switchSection('passenger-section');
-    });
-    
-    // 點擊彈窗外部關閉彈窗
-    reviewModal.addEventListener('click', (e) => {
-      if (e.target === reviewModal) {
-        reviewModal.classList.add('hidden');
-        switchSection('passenger-section');
-      }
-    });
-    
-    // 添加頁面加載動畫
-    window.addEventListener('load', () => {
-      document.body.classList.add('opacity-100');
-      document.body.classList.remove('opacity-0');
-      
-      // 頁面加載時自動填入測試帳號（已移除超管測試帳號）
-      // 司機測試帳號
-      document.getElementById('driver-phone').value = ACCOUNT_SYSTEM.testAccounts.driver.phone;
-      document.getElementById('driver-password').value = ACCOUNT_SYSTEM.testAccounts.driver.password;
-      
-      // 管理員測試帳號
-      const adminUsernameInput = document.querySelector('input[name="admin-username"]');
-      const adminPasswordInput = document.querySelector('input[name="admin-password"]');
-      
-      if (adminUsernameInput) adminUsernameInput.value = ACCOUNT_SYSTEM.testAccounts.fleetAdmin.username;
-      if (adminPasswordInput) adminPasswordInput.value = ACCOUNT_SYSTEM.testAccounts.fleetAdmin.password;
+    // 頁面加載完成後初始化
+    document.addEventListener('DOMContentLoaded', () => {
+      APP.init();
     });
   </script>
 </body>
