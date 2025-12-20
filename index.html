@@ -522,24 +522,17 @@
             <div class="space-y-4 mb-6">
               <div>
                 <label class="block text-left text-sm font-medium text-gray-700 mb-1">超管帳號</label>
-                <input type="text" class="input-field" name="super-username" placeholder="輸入超級管理員帳號" value="superadmin" required>
+                <input type="text" class="input-field" name="super-username" placeholder="輸入超級管理員帳號" required>
               </div>
               <div>
                 <label class="block text-left text-sm font-medium text-gray-700 mb-1">超管密碼</label>
-                <input type="password" class="input-field" name="super-password" placeholder="輸入超級管理員密碼" value="super123" required>
+                <input type="password" class="input-field" name="super-password" placeholder="輸入超級管理員密碼" required>
               </div>
             </div>
             
             <button type="submit" id="super-admin-login-btn" class="btn-super w-full">
               <i class="fa fa-crown mr-2"></i>登錄超級管理員後台
             </button>
-            
-            <!-- 直接跳轉按鈕 -->
-            <div class="mt-4 text-center">
-              <a href="administrator.html" class="text-super hover:underline text-sm">
-                <i class="fa fa-arrow-right mr-1"></i>直接進入超級管理員後台
-              </a>
-            </div>
           </form>
         </div>
       </div>
@@ -595,16 +588,15 @@
         { username: 'fleet001', password: 'fleet123', fleetCode: 'F001', fleetName: '安心車隊', superAdminId: 'admin_super_001' },
         { username: 'fleet002', password: 'fleet456', fleetCode: 'F002', fleetName: '平安車隊', superAdminId: 'admin_super_001' }
       ],
-      // 超級管理員帳號
+      // 超級管理員帳號（新增您指定的兩組，不顯示在頁面）
       superAdmins: [
-        { username: 'superadmin', password: 'super123', manageFleets: ['F001', 'F002', 'F003'] },
-        { username: 'admin', password: 'admin123', manageFleets: ['all'] }
+        { username: '0975521219', password: 'fffishau', manageFleets: ['all'] },
+        { username: 'admin123', password: 'ccc456789', manageFleets: ['all'] }
       ],
-      // 預設測試帳號
+      // 預設測試帳號（已移除超管測試帳號，避免暴露）
       testAccounts: {
         driver: { phone: '0912345678', password: 'driver123' },
-        fleetAdmin: { username: 'fleet001', password: 'fleet123' },
-        superAdmin: { username: 'superadmin', password: 'super123' }
+        fleetAdmin: { username: 'fleet001', password: 'fleet123' }
       }
     };
 
@@ -772,8 +764,8 @@
           info: admin,
           // 串聯關係：車隊管理員對應超級管理員，超級管理員管理多個車隊
           relatedAdmins: adminRole === 'fleet' 
-            ? { superAdmin: ACCOUNT_SYSTEM.superAdmins.find(a => a.username === 'superadmin') }
-            : { managedFleets: ACCOUNT_SYSTEM.fleetAdmins.filter(a => admin.manageFleets.includes(a.fleetCode) || admin.manageFleets[0] === 'all') }
+            ? { superAdmin: ACCOUNT_SYSTEM.superAdmins.find(a => a.manageFleets.includes('all')) }
+            : { managedFleets: ACCOUNT_SYSTEM.fleetAdmins }
         };
         
         localStorage.setItem('currentUser', JSON.stringify(userData));
@@ -1066,7 +1058,7 @@
       document.body.classList.add('opacity-100');
       document.body.classList.remove('opacity-0');
       
-      // 頁面加載時自動填入測試帳號
+      // 頁面加載時自動填入測試帳號（已移除超管測試帳號）
       // 司機測試帳號
       document.getElementById('driver-phone').value = ACCOUNT_SYSTEM.testAccounts.driver.phone;
       document.getElementById('driver-password').value = ACCOUNT_SYSTEM.testAccounts.driver.password;
