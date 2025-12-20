@@ -217,12 +217,7 @@
               </div>
             </div>
             
-            <!-- 車隊編號欄位 (預設隱藏) -->
-            <div id="fleet-code-container" class="hidden mb-4">
-              <label class="block text-left text-sm font-medium text-gray-700 mb-1">車隊編號</label>
-              <input type="text" class="input-field" id="fleet-code" placeholder="輸入所屬車隊編號" required>
-              <p class="text-xs text-gray-500 mt-1">請向您的車隊管理員索取車隊編號</p>
-            </div>
+            <!-- 已刪除：車隊編號欄位 -->
             
             <div class="space-y-4 mb-6">
               <div>
@@ -453,11 +448,7 @@
           
           <!-- 管理員登錄表單 - 串聯超級管理員與車隊管理員 -->
           <form id="admin-login-form">
-            <!-- 車隊編號 (僅車隊管理員顯示) -->
-            <div id="admin-fleet-code-container" class="mb-4">
-              <label class="block text-left text-sm font-medium text-gray-700 mb-1">車隊編號</label>
-              <input type="text" class="input-field" name="fleet-code" placeholder="輸入車隊編號" required>
-            </div>
+            <!-- 已刪除：車隊編號欄位 -->
             
             <div class="space-y-4 mb-6">
               <div>
@@ -652,42 +643,23 @@
     }
 
     // ===== 帳號串聯邏輯 =====
-    // 司機類型切換（個人/車隊）
-    const driverTypeRadios = document.querySelectorAll('input[name="driverType"]');
-    const fleetCodeContainer = document.getElementById('fleet-code-container');
-    
-    driverTypeRadios.forEach(radio => {
-      radio.addEventListener('change', () => {
-        if (radio.value === 'fleet') {
-          fleetCodeContainer.classList.remove('hidden');
-          document.getElementById('fleet-code').required = true;
-        } else {
-          fleetCodeContainer.classList.add('hidden');
-          document.getElementById('fleet-code').required = false;
-        }
-      });
-    });
+    // 已刪除：司機類型切換（個人/車隊）相關程式碼（車隊編號邏輯）
 
     // 管理員角色切換（車隊/超級）
     const adminRoleRadios = document.querySelectorAll('input[name="adminRole"]');
-    const adminFleetCodeContainer = document.getElementById('admin-fleet-code-container');
     const superAdminLink = document.getElementById('super-admin-link');
     const adminLoginBtn = document.getElementById('admin-login-btn');
     
     adminRoleRadios.forEach(radio => {
       radio.addEventListener('change', () => {
         if (radio.value === 'super') {
-          // 超級管理員 - 隱藏車隊編號，顯示超管按鈕，更換按鈕樣式
-          adminFleetCodeContainer.classList.add('hidden');
-          adminFleetCodeContainer.querySelector('input').required = false;
+          // 超級管理員 - 顯示超管按鈕，更換按鈕樣式
           superAdminLink.classList.remove('hidden');
           adminLoginBtn.classList.remove('btn-fleet');
           adminLoginBtn.classList.add('btn-super');
           adminLoginBtn.innerHTML = '<span>登錄超級管理員後台</span>';
         } else {
-          // 車隊管理員 - 顯示車隊編號，隱藏超管按鈕，恢復按鈕樣式
-          adminFleetCodeContainer.classList.remove('hidden');
-          adminFleetCodeContainer.querySelector('input').required = true;
+          // 車隊管理員 - 隱藏超管按鈕，恢復按鈕樣式
           superAdminLink.classList.add('hidden');
           adminLoginBtn.classList.remove('btn-super');
           adminLoginBtn.classList.add('btn-fleet');
@@ -696,17 +668,15 @@
       });
     });
 
-    // 司機登錄驗證（串聯車隊管理員）
+    // 司機登錄驗證（移除車隊編號驗證）
     document.getElementById('driver-login-btn').addEventListener('click', function() {
       const driverType = document.querySelector('input[name="driverType"]:checked').value;
       const phone = document.getElementById('driver-phone').value.trim();
       const password = document.getElementById('driver-password').value.trim();
-      const fleetCode = driverType === 'fleet' ? document.getElementById('fleet-code').value.trim() : '';
       
-      // 查找司機帳號
+      // 查找司機帳號（移除車隊編號驗證）
       const driver = ACCOUNT_SYSTEM.drivers.find(d => 
-        d.phone === phone && d.password === password && 
-        (driverType === 'individual' || d.fleetCode === fleetCode)
+        d.phone === phone && d.password === password
       );
       
       if (driver) {
@@ -723,20 +693,19 @@
           window.location.href = 'driver-dashboard.html';
         });
       } else {
-        alert('司機帳號、密碼或車隊編號錯誤，請重新輸入');
+        alert('司機帳號或密碼錯誤，請重新輸入');
         document.getElementById('driver-password').value = '';
         document.getElementById('driver-password').focus();
       }
     });
 
-    // 管理員登錄驗證（串聯超級管理員）
+    // 管理員登錄驗證（移除車隊編號驗證）
     document.getElementById('admin-login-form').addEventListener('submit', function(e) {
       e.preventDefault();
       
       const adminRole = document.querySelector('input[name="adminRole"]:checked').value;
       const username = this.querySelector('input[name="admin-username"]').value.trim();
       const password = this.querySelector('input[name="admin-password"]').value.trim();
-      const fleetCode = adminRole === 'fleet' ? this.querySelector('input[name="fleet-code"]').value.trim() : '';
       
       let admin = null;
       let redirectUrl = '';
@@ -746,9 +715,9 @@
         admin = ACCOUNT_SYSTEM.superAdmins.find(a => a.username === username && a.password === password);
         redirectUrl = 'super-admin-dashboard.html';
       } else {
-        // 車隊管理員驗證
+        // 車隊管理員驗證（移除車隊編號驗證）
         admin = ACCOUNT_SYSTEM.fleetAdmins.find(a => 
-          a.username === username && a.password === password && a.fleetCode === fleetCode
+          a.username === username && a.password === password
         );
         redirectUrl = 'admin-dashboard.html';
       }
@@ -776,7 +745,7 @@
           }
         );
       } else {
-        alert(`${adminRole === 'super' ? '超級' : '車隊'}管理員帳號、密碼或車隊編號錯誤，請重新輸入`);
+        alert(`${adminRole === 'super' ? '超級' : '車隊'}管理員帳號或密碼錯誤，請重新輸入`);
         this.querySelector('input[name="admin-password"]').value = '';
         this.querySelector('input[name="admin-password"]').focus();
       }
@@ -1017,11 +986,9 @@
       // 管理員測試帳號
       const adminUsernameInput = document.querySelector('input[name="admin-username"]');
       const adminPasswordInput = document.querySelector('input[name="admin-password"]');
-      const adminFleetCodeInput = document.querySelector('input[name="fleet-code"]');
       
       if (adminUsernameInput) adminUsernameInput.value = ACCOUNT_SYSTEM.testAccounts.fleetAdmin.username;
       if (adminPasswordInput) adminPasswordInput.value = ACCOUNT_SYSTEM.testAccounts.fleetAdmin.password;
-      if (adminFleetCodeInput) adminFleetCodeInput.value = ACCOUNT_SYSTEM.testAccounts.fleetAdmin.fleetCode;
     });
   </script>
 </body>
