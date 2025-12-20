@@ -90,14 +90,14 @@
             <input type="tel" class="input-field input-field-primary" placeholder="輸入您的聯絡電話" required>
           </div>
           
-          <!-- 上車地點 (整合Mapbox，無按鈕) -->
+          <!-- 上車地點 (整合Mapbox，定位台中市) -->
           <div class="text-left">
             <label class="block text-sm font-medium text-gray-700 mb-1">上車地點</label>
             <input type="text" class="input-field input-field-primary" id="pickup-location" placeholder="點擊地圖選擇位置" required>
             <div id="pickup-map" class="map-container"></div>
           </div>
           
-          <!-- 下車地點 (整合Mapbox，無按鈕) -->
+          <!-- 下車地點 (整合Mapbox，定位台中市) -->
           <div class="text-left">
             <label class="block text-sm font-medium text-gray-700 mb-1">下車地點</label>
             <input type="text" class="input-field input-field-primary" id="dropoff-location" placeholder="點擊地圖選擇位置" required>
@@ -127,7 +127,8 @@
         <h2 class="text-2xl font-bold text-primary mb-2">司機入口</h2>
         <div class="flex justify-end mb-6">
           <a href="#" class="text-gray-500 hover:text-primary transition-colors mr-4">登錄</a>
-          <a href="#" class="text-primary font-medium">註冊</a>
+          <!-- 司機註冊跳轉到 driver/driver-register.html -->
+          <a href="driver/driver-register.html" class="text-primary font-medium">註冊</a>
         </div>
         
         <!-- 移除司機類型欄位 -->
@@ -164,12 +165,9 @@
         <h2 class="text-2xl font-bold text-fleet mb-2">管理員登錄</h2>
         <p class="text-gray-600 text-sm mb-6">管理所屬車隊與訂單</p>
         
-        <!-- 車隊管理員選項 -->
-        <div class="mb-4">
-          <label class="inline-flex items-center">
-            <input type="radio" name="adminType" value="fleet" checked class="text-fleet">
-            <span class="ml-2 text-fleet font-medium">車隊管理員</span>
-          </label>
+        <!-- 新增：車隊管理員註冊連結 -->
+        <div class="mb-4 text-right">
+          <a href="manager.html" class="text-fleet hover:underline text-sm">註冊車隊管理員</a>
         </div>
         
         <!-- 車隊管理員登錄表單 -->
@@ -257,15 +255,19 @@
     const APP = {
       // Mapbox Token
       mapboxToken: 'pk.eyJ1IjoiaWY5Mjlob25nIiwiYSI6ImNtamQxczU2cjAweDMzZnM1Z3BvY2JkejgifQ.q-GNcs0rqWrZ3HtjhmysEQ',
-      // 車隊管理員帳號配置
+      // 車隊管理員帳號配置 (跳轉到 admin/admin-dashboard.html)
       fleetAdmins: [
-        { username: '0975521219', password: 'fffishau', redirect: 'fleet-admin-dashboard.html' }
+        { username: '0975521219', password: 'fffishau', redirect: 'admin/admin-dashboard.html' }
       ],
-      // 超管帳號配置 - 修改跳轉為 administrator.html
+      // 超管帳號配置 - 跳轉到 administrator.html
       superAdmins: [
         { username: '0975521219', password: 'fffishau', redirect: 'administrator.html' },
         { username: 'admin123', password: 'ccc456789', redirect: 'administrator.html' }
       ],
+      // 車隊管理員註冊申請列表
+      fleetAdminApplications: JSON.parse(localStorage.getItem('fleetAdminApplications')) || [],
+      // 司機註冊申請列表（供manager.html顯示）
+      driverApplications: JSON.parse(localStorage.getItem('driverApplications')) || [],
       // 初始化所有功能
       init: function() {
         this.initNavSwitch();      // 導航切換
@@ -340,19 +342,21 @@
         });
       },
       
-      // ========== 乘客地圖初始化 ==========
+      // ========== 乘客地圖初始化 (定位台中市) ==========
       initPassengerMap: function() {
         if (!mapboxgl) return;
         
         mapboxgl.accessToken = this.mapboxToken;
+        // 台中市經緯度：120.6704, 24.1319
+        const taichungCenter = [120.6704, 24.1319];
 
         // 上車地圖
         const pickupMap = new mapboxgl.Map({
           container: 'pickup-map',
           style: 'mapbox://styles/mapbox/streets-v12',
-          center: [121.5654, 25.0330], // 台北經緯度
-          zoom: 15,
-          attributionControl: false // 隱藏版權信息
+          center: taichungCenter,
+          zoom: 14,
+          attributionControl: false
         });
         pickupMap.addControl(new mapboxgl.AttributionControl({ compact: true }));
         
@@ -365,8 +369,8 @@
         const dropoffMap = new mapboxgl.Map({
           container: 'dropoff-map',
           style: 'mapbox://styles/mapbox/streets-v12',
-          center: [121.5654, 25.0330],
-          zoom: 15,
+          center: taichungCenter,
+          zoom: 14,
           attributionControl: false
         });
         dropoffMap.addControl(new mapboxgl.AttributionControl({ compact: true }));
@@ -393,11 +397,11 @@
       
       // ========== 表單處理邏輯 ==========
       initFormHandlers: function() {
-        // 1. 乘客叫車表單
+        // 1. 乘客叫車表單 (跳轉到 passenger/passenger-order.html)
         document.getElementById('passenger-order-form')?.addEventListener('submit', (e) => {
           e.preventDefault();
-          alert('叫車請求已發送！司機將盡快與您聯繫');
-          e.target.reset();
+          // 跳轉到乘客訂單頁面
+          window.location.href = 'passenger/passenger-order.html';
         });
 
         // 2. 司機登錄表單
@@ -420,7 +424,7 @@
           
           if (matchedAdmin) {
             localStorage.setItem('currentFleetAdmin', JSON.stringify(matchedAdmin));
-            window.location.href = matchedAdmin.redirect;
+            window.location.href = matchedAdmin.redirect; // 跳轉到 admin/admin-dashboard.html
           } else {
             alert('車隊管理員帳號或密碼錯誤！');
             document.getElementById('fleet-password').value = '';
