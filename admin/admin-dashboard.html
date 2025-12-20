@@ -76,15 +76,15 @@
             <h2 class="text-2xl font-bold text-center mb-6 text-text-dark">管理員身份驗證</h2>
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-text-dark mb-1">管理員帳號</label>
-                    <input type="text" id="authAccount" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary" placeholder="輸入管理員帳號">
+                    <label for="authAccount" class="block text-sm font-medium text-text-dark mb-1">管理員帳號</label>
+                    <input type="text" id="authAccount" name="authAccount" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary" placeholder="輸入管理員帳號">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-text-dark mb-1">密碼</label>
-                    <input type="password" id="authPassword" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary" placeholder="輸入管理員密碼">
+                    <label for="authPassword" class="block text-sm font-medium text-text-dark mb-1">密碼</label>
+                    <input type="password" id="authPassword" name="authPassword" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary" placeholder="輸入管理員密碼">
                 </div>
                 <div id="authError" class="text-red-500 text-sm text-center hidden">帳號或密碼錯誤，請重新輸入</div>
-                <button id="authSubmit" class="w-full py-3 bg-primary text-white rounded-lg font-medium hover:bg-secondary transition-all">
+                <button type="button" id="authSubmit" class="w-full py-3 bg-primary text-white rounded-lg font-medium hover:bg-secondary transition-all">
                     驗證身份
                 </button>
             </div>
@@ -96,7 +96,7 @@
         <div class="flex justify-between items-center">
             <h1 class="text-xl font-bold text-text-dark" id="systemTitle">LINE多元化搭車管理員登入系統</h1>
             <div class="flex items-center space-x-4">
-                <button class="text-text-light hover:text-primary">
+                <button type="button" class="text-text-light hover:text-primary">
                     <i class="fa fa-bell text-lg"></i>
                 </button>
                 <div class="flex items-center space-x-2">
@@ -152,8 +152,8 @@
                 <div class="mb-8">
                     <h3 class="text-lg font-medium text-text-dark mb-4">價格設定</h3>
                     <div class="bg-gray-50 rounded-lg p-5 border border-gray-200">
-                        <label class="block text-sm text-text-dark mb-2">選擇繳費週期 <span class="text-red-500">*</span></label>
-                        <select id="paymentCycle" class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" required>
+                        <label for="paymentCycle" class="block text-sm text-text-dark mb-2">選擇繳費週期 <span class="text-red-500">*</span></label>
+                        <select id="paymentCycle" name="paymentCycle" class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" required>
                             <option value="">請選擇繳費週期</option>
                             <option value="monthly" data-price="9500">月繳 (NT$ 9,500)</option>
                             <option value="quarterly" data-price="9000">季繳 (NT$ 9,000/月)</option>
@@ -167,35 +167,35 @@
                         <!-- 完整價格設定欄位（嚴格對應要求：起步金額、里程金額、時間費用、固定回給、百回金額） -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
                             <div>
-                                <label class="block text-sm text-text-dark mb-2">起步金額 (NT$)</label>
-                                <input type="number" id="startPrice" class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" 
+                                <label for="startPrice" class="block text-sm text-text-dark mb-2">起步金額 (NT$)</label>
+                                <input type="number" id="startPrice" name="startPrice" class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" 
                                        value="80" min="0" step="1">
                             </div>
                             <div>
-                                <label class="block text-sm text-text-dark mb-2">里程金額 (每公里/NT$)</label>
-                                <input type="number" id="distancePrice" class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" 
+                                <label for="distancePrice" class="block text-sm text-text-dark mb-2">里程金額 (每公里/NT$)</label>
+                                <input type="number" id="distancePrice" name="distancePrice" class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" 
                                        value="5" min="0" step="0.1">
                             </div>
                             <div>
-                                <label class="block text-sm text-text-dark mb-2">時間費用 (每分/NT$)</label>
-                                <input type="number" id="timePrice" class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" 
+                                <label for="timePrice" class="block text-sm text-text-dark mb-2">時間費用 (每分/NT$)</label>
+                                <input type="number" id="timePrice" name="timePrice" class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" 
                                        value="1.5" min="0" step="0.1">
                             </div>
                             <div>
-                                <label class="block text-sm text-text-dark mb-2">固定回給 (NT$)</label>
-                                <input type="number" id="fixedRebate" class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" 
+                                <label for="fixedRebate" class="block text-sm text-text-dark mb-2">固定回給 (NT$)</label>
+                                <input type="number" id="fixedRebate" name="fixedRebate" class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" 
                                        value="20" min="0" step="1">
                             </div>
                             <div class="md:col-span-2">
-                                <label class="block text-sm text-text-dark mb-2">百回金額 (NT$)</label>
-                                <input type="number" id="hundredRebate" class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" 
+                                <label for="hundredRebate" class="block text-sm text-text-dark mb-2">百回金額 (NT$)</label>
+                                <input type="number" id="hundredRebate" name="hundredRebate" class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" 
                                        value="1000" min="0" step="10">
                             </div>
                         </div>
                         
                         <!-- 保存價格設定按鈕 -->
                         <div class="mt-4 flex justify-end">
-                            <button id="savePriceSettings" class="px-6 py-2 bg-primary text-white rounded-md text-sm hover:bg-secondary transition-all">
+                            <button type="button" id="savePriceSettings" class="px-6 py-2 bg-primary text-white rounded-md text-sm hover:bg-secondary transition-all">
                                 保存價格設定
                             </button>
                         </div>
@@ -256,13 +256,13 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <!-- 繳費日期 -->
                             <div>
-                                <label class="block text-sm text-text-dark mb-2">繳費日期 <span class="text-red-500">*</span></label>
-                                <input type="date" class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" required>
+                                <label for="paymentDate" class="block text-sm text-text-dark mb-2">繳費日期 <span class="text-red-500">*</span></label>
+                                <input type="date" id="paymentDate" name="paymentDate" class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" required>
                             </div>
                             <!-- 匯款後五碼 -->
                             <div>
-                                <label class="block text-sm text-text-dark mb-2">匯款帳號後五碼 <span class="text-red-500">*</span></label>
-                                <input type="text" placeholder="請輸入匯款帳號後五碼" 
+                                <label for="accountLastFive" class="block text-sm text-text-dark mb-2">匯款帳號後五碼 <span class="text-red-500">*</span></label>
+                                <input type="text" id="accountLastFive" name="accountLastFive" placeholder="請輸入匯款帳號後五碼" 
                                        class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" 
                                        pattern="[0-9]{5}" 
                                        title="請輸入數字且長度為5位"
@@ -270,8 +270,8 @@
                             </div>
                             <!-- 聯繫電話 -->
                             <div>
-                                <label class="block text-sm text-text-dark mb-2">聯繫電話</label>
-                                <input type="tel" placeholder="請輸入聯繫電話" 
+                                <label for="contactPhone" class="block text-sm text-text-dark mb-2">聯繫電話</label>
+                                <input type="tel" id="contactPhone" name="contactPhone" placeholder="請輸入聯繫電話" 
                                        class="w-full p-3 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" 
                                        pattern="[0-9]{2,4}-?[0-9]{3,4}-?[0-9]{3,4}">
                             </div>
@@ -279,9 +279,9 @@
                         
                         <!-- 繳費憑證上傳 -->
                         <div>
-                            <label class="block text-sm text-text-dark mb-2">繳費憑證上傳 <span class="text-red-500">*</span></label>
+                            <label for="receiptUpload" class="block text-sm text-text-dark mb-2">繳費憑證上傳 <span class="text-red-500">*</span></label>
                             <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary transition-all">
-                                <input type="file" id="receiptUpload" accept="image/*,.pdf" class="hidden" required>
+                                <input type="file" id="receiptUpload" name="receiptUpload" accept="image/*,.pdf" class="hidden" required>
                                 <label for="receiptUpload" class="cursor-pointer">
                                     <div class="flex flex-col items-center">
                                         <i class="fa fa-cloud-upload text-2xl text-text-light mb-3"></i>
@@ -290,7 +290,7 @@
                                     </div>
                                 </label>
                                 <div id="uploadPreview" class="mt-4 hidden">
-                                    <img id="previewImage" src="" alt="繳費憑證預覽" class="max-h-48 mx-auto rounded-md border border-gray-200">
+                                    <img id="previewImage" src="#" alt="繳費憑證預覽" class="max-h-48 mx-auto rounded-md border border-gray-200">
                                     <p id="fileName" class="text-xs text-text-dark mt-3"></p>
                                 </div>
                             </div>
@@ -298,8 +298,8 @@
                         
                         <!-- 備註 -->
                         <div>
-                            <label class="block text-sm text-text-dark mb-2">備註</label>
-                            <textarea class="w-full p-3 border border-gray-200 rounded-md text-sm h-24 resize-none focus:outline-none focus:ring-2 focus:ring-primary/50" 
+                            <label for="paymentNote" class="block text-sm text-text-dark mb-2">備註</label>
+                            <textarea id="paymentNote" name="paymentNote" class="w-full p-3 border border-gray-200 rounded-md text-sm h-24 resize-none focus:outline-none focus:ring-2 focus:ring-primary/50" 
                                       placeholder="請輸入其他需要說明的事項（選填）"></textarea>
                         </div>
                         
@@ -347,7 +347,7 @@
                 <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
                     <div class="flex items-center justify-between mb-4">
                         <p class="font-medium text-text-dark">訂單趨勢（今日）</p>
-                        <select class="text-sm border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary" id="trendTimeRange">
+                        <select id="trendTimeRange" name="trendTimeRange" class="text-sm border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary">
                             <option value="today">今日</option>
                             <option value="week">本周</option>
                             <option value="month">本月</option>
@@ -362,7 +362,7 @@
                 <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
                     <div class="flex items-center justify-between mb-4">
                         <p class="font-medium text-text-dark">收入統計（本周）</p>
-                        <select class="text-sm border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary" id="incomeTimeRange">
+                        <select id="incomeTimeRange" name="incomeTimeRange" class="text-sm border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary">
                             <option value="week">本周</option>
                             <option value="month">本月</option>
                             <option value="quarter">本季度</option>
@@ -379,7 +379,7 @@
                 <div class="flex justify-between items-center mb-5">
                     <p class="font-medium text-text-dark">今日訂單列表</p>
                     <div class="flex items-center space-x-3">
-                        <input type="text" placeholder="搜索訂單號" class="text-sm border border-gray-200 rounded px-3 py-2 w-44 focus:outline-none focus:ring-1 focus:ring-primary">
+                        <input type="text" id="orderSearch" name="orderSearch" placeholder="搜索訂單號" class="text-sm border border-gray-200 rounded px-3 py-2 w-44 focus:outline-none focus:ring-1 focus:ring-primary">
                         <a href="admin-order.html" class="text-primary text-sm hover:underline">查看全部</a>
                     </div>
                 </div>
@@ -450,11 +450,11 @@
                 <div class="flex justify-between items-center mt-5 text-sm">
                     <p class="text-text-light">顯示 1-4 條，共 36 條</p>
                     <div class="flex space-x-2">
-                        <button class="px-3 py-1 border border-gray-200 rounded text-text-light disabled:opacity-50" disabled>上一頁</button>
-                        <button class="px-3 py-1 border border-primary bg-primary text-white rounded">1</button>
-                        <button class="px-3 py-1 border border-gray-200 rounded text-text-dark hover:bg-gray-50">2</button>
-                        <button class="px-3 py-1 border border-gray-200 rounded text-text-dark hover:bg-gray-50">3</button>
-                        <button class="px-3 py-1 border border-gray-200 rounded text-text-dark hover:bg-gray-50">下一頁</button>
+                        <button type="button" class="px-3 py-1 border border-gray-200 rounded text-text-light disabled:opacity-50" disabled>上一頁</button>
+                        <button type="button" class="px-3 py-1 border border-primary bg-primary text-white rounded">1</button>
+                        <button type="button" class="px-3 py-1 border border-gray-200 rounded text-text-dark hover:bg-gray-50">2</button>
+                        <button type="button" class="px-3 py-1 border border-gray-200 rounded text-text-dark hover:bg-gray-50">3</button>
+                        <button type="button" class="px-3 py-1 border border-gray-200 rounded text-text-dark hover:bg-gray-50">下一頁</button>
                     </div>
                 </div>
             </div>
