@@ -486,7 +486,7 @@
               <a href="admin-report.html" class="flex items-center justify-center p-3 border border-gray-200 rounded-lg hover:border-primary hover:bg-gray-50 transition-colors col-span-2">
                 <span class="text-sm">報表統計</span>
               </a>
-              <a href="admin-super.html" id="super-admin-link" class="flex items-center justify-center p-3 border border-gray-200 rounded-lg hover:border-super hover:bg-gray-50 transition-colors col-span-2 hidden">
+              <a href="administrator.html" id="super-admin-link" class="flex items-center justify-center p-3 border border-gray-200 rounded-lg hover:border-super hover:bg-gray-50 transition-colors col-span-2 hidden">
                 <span class="text-sm"><i class="fa fa-crown mr-1 text-super"></i>超管專屬功能</span>
               </a>
             </div>
@@ -557,7 +557,7 @@
       // 預設測試帳號
       testAccounts: {
         driver: { phone: '0912345678', password: 'driver123' },
-        fleetAdmin: { username: 'fleet001', password: 'fleet123', fleetCode: 'F001' },
+        fleetAdmin: { username: 'fleet001', password: 'fleet123' },
         superAdmin: { username: 'superadmin', password: 'super123' }
       }
     };
@@ -643,8 +643,6 @@
     }
 
     // ===== 帳號串聯邏輯 =====
-    // 已刪除：司機類型切換（個人/車隊）相關程式碼（車隊編號邏輯）
-
     // 管理員角色切換（車隊/超級）
     const adminRoleRadios = document.querySelectorAll('input[name="adminRole"]');
     const superAdminLink = document.getElementById('super-admin-link');
@@ -668,13 +666,13 @@
       });
     });
 
-    // 司機登錄驗證（移除車隊編號驗證）
+    // 司機登錄驗證（串聯到 driver-login.html）
     document.getElementById('driver-login-btn').addEventListener('click', function() {
       const driverType = document.querySelector('input[name="driverType"]:checked').value;
       const phone = document.getElementById('driver-phone').value.trim();
       const password = document.getElementById('driver-password').value.trim();
       
-      // 查找司機帳號（移除車隊編號驗證）
+      // 查找司機帳號
       const driver = ACCOUNT_SYSTEM.drivers.find(d => 
         d.phone === phone && d.password === password
       );
@@ -689,8 +687,8 @@
         
         // 顯示成功提示
         showPermissionModal('司機登錄成功', `歡迎回來！${driver.fleetName} - ${phone}`, () => {
-          // 跳轉到司機後台
-          window.location.href = 'driver-dashboard.html';
+          // 跳轉到司機登錄頁（根目錄 driver-login.html）
+          window.location.href = 'driver-login.html';
         });
       } else {
         alert('司機帳號或密碼錯誤，請重新輸入');
@@ -699,7 +697,7 @@
       }
     });
 
-    // 管理員登錄驗證（移除車隊編號驗證）
+    // 管理員登錄驗證（串聯到指定後台頁面）
     document.getElementById('admin-login-form').addEventListener('submit', function(e) {
       e.preventDefault();
       
@@ -711,11 +709,11 @@
       let redirectUrl = '';
       
       if (adminRole === 'super') {
-        // 超級管理員驗證
+        // 超級管理員驗證 - 跳轉到 administrator.html
         admin = ACCOUNT_SYSTEM.superAdmins.find(a => a.username === username && a.password === password);
-        redirectUrl = 'super-admin-dashboard.html';
+        redirectUrl = 'administrator.html';
       } else {
-        // 車隊管理員驗證（移除車隊編號驗證）
+        // 車隊管理員驗證 - 跳轉到 admin-dashboard.html
         admin = ACCOUNT_SYSTEM.fleetAdmins.find(a => 
           a.username === username && a.password === password
         );
