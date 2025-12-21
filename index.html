@@ -201,11 +201,11 @@
           </label>
         </div>
         
-        <!-- 超級管理員登錄表單 -->
+        <!-- 超級管理員登錄表單（修正默認帳號） -->
         <form id="super-admin-login-form" class="space-y-4">
           <div class="text-left">
             <label class="block text-sm font-medium text-gray-700 mb-1">超管帳號</label>
-            <input type="text" class="input-field input-field-super" id="super-username" placeholder="輸入超管帳號" required>
+            <input type="text" class="input-field input-field-super" id="super-username" value="0975521219" placeholder="輸入超管帳號" required>
           </div>
           <div class="text-left">
             <label class="block text-sm font-medium text-gray-700 mb-1">超管密碼</label>
@@ -237,7 +237,7 @@
       fleetAdmins: [
         { username: '0975521219', password: 'fffishau', redirect: 'admin/admin-dashboard.html' }
       ],
-      // 超管帳號配置 - 跳轉到 administrator.html
+      // 超管帳號配置 - 跳轉到 administrator.html（確認帳號密碼正確）
       superAdmins: [
         { username: '0975521219', password: 'fffishau', redirect: 'administrator.html' },
         { username: 'admin123', password: 'ccc456789', redirect: 'administrator.html' }
@@ -438,7 +438,7 @@
           });
       },
       
-      // ========== 表單處理邏輯（新增登錄狀態存儲） ==========
+      // ========== 表單處理邏輯（修正超管登錄比對） ==========
       initFormHandlers: function() {
         // 1. 乘客叫車表單 (跳轉到 passenger/passenger-order.html)
         document.getElementById('passenger-order-form')?.addEventListener('submit', (e) => {
@@ -480,21 +480,24 @@
           }
         });
 
-        // 4. 超級管理員登錄表單（新增存儲登錄狀態）
+        // 4. 超級管理員登錄表單（修正比對邏輯 + 狀態存儲）
         document.getElementById('super-admin-login-form')?.addEventListener('submit', (e) => {
           e.preventDefault();
-          const username = document.getElementById('super-username').value.trim();
-          const password = document.getElementById('super-password').value.trim();
+          // 獲取輸入的帳號密碼（去除前後空格）
+          const inputUsername = document.getElementById('super-username').value.trim();
+          const inputPassword = document.getElementById('super-password').value.trim();
           
-          const matchedAdmin = this.superAdmins.find(admin => 
-            admin.username === username && admin.password === password
+          // 比對超管帳號列表
+          const matchedSuperAdmin = this.superAdmins.find(admin => 
+            admin.username === inputUsername && admin.password === inputPassword
           );
           
-          if (matchedAdmin) {
+          if (matchedSuperAdmin) {
             // 存儲超管登錄狀態
             localStorage.setItem('loggedInRole', 'superAdmin');
-            localStorage.setItem('currentSuperAdmin', JSON.stringify(matchedAdmin));
-            window.location.href = matchedAdmin.redirect; // 跳轉到 administrator.html
+            localStorage.setItem('currentSuperAdmin', JSON.stringify(matchedSuperAdmin));
+            // 跳轉到超管後台
+            window.location.href = matchedSuperAdmin.redirect;
           } else {
             alert('超級管理員帳號或密碼錯誤！');
             document.getElementById('super-password').value = '';
