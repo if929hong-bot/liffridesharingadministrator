@@ -173,29 +173,28 @@
                             <i class="fa fa-bank text-primary mt-1 mr-3"></i>
                             <div>
                                 <p class="text-sm text-text-light">銀行名稱</p>
-                                <p class="text-text-dark font-medium">中國信託 - 營業部</p>
+                                <p class="text-text-dark font-medium" id="bankName">中國信託 - 營業部</p>
                             </div>
                         </div>
                         <div class="flex items-start">
                             <i class="fa fa-credit-card text-primary mt-1 mr-3"></i>
                             <div>
                                 <p class="text-sm text-text-light">帳戶名稱</p>
-                                <p class="text-text-dark font-medium">洪語涵</p>
+                                <p class="text-text-dark font-medium" id="accountName">洪語涵</p>
                             </div>
                         </div>
                         <div class="flex items-start">
                             <i class="fa fa-hashtag text-primary mt-1 mr-3"></i>
                             <div>
                                 <p class="text-sm text-text-light">銀行帳號</p>
-                                <p class="text-text-dark font-medium">901566141052</p>
+                                <p class="text-text-dark font-medium" id="bankAccount">901566141052</p>
                             </div>
                         </div>
                         <div class="flex items-start">
                             <i class="fa fa-mobile text-primary mt-1 mr-3"></i>
                             <div>
                                 <p class="text-sm text-text-light">聯繫電話</p>
-                                <!-- 修正：聯繫電話改為0975-521-219 -->
-                                <p class="text-text-dark font-medium">0975-521-219</p>
+                                <p class="text-text-dark font-medium" id="contactPhone">0975-521-219</p>
                             </div>
                         </div>
                     </div>
@@ -391,7 +390,27 @@
 
             // 加載已保存的搭車費用設定
             loadFareSettings();
+
+            // 加載銀行帳戶資訊（同步administrator.html）
+            loadBankAccountInfo();
         });
+
+        // 新增：加載銀行帳戶資訊（同步administrator.html）
+        function loadBankAccountInfo() {
+            // 讀取localStorage中保存的銀行帳戶資訊
+            const savedBankInfo = JSON.parse(localStorage.getItem('bankAccountInfo')) || {
+                bankName: '中國信託 - 營業部',
+                accountName: '洪語涵',
+                bankAccount: '901566141052',
+                contactPhone: '0975-521-219'
+            };
+
+            // 更新頁面顯示
+            document.getElementById('bankName').textContent = savedBankInfo.bankName;
+            document.getElementById('accountName').textContent = savedBankInfo.accountName;
+            document.getElementById('bankAccount').textContent = savedBankInfo.bankAccount;
+            document.getElementById('contactPhone').textContent = savedBankInfo.contactPhone;
+        }
 
         // 新增：加載搭車費用設定
         function loadFareSettings() {
