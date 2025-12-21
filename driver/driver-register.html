@@ -54,6 +54,12 @@
       color: #6b7280;
       font-size: 14px;
     }
+    .error-text {
+      color: #ef4444;
+      font-size: 12px;
+      margin-top: 4px;
+      display: none;
+    }
   </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen py-8 px-4">
@@ -69,7 +75,42 @@
     </div>
 
     <form id="driverRegisterForm">
-      <!-- 保留的核心註冊欄位區塊 -->
+      <!-- 新增的基礎欄目 -->
+      <div class="form-group">
+        <label class="form-label">註冊車隊名稱</label>
+        <input type="text" id="registerTeamName" class="form-input" placeholder="請輸入車隊名稱" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">姓名</label>
+        <input type="text" id="registerName" class="form-input" placeholder="請輸入您的真實姓名" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">電話</label>
+        <input type="tel" id="registerPhone" class="form-input" placeholder="請輸入聯繫電話" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">LINE ID</label>
+        <input type="text" id="registerLineId" class="form-input" placeholder="請輸入您的LINE ID" required>
+      </div>
+
+      <!-- 新增密碼欄位 -->
+      <div class="form-group">
+        <label class="form-label">密碼</label>
+        <input type="password" id="registerPassword" class="form-input" placeholder="請設定密碼（至少8位，含數字/字母）" required>
+        <div class="error-text" id="passwordError">密碼需至少8位，包含數字和字母</div>
+      </div>
+
+      <!-- 新增確認密碼欄位 -->
+      <div class="form-group">
+        <label class="form-label">確認密碼</label>
+        <input type="password" id="registerPasswordConfirm" class="form-input" placeholder="請再次輸入密碼" required>
+        <div class="error-text" id="passwordConfirmError">兩次輸入的密碼不一致</div>
+      </div>
+
+      <!-- 原有的核心註冊欄位區塊 -->
       <div class="form-group">
         <label class="form-label">目前職業</label>
         <input type="text" id="registerJob" class="form-input" placeholder="請輸入您的目前職業" required>
@@ -125,11 +166,45 @@
   </div>
 
   <script>
-    // 簡化後的表單驗證邏輯
+    // 密碼驗證規則
+    const passwordInput = document.getElementById('registerPassword');
+    const passwordConfirmInput = document.getElementById('registerPasswordConfirm');
+    const passwordError = document.getElementById('passwordError');
+    const passwordConfirmError = document.getElementById('passwordConfirmError');
+
+    // 密碼格式驗證
+    passwordInput.addEventListener('blur', () => {
+      const password = passwordInput.value.trim();
+      const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+      if (password && !passwordRegex.test(password)) {
+        passwordError.style.display = 'block';
+      } else {
+        passwordError.style.display = 'none';
+      }
+    });
+
+    // 確認密碼一致性驗證
+    passwordConfirmInput.addEventListener('blur', () => {
+      const password = passwordInput.value.trim();
+      const confirmPassword = passwordConfirmInput.value.trim();
+      if (confirmPassword && password !== confirmPassword) {
+        passwordConfirmError.style.display = 'block';
+      } else {
+        passwordConfirmError.style.display = 'none';
+      }
+    });
+
+    // 表單提交驗證
     document.getElementById('driverRegisterForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      // 取得保留欄位的數據
+      // 取得所有欄位數據
+      const teamName = document.getElementById('registerTeamName').value.trim();
+      const name = document.getElementById('registerName').value.trim();
+      const phone = document.getElementById('registerPhone').value.trim();
+      const lineId = document.getElementById('registerLineId').value.trim();
+      const password = passwordInput.value.trim();
+      const confirmPassword = passwordConfirmInput.value.trim();
       const job = document.getElementById('registerJob').value.trim();
       const criminal = document.getElementById('registerCriminal').value.trim();
       const insurance = document.getElementById('registerInsurance').value.trim();
@@ -137,22 +212,56 @@
       const carImg = document.getElementById('registerCarImg').files[0];
       const licenseImg = document.getElementById('registerLicenseImg').files[0];
 
+      // 先驗證密碼
+      const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+      let isFormValid = true;
+      
+      if (!passwordRegex.test(password)) {
+        passwordError.style.display = 'block';
+        isFormValid = false;
+      }
+      if (password !== confirmPassword) {
+        passwordConfirmError.style.display = 'block';
+        isFormValid = false;
+      }
+
       // 驗證必填項
-      if (!job || !criminal || !insurance) {
+      if (!teamName || !name || !phone || !lineId || !password || !confirmPassword || !job || !criminal || !insurance) {
         alert('請填寫完整所有必填欄位！');
-        return;
+        isFormValid = false;
       }
       if (!goodCitizenImg || !carImg || !licenseImg) {
         alert('請上傳所有必要圖片！');
-        return;
+        isFormValid = false;
       }
 
-      // 模擬提交成功
+      // 驗證不通過則中斷
+      if (!isFormValid) return;
+
+      // 模擬保存司機數據（真實場景需發送後端，並加密存儲密碼）
+      const driverData = {
+        teamName,
+        name,
+        phone,
+        lineId,
+        password, // 注意：真實環境需加密後存儲，這裡僅演示
+        job,
+        criminal,
+        insurance,
+        registerTime: new Date().toLocaleString('zh-TW')
+      };
+
+      // 模擬存儲到localStorage（供管理員後台讀取）
+      let drivers = JSON.parse(localStorage.getItem('drivers') || '[]');
+      drivers.push(driverData);
+      localStorage.setItem('drivers', JSON.stringify(drivers));
+
+      // 提交成功提示
       alert('註冊資料已提交，請等待審核！');
       window.location.href = 'driver-audit.html';
     });
 
-    // 上傳按鈕交互（保留）
+    // 上傳按鈕交互
     document.querySelectorAll('.upload-btn').forEach(btn => {
       btn.addEventListener('click', () => btn.querySelector('input').click());
       btn.querySelector('input').addEventListener('change', (e) => {
