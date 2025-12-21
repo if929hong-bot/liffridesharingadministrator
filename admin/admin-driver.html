@@ -114,6 +114,7 @@
       cursor: pointer;
       font-size: 14px;
       transition: all 0.2s ease;
+      margin-right: 4px;
     }
     .btn-approve {
       background-color: #00C300;
@@ -188,7 +189,7 @@
 </head>
 <body>
   <div class="app-container">
-    <!-- 側邊欄（確認報表統計連結為同目錄admin-report.html） -->
+    <!-- 側邊欄 -->
     <div class="sidebar">
       <div class="sidebar-logo">LINE多元化搭車管理員</div>
       <ul class="sidebar-menu">
@@ -197,17 +198,16 @@
         <li><a href="admin-driver.html" class="active"><i class="fa fa-car"></i>司機管理</a></li>
         <li><a href="admin-order.html"><i class="fa fa-list"></i>訂單管理</a></li>
         <li><a href="admin-finance.html"><i class="fa fa-money"></i>財務管理</a></li>
-        <!-- 確認：報表統計連結為同目錄的admin-report.html -->
         <li><a href="admin-report.html"><i class="fa fa-bar-chart"></i>報表統計</a></li>
         <li><a href="../managerindex.html"><i class="fa fa-sign-out"></i>退出登入</a></li>
       </ul>
     </div>
 
-    <!-- 主內容區（清空所有虛擬司機數據，只保留框架） -->
+    <!-- 主內容區 -->
     <div class="main-content">
       <div class="card">
         <div class="card-title">司機申請管理</div>
-        <!-- 司機申請列表表格（清空虛擬數據，只保留表頭） -->
+        <!-- 司機申請列表表格 -->
         <table class="driver-table">
           <thead>
             <tr>
@@ -222,7 +222,7 @@
             </tr>
           </thead>
           <tbody id="driverApplications">
-            <!-- 清空虛擬數據，顯示「暫無數據」提示 -->
+            <!-- 數據將動態加載 -->
             <tr>
               <td colspan="8" class="py-6 text-center text-neutral-500">
                 <i class="fa fa-inbox mr-2"></i>暫無司機申請數據
@@ -235,12 +235,169 @@
   </div>
 
   <script>
-    // 清空所有交互邏輯，只保留基礎頁面初始化
+    // 頁面加載時加載司機申請數據（串聯driver-register.html）
     window.addEventListener('load', function() {
-      // 清空localStorage中的虛擬司機數據
-      localStorage.removeItem('driverApplications');
-      localStorage.removeItem('managedDrivers');
+      loadDriverApplications();
     });
+
+    // 加載司機註冊申請（從localStorage讀取driver-register.html提交的數據）
+    function loadDriverApplications() {
+      const driverApplications = JSON.parse(localStorage.getItem('driverApplications')) || [];
+      const managedDrivers = JSON.parse(localStorage.getItem('managedDrivers')) || [];
+      const tableBody = document.getElementById('driverApplications');
+      tableBody.innerHTML = '';
+
+      // 合併申請數據和已管理司機數據
+      const allDrivers = [...driverApplications, ...managedDrivers].filter(driver => !!driver);
+
+      if (allDrivers.length === 0) {
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="8" class="py-6 text-center text-neutral-500">
+              <i class="fa fa-inbox mr-2"></i>暫無司機申請數據
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      // 渲染司機列表
+      allDrivers.forEach(driver => {
+        const isApproved = driver.applyStatus === 'approved';
+        const isSuspended = driver.accountStatus === 'suspended';
+        
+        tableBody.innerHTML += `
+          <tr data-id="${driver.idNumber}">
+            <td>${driver.name}</td>
+            <td>${driver.phone}</td>
+            <td>${driver.idNumber}</td>
+            <td>${driver.licenseNumber}</td>
+            <td>${driver.carPlate}</td>
+            <td>
+              <span class="status-tag ${
+                driver.applyStatus === 'pending' ? 'status-pending' : 
+                driver.applyStatus === 'approved' ? 'status-approved' : 'status-rejected'
+              }">
+                ${driver.applyStatus === 'pending' ? '待審核' : 
+                  driver.applyStatus === 'approved' ? '已通過' : '已拒絕'}
+              </span>
+            </td>
+            <td>
+              <span class="status-tag ${
+                driver.accountStatus === 'pending' ? 'status-pending' : 
+                driver.accountStatus === 'approved' ? 'status-approved' : 'status-suspended'
+              }">
+                ${driver.accountStatus === 'pending' ? '未激活' : 
+                  driver.accountStatus === 'approved' ? '正常' : '已停權'}
+              </span>
+            </td>
+            <td>
+              ${!isApproved ? `
+                <button class="btn btn-approve" onclick="approveDriver(this)">通過</button>
+                <button class="btn btn-reject" onclick="rejectDriver(this)">拒絕</button>
+              ` : ''}
+              ${isApproved && !isSuspended ? `
+                <button class="btn btn-suspend" onclick="suspendDriver(this)">停權</button>
+              ` : ''}
+              ${isApproved && isSuspended ? `
+                <button class="btn btn-resume" onclick="resumeDriver(this)">復權</button>
+              ` : ''}
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    // 通過司機申請
+    function approveDriver(btn) {
+      const row = btn.closest('tr');
+      const driverId = row.dataset.id;
+      const driverApplications = JSON.parse(localStorage.getItem('driverApplications')) || [];
+      const managedDrivers = JSON.parse(localStorage.getItem('managedDrivers')) || [];
+
+      // 找到對應司機並更新狀態
+      const driverIndex = driverApplications.findIndex(d => d.idNumber === driverId);
+      const driver = driverApplications[driverIndex];
+      driver.applyStatus = 'approved';
+      driver.accountStatus = 'approved';
+
+      // 移動到已管理司機列表
+      managedDrivers.push(driver);
+      driverApplications.splice(driverIndex, 1);
+
+      // 保存到localStorage
+      localStorage.setItem('driverApplications', JSON.stringify(driverApplications));
+      localStorage.setItem('managedDrivers', JSON.stringify(managedDrivers));
+      localStorage.setItem(`driver_${driverId}_status`, 'approved');
+
+      // 重新加載列表
+      loadDriverApplications();
+      alert('司機申請已通過，賬戶已激活！');
+    }
+
+    // 拒絕司機申請
+    function rejectDriver(btn) {
+      const row = btn.closest('tr');
+      const driverId = row.dataset.id;
+      const driverApplications = JSON.parse(localStorage.getItem('driverApplications')) || [];
+      const driverIndex = driverApplications.findIndex(d => d.idNumber === driverId);
+      const driver = driverApplications[driverIndex];
+
+      // 更新狀態
+      driver.applyStatus = 'rejected';
+      driver.accountStatus = 'rejected';
+      driverApplications[driverIndex] = driver;
+
+      // 保存到localStorage
+      localStorage.setItem('driverApplications', JSON.stringify(driverApplications));
+      localStorage.setItem(`driver_${driverId}_status`, 'rejected');
+
+      // 重新加載列表
+      loadDriverApplications();
+      alert('司機申請已拒絕！');
+    }
+
+    // 停權司機（停權後無法登入）
+    function suspendDriver(btn) {
+      const row = btn.closest('tr');
+      const driverId = row.dataset.id;
+      const managedDrivers = JSON.parse(localStorage.getItem('managedDrivers')) || [];
+      const driverIndex = managedDrivers.findIndex(d => d.idNumber === driverId);
+      const driver = managedDrivers[driverIndex];
+
+      // 更新狀態
+      driver.accountStatus = 'suspended';
+      managedDrivers[driverIndex] = driver;
+
+      // 保存到localStorage（司機端登入時會讀取此狀態）
+      localStorage.setItem('managedDrivers', JSON.stringify(managedDrivers));
+      localStorage.setItem(`driver_${driverId}_status`, 'suspended');
+
+      // 重新加載列表
+      loadDriverApplications();
+      alert('司機已停權，無法登入系統！');
+    }
+
+    // 復權司機
+    function resumeDriver(btn) {
+      const row = btn.closest('tr');
+      const driverId = row.dataset.id;
+      const managedDrivers = JSON.parse(localStorage.getItem('managedDrivers')) || [];
+      const driverIndex = managedDrivers.findIndex(d => d.idNumber === driverId);
+      const driver = managedDrivers[driverIndex];
+
+      // 更新狀態
+      driver.accountStatus = 'approved';
+      managedDrivers[driverIndex] = driver;
+
+      // 保存到localStorage
+      localStorage.setItem('managedDrivers', JSON.stringify(managedDrivers));
+      localStorage.setItem(`driver_${driverId}_status`, 'approved');
+
+      // 重新加載列表
+      loadDriverApplications();
+      alert('司機權限已恢復！');
+    }
   </script>
 </body>
 </html>
