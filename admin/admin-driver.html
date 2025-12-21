@@ -188,7 +188,7 @@
 </head>
 <body>
   <div class="app-container">
-    <!-- 側邊欄（修正報表統計連結為同目錄admin-report.html） -->
+    <!-- 側邊欄（確認報表統計連結為同目錄admin-report.html） -->
     <div class="sidebar">
       <div class="sidebar-logo">LINE多元化搭車管理員</div>
       <ul class="sidebar-menu">
@@ -197,17 +197,17 @@
         <li><a href="admin-driver.html" class="active"><i class="fa fa-car"></i>司機管理</a></li>
         <li><a href="admin-order.html"><i class="fa fa-list"></i>訂單管理</a></li>
         <li><a href="admin-finance.html"><i class="fa fa-money"></i>財務管理</a></li>
-        <!-- 修正：報表統計連結為同目錄的admin-report.html -->
+        <!-- 確認：報表統計連結為同目錄的admin-report.html -->
         <li><a href="admin-report.html"><i class="fa fa-bar-chart"></i>報表統計</a></li>
         <li><a href="../managerindex.html"><i class="fa fa-sign-out"></i>退出登入</a></li>
       </ul>
     </div>
 
-    <!-- 主內容區（新增司機申請審核和管理功能） -->
+    <!-- 主內容區（清空所有虛擬司機數據，只保留框架） -->
     <div class="main-content">
       <div class="card">
         <div class="card-title">司機申請管理</div>
-        <!-- 司機申請列表表格 -->
+        <!-- 司機申請列表表格（清空虛擬數據，只保留表頭） -->
         <table class="driver-table">
           <thead>
             <tr>
@@ -222,44 +222,10 @@
             </tr>
           </thead>
           <tbody id="driverApplications">
-            <!-- 從driver-register.html獲取的申請數據會動態加載到這裡 -->
+            <!-- 清空虛擬數據，顯示「暫無數據」提示 -->
             <tr>
-              <td>陳大文</td>
-              <td>0912345678</td>
-              <td>A123456789</td>
-              <td>9876543210</td>
-              <td>ABC-1234</td>
-              <td><span class="status-tag status-pending">待審核</span></td>
-              <td><span class="status-tag status-pending">未激活</span></td>
-              <td>
-                <button class="btn btn-approve mr-2" onclick="approveDriver(this)">通過</button>
-                <button class="btn btn-reject" onclick="rejectDriver(this)">拒絕</button>
-              </td>
-            </tr>
-            <tr>
-              <td>張小美</td>
-              <td>0987654321</td>
-              <td>B987654321</td>
-              <td>1234567890</td>
-              <td>XYZ-9876</td>
-              <td><span class="status-tag status-approved">已通過</span></td>
-              <td><span class="status-tag status-approved">正常</span></td>
-              <td>
-                <button class="btn btn-suspend mr-2" onclick="suspendDriver(this)">停權</button>
-                <button class="btn btn-resume hidden" onclick="resumeDriver(this)">恢復</button>
-              </td>
-            </tr>
-            <tr>
-              <td>李建國</td>
-              <td>0923456789</td>
-              <td>C456789123</td>
-              <td>4567891230</td>
-              <td>DEF-4567</td>
-              <td><span class="status-tag status-approved">已通過</span></td>
-              <td><span class="status-tag status-suspended">已停權</span></td>
-              <td>
-                <button class="btn btn-suspend mr-2 hidden" onclick="suspendDriver(this)">停權</button>
-                <button class="btn btn-resume" onclick="resumeDriver(this)">恢復</button>
+              <td colspan="8" class="py-6 text-center text-neutral-500">
+                <i class="fa fa-inbox mr-2"></i>暫無司機申請數據
               </td>
             </tr>
           </tbody>
@@ -269,159 +235,12 @@
   </div>
 
   <script>
-    // 頁面加載時加載司機申請數據
+    // 清空所有交互邏輯，只保留基礎頁面初始化
     window.addEventListener('load', function() {
-      loadDriverApplications();
+      // 清空localStorage中的虛擬司機數據
+      localStorage.removeItem('driverApplications');
+      localStorage.removeItem('managedDrivers');
     });
-
-    // 加載從driver-register.html提交的司機申請數據
-    function loadDriverApplications() {
-      // 從localStorage獲取司機註冊申請數據
-      const driverApplications = JSON.parse(localStorage.getItem('driverApplications')) || [];
-      const tableBody = document.getElementById('driverApplications');
-      
-      // 如果有新的申請數據，添加到表格
-      if (driverApplications.length > 0) {
-        driverApplications.forEach(driver => {
-          // 跳過已存在的司機記錄
-          const existingRows = Array.from(tableBody.querySelectorAll('tr'));
-          const isExist = existingRows.some(row => {
-            return row.cells[2].textContent === driver.idNumber;
-          });
-          
-          if (!isExist) {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-              <td>${driver.name}</td>
-              <td>${driver.phone}</td>
-              <td>${driver.idNumber}</td>
-              <td>${driver.licenseNumber}</td>
-              <td>${driver.carPlate}</td>
-              <td><span class="status-tag status-pending">待審核</span></td>
-              <td><span class="status-tag status-pending">未激活</span></td>
-              <td>
-                <button class="btn btn-approve mr-2" onclick="approveDriver(this)">通過</button>
-                <button class="btn btn-reject" onclick="rejectDriver(this)">拒絕</button>
-              </td>
-            `;
-            tableBody.appendChild(row);
-          }
-        });
-      }
-    }
-
-    // 通過司機申請
-    function approveDriver(btn) {
-      const row = btn.closest('tr');
-      const statusCell = row.cells[5];
-      const accountStatusCell = row.cells[6];
-      const actionCell = row.cells[7];
-      
-      // 更新狀態
-      statusCell.innerHTML = '<span class="status-tag status-approved">已通過</span>';
-      accountStatusCell.innerHTML = '<span class="status-tag status-approved">正常</span>';
-      
-      // 更新操作按鈕（替換為停權/恢復按鈕）
-      actionCell.innerHTML = `
-        <button class="btn btn-suspend mr-2" onclick="suspendDriver(this)">停權</button>
-        <button class="btn btn-resume hidden" onclick="resumeDriver(this)">恢復</button>
-      `;
-      
-      // 保存司機狀態到localStorage
-      saveDriverStatus(row, 'approved');
-      
-      alert('司機申請已通過，賬戶已激活！');
-    }
-
-    // 拒絕司機申請
-    function rejectDriver(btn) {
-      const row = btn.closest('tr');
-      const statusCell = row.cells[5];
-      const accountStatusCell = row.cells[6];
-      
-      // 更新狀態
-      statusCell.innerHTML = '<span class="status-tag status-rejected">已拒絕</span>';
-      accountStatusCell.innerHTML = '<span class="status-tag status-rejected">已拒絕</span>';
-      
-      // 移除操作按鈕
-      row.cells[7].innerHTML = '';
-      
-      // 保存司機狀態到localStorage
-      saveDriverStatus(row, 'rejected');
-      
-      alert('司機申請已拒絕！');
-    }
-
-    // 停權司機
-    function suspendDriver(btn) {
-      const row = btn.closest('tr');
-      const accountStatusCell = row.cells[6];
-      const suspendBtn = row.querySelector('.btn-suspend');
-      const resumeBtn = row.querySelector('.btn-resume');
-      
-      // 更新狀態
-      accountStatusCell.innerHTML = '<span class="status-tag status-suspended">已停權</span>';
-      
-      // 切換按鈕顯示
-      suspendBtn.classList.add('hidden');
-      resumeBtn.classList.remove('hidden');
-      
-      // 保存停權狀態到localStorage
-      saveDriverStatus(row, 'suspended');
-      
-      alert('司機已被停權，無法登入系統！');
-    }
-
-    // 恢復司機權限
-    function resumeDriver(btn) {
-      const row = btn.closest('tr');
-      const accountStatusCell = row.cells[6];
-      const suspendBtn = row.querySelector('.btn-suspend');
-      const resumeBtn = row.querySelector('.btn-resume');
-      
-      // 更新狀態
-      accountStatusCell.innerHTML = '<span class="status-tag status-approved">正常</span>';
-      
-      // 切換按鈕顯示
-      suspendBtn.classList.remove('hidden');
-      resumeBtn.classList.add('hidden');
-      
-      // 保存恢復狀態到localStorage
-      saveDriverStatus(row, 'approved');
-      
-      alert('司機權限已恢復！');
-    }
-
-    // 保存司機狀態到localStorage
-    function saveDriverStatus(row, status) {
-      const driverInfo = {
-        name: row.cells[0].textContent,
-        phone: row.cells[1].textContent,
-        idNumber: row.cells[2].textContent,
-        licenseNumber: row.cells[3].textContent,
-        carPlate: row.cells[4].textContent,
-        applyStatus: row.cells[5].textContent.includes('已通過') ? 'approved' : 
-                      row.cells[5].textContent.includes('已拒絕') ? 'rejected' : 'pending',
-        accountStatus: status
-      };
-      
-      // 獲取現有司機數據
-      let drivers = JSON.parse(localStorage.getItem('managedDrivers')) || [];
-      
-      // 更新或添加司機數據
-      const existingIndex = drivers.findIndex(d => d.idNumber === driverInfo.idNumber);
-      if (existingIndex >= 0) {
-        drivers[existingIndex] = driverInfo;
-      } else {
-        drivers.push(driverInfo);
-      }
-      
-      // 保存回localStorage
-      localStorage.setItem('managedDrivers', JSON.stringify(drivers));
-      
-      // 同時更新司機登入狀態
-      localStorage.setItem(`driver_${driverInfo.idNumber}_status`, status);
-    }
   </script>
 </body>
 </html>

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>財務管理 - 訂單收入記錄</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- 自定義配置（保留基礎色系，移除多餘配置） -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#00C300', // 主色
+                        secondary: '#00A600', // 次要綠色
+                        accent: '#008700', // 深綠色
+                        neutral: {
+                            100: '#F2F3F5',
+                            200: '#E5E6EB',
+                            500: '#4E5969',
+                            700: '#1D2129',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Microsoft JhengHei', 'system-ui', 'sans-serif'],
+                    }
+                },
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            /* 僅保留基礎側邊欄樣式 */
+            .sidebar-menu {
+                background: #fff;
+                border-right: 1px solid #e6e6e6;
+            }
+            .sidebar-menu a {
+                @apply flex items-center gap-2 py-3 px-4 text-neutral-500 hover:bg-primary/10 hover:text-primary transition-all;
+            }
+            .sidebar-menu a.active {
+                @apply bg-primary text-white;
+            }
+        }
+    </style>
+</head>
+<body class="bg-neutral-100 font-sans text-neutral-700 min-h-screen flex">
+    <!-- 左側菜單（修正報表統計連結為同目錄admin-report.html） -->
+    <aside class="sidebar-menu w-56 h-screen sticky top-0">
+        <div class="py-4 px-4 border-b border-neutral-200">
+            <h2 class="font-bold text-lg text-neutral-700">LINE多元化搭車管理員</h2>
+        </div>
+        <nav>
+            <a href="admin-dashboard.html" class="flex items-center gap-2">
+                <i class="fa fa-home"></i>
+                <span>首頁</span>
+            </a>
+            <a href="admin-area.html" class="flex items-center gap-2">
+                <i class="fa fa-map-marker"></i>
+                <span>區域管理</span>
+            </a>
+            <a href="admin-driver.html" class="flex items-center gap-2">
+                <i class="fa fa-car"></i>
+                <span>司機管理</span>
+            </a>
+            <a href="admin-order.html" class="flex items-center gap-2">
+                <i class="fa fa-list"></i>
+                <span>訂單管理</span>
+            </a>
+            <a href="admin-finance.html" class="flex items-center gap-2 active">
+                <i class="fa fa-money"></i>
+                <span>財務管理</span>
+            </a>
+            <!-- 核心修正：確認報表統計連結為同目錄的admin-report.html -->
+            <a href="admin-report.html" class="flex items-center gap-2">
+                <i class="fa fa-bar-chart"></i>
+                <span>報表統計</span>
+            </a>
+            <a href="../managerindex.html" class="flex items-center gap-2 mt-4">
+                <i class="fa fa-sign-out"></i>
+                <span>退出登入</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- 主內容區（清空所有虛擬資訊，只保留標題） -->
+    <div class="flex-1 flex flex-col">
+        <!-- 頂部導航欄（簡化，只保留標題） -->
+        <header class="bg-white shadow-sm sticky top-0 z-50">
+            <div class="container mx-auto px-4 py-3 flex items-center">
+                <div class="flex items-center gap-2">
+                    <i class="fa fa-line-chart text-primary text-2xl"></i>
+                    <h1 class="text-xl font-bold text-neutral-700">財務管理系統</h1>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主內容（僅保留基礎卡片和標題） -->
+        <main class="container mx-auto px-4 py-6 flex-1">
+            <section class="bg-white rounded-xl p-6">
+                <h2 class="text-lg font-bold text-neutral-700">財務管理</h2>
+            </section>
+        </main>
+
+        <!-- 頁腳（保留基礎結構） -->
+        <footer class="bg-white border-t border-neutral-200 mt-8 py-6">
+            <div class="container mx-auto px-4 text-center text-neutral-500 text-sm">
+                <p>© 2025 LINE多元化搭車管理員 - 所有權利保留</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- 清空所有JS交互邏輯 -->
+    <script>
+        // 僅保留空腳本標籤，無任何交互邏輯
+    </script>
+</body>
+</html>
