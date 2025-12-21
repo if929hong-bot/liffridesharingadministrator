@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -93,7 +93,7 @@
 
     <!-- 主容器 -->
     <div class="pt-16 flex">
-        <!-- 側邊菜單（刪除超管管理，保留其他菜單） -->
+        <!-- 側邊菜單（更新財務/報表連結） -->
         <aside class="sidebar w-56 bg-white shadow-sm p-4">
             <nav class="space-y-1">
                 <a href="admin-dashboard.html" class="block py-2 px-3 rounded-md menu-active font-medium text-white">
@@ -108,9 +108,11 @@
                 <a href="admin-order.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
                     <i class="fa fa-list-alt mr-2"></i>訂單管理
                 </a>
+                <!-- 修正：財務管理連結為同目錄admin-finance.html -->
                 <a href="admin-finance.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
                     <i class="fa fa-money mr-2"></i>財務管理
                 </a>
+                <!-- 修正：報表統計連結為同目錄admin-report.html -->
                 <a href="admin-report.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
                     <i class="fa fa-bar-chart mr-2"></i>報表統計
                 </a>
@@ -122,7 +124,7 @@
 
         <!-- 主內容區 -->
         <main class="flex-1 p-6 max-w-7xl mx-auto">
-            <!-- 新增：租金繳費區域（最頂部，與administrator.html一模一樣） -->
+            <!-- 租金繳費區域（同步administrator.html設定） -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                 <!-- 左側：租金價格選擇 + 繳費表單 -->
                 <div class="lg:col-span-2 bg-white rounded-lg p-5 shadow-sm border border-gray-100 payment-form">
@@ -159,7 +161,7 @@
                     </button>
                 </div>
 
-                <!-- 右側：銀行帳戶資訊（與administrator.html一模一樣） -->
+                <!-- 右側：銀行帳戶資訊（同步administrator.html設定） -->
                 <div class="bank-info-card bg-white rounded-lg p-5 shadow-sm border border-gray-100">
                     <h2 class="text-lg font-bold text-text-dark mb-4">匯款帳戶資訊</h2>
                     <div class="space-y-3">
@@ -167,28 +169,29 @@
                             <i class="fa fa-bank text-primary mt-1 mr-3"></i>
                             <div>
                                 <p class="text-sm text-text-light">銀行名稱</p>
-                                <p class="text-text-dark font-medium">台灣銀行 - 台北總行</p>
+                                <p class="text-text-dark font-medium">中國信託 - 營業部</p>
                             </div>
                         </div>
                         <div class="flex items-start">
                             <i class="fa fa-credit-card text-primary mt-1 mr-3"></i>
                             <div>
                                 <p class="text-sm text-text-light">帳戶名稱</p>
-                                <p class="text-text-dark font-medium">LINE多元化搭車平台</p>
+                                <p class="text-text-dark font-medium">洪語涵</p>
                             </div>
                         </div>
                         <div class="flex items-start">
                             <i class="fa fa-hashtag text-primary mt-1 mr-3"></i>
                             <div>
                                 <p class="text-sm text-text-light">銀行帳號</p>
-                                <p class="text-text-dark font-medium">123-4567-89012-34</p>
+                                <p class="text-text-dark font-medium">901566141052</p>
                             </div>
                         </div>
                         <div class="flex items-start">
                             <i class="fa fa-mobile text-primary mt-1 mr-3"></i>
                             <div>
                                 <p class="text-sm text-text-light">聯繫電話</p>
-                                <p class="text-text-dark font-medium">02-12345678</p>
+                                <!-- 修正：聯繫電話改為0975-521-219 -->
+                                <p class="text-text-dark font-medium">0975-521-219</p>
                             </div>
                         </div>
                     </div>
