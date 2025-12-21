@@ -110,6 +110,22 @@
         <div class="error-text" id="passwordConfirmError">兩次輸入的密碼不一致</div>
       </div>
 
+      <!-- 補充 admin-driver.html 所需的核心欄位 -->
+      <div class="form-group">
+        <label class="form-label">身份證號</label>
+        <input type="text" id="registerIdNumber" class="form-input" placeholder="請輸入身份證號" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">駕照號碼</label>
+        <input type="text" id="registerLicenseNumber" class="form-input" placeholder="請輸入駕照號碼" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">車牌號碼</label>
+        <input type="text" id="registerCarPlate" class="form-input" placeholder="請輸入車牌號碼" required>
+      </div>
+
       <!-- 原有的核心註冊欄位區塊 -->
       <div class="form-group">
         <label class="form-label">目前職業</label>
@@ -194,7 +210,7 @@
       }
     });
 
-    // 表單提交驗證
+    // 表單提交驗證（核心修改：存入 driverApplications 鍵，並匹配 admin-driver.html 字段）
     document.getElementById('driverRegisterForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -205,6 +221,11 @@
       const lineId = document.getElementById('registerLineId').value.trim();
       const password = passwordInput.value.trim();
       const confirmPassword = passwordConfirmInput.value.trim();
+      // 新增 admin-driver.html 所需字段
+      const idNumber = document.getElementById('registerIdNumber').value.trim();
+      const licenseNumber = document.getElementById('registerLicenseNumber').value.trim();
+      const carPlate = document.getElementById('registerCarPlate').value.trim();
+      
       const job = document.getElementById('registerJob').value.trim();
       const criminal = document.getElementById('registerCriminal').value.trim();
       const insurance = document.getElementById('registerInsurance').value.trim();
@@ -225,8 +246,9 @@
         isFormValid = false;
       }
 
-      // 驗證必填項
-      if (!teamName || !name || !phone || !lineId || !password || !confirmPassword || !job || !criminal || !insurance) {
+      // 驗證必填項（包含新增的身份證/駕照/車牌）
+      if (!teamName || !name || !phone || !lineId || !password || !confirmPassword || 
+          !idNumber || !licenseNumber || !carPlate || !job || !criminal || !insurance) {
         alert('請填寫完整所有必填欄位！');
         isFormValid = false;
       }
@@ -238,23 +260,29 @@
       // 驗證不通過則中斷
       if (!isFormValid) return;
 
-      // 模擬保存司機數據（真實場景需發送後端，並加密存儲密碼）
+      // 核心修改：數據格式完全匹配 admin-driver.html 預期
       const driverData = {
         teamName,
         name,
         phone,
         lineId,
-        password, // 注意：真實環境需加密後存儲，這裡僅演示
+        password, // 真實環境需加密，這裡僅演示
+        // 匹配 admin-driver.html 的字段名
+        idNumber,
+        licenseNumber,
+        carPlate,
         job,
         criminal,
         insurance,
+        applyStatus: 'pending', // 申請狀態：待審核
+        accountStatus: 'pending', // 賬戶狀態：未激活
         registerTime: new Date().toLocaleString('zh-TW')
       };
 
-      // 模擬存儲到localStorage（供管理員後台讀取）
-      let drivers = JSON.parse(localStorage.getItem('drivers') || '[]');
-      drivers.push(driverData);
-      localStorage.setItem('drivers', JSON.stringify(drivers));
+      // 核心修改：存入 driverApplications 鍵（和 admin-driver.html 讀取的鍵一致）
+      let driverApplications = JSON.parse(localStorage.getItem('driverApplications') || '[]');
+      driverApplications.push(driverData);
+      localStorage.setItem('driverApplications', JSON.stringify(driverApplications));
 
       // 提交成功提示
       alert('註冊資料已提交，請等待審核！');
