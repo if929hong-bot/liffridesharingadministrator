@@ -339,12 +339,13 @@
   </main>
 
   <script>
-    // 儲存鍵名定義
+    // 儲存鍵名定義（新增 approvedFleetAdmins 鍵，與 index.html 登錄驗證對應）
     const PRICE_KEY = 'carRentalPrice';
     const BANK_KEY = 'carRentalBank';
     const PAYMENT_KEY = 'carRentalPayment';
     const FLEET_REGISTER_KEY = 'fleetManagers'; 
     const FLEET_ADMIN_KEY = 'fleetAdminList';    
+    const APPROVED_FLEET_ADMINS_KEY = 'approvedFleetAdmins'; // 登錄驗證用的已審核列表
 
     // 1. 左側菜單切換主面板
     document.querySelectorAll('.menu > li > a').forEach(link => {
@@ -356,7 +357,10 @@
         const panelId = link.getAttribute('data-panel');
         document.getElementById(panelId).classList.add('active');
         if (panelId === 'fleet-register-apply') loadRegisterApply();
-        if (panelId === 'fleet-manager') loadFleetAdmins();
+        if (panelId === 'fleet-manager') {
+          loadFleetAdmins();
+          syncApprovedFleetAdmins(); // 切換到列表時同步登錄驗證列表
+        }
       });
     });
 
@@ -447,31 +451,48 @@
       });
     }
 
-    // 5. 通過註冊申請（包含信箱、密碼）
+    // 5. 通過註冊申請（同步到登錄驗證列表）
     function approveRegister(account) {
       const applyList = JSON.parse(localStorage.getItem(FLEET_REGISTER_KEY) || '[]');
       const approvedItem = applyList.find(item => item.managerAccount === account);
       if (!approvedItem) return;
 
+      // 1. 新增到原車隊管理員列表
       const adminList = JSON.parse(localStorage.getItem(FLEET_ADMIN_KEY) || '[]');
-      adminList.push({
+      const newAdmin = {
         id: `fleet-${Date.now()}`,
         fleetName: approvedItem.fleetName,
         managerName: approvedItem.managerName,
         phone: approvedItem.managerPhone,
         email: approvedItem.managerEmail,
         account: approvedItem.managerAccount,
+        username: approvedItem.managerAccount, // 新增 username 字段（匹配 index.html 登錄驗證）
         password: approvedItem.managerPassword,
         status: 'active'
-      });
+      };
+      adminList.push(newAdmin);
       localStorage.setItem(FLEET_ADMIN_KEY, JSON.stringify(adminList));
 
+      // 2. 同步到登錄驗證用的 approvedFleetAdmins 列表
+      const approvedAdmins = JSON.parse(localStorage.getItem(APPROVED_FLEET_ADMINS_KEY) || '[]');
+      approvedAdmins.push({
+        teamName: approvedItem.fleetName,
+        name: approvedItem.managerName,
+        phone: approvedItem.managerPhone,
+        email: approvedItem.managerEmail,
+        username: approvedItem.managerAccount, // 登錄帳號
+        password: approvedItem.managerPassword, // 登錄密碼
+        status: 'active'
+      });
+      localStorage.setItem(APPROVED_FLEET_ADMINS_KEY, JSON.stringify(approvedAdmins));
+
+      // 3. 移除待審核列表中的該項
       const updatedApplyList = applyList.filter(item => item.managerAccount !== account);
       localStorage.setItem(FLEET_REGISTER_KEY, JSON.stringify(updatedApplyList));
 
       loadRegisterApply();
       loadFleetAdmins();
-      alert('已通過該車隊管理員的註冊申請！');
+      alert('已通過該車隊管理員的註冊申請！可登錄車隊管理員後台');
     }
 
     // 6. 駁回註冊申請
@@ -483,16 +504,26 @@
       alert('已駁回該車隊管理員的註冊申請！');
     }
 
-    // 7. 刪除車隊管理員
+    // 7. 刪除車隊管理員（同時從登錄驗證列表移除）
     function deleteFleetAdmin(id) {
+      // 1. 從原列表刪除
       const adminList = JSON.parse(localStorage.getItem(FLEET_ADMIN_KEY) || '[]');
+      const deletedAdmin = adminList.find(item => item.id === id);
       const updatedList = adminList.filter(item => item.id !== id);
       localStorage.setItem(FLEET_ADMIN_KEY, JSON.stringify(updatedList));
+
+      // 2. 從登錄驗證列表移除對應帳號
+      if (deletedAdmin) {
+        const approvedAdmins = JSON.parse(localStorage.getItem(APPROVED_FLEET_ADMINS_KEY) || '[]');
+        const updatedApproved = approvedAdmins.filter(item => item.username !== deletedAdmin.account);
+        localStorage.setItem(APPROVED_FLEET_ADMINS_KEY, JSON.stringify(updatedApproved));
+      }
+
       loadFleetAdmins();
-      alert('已刪除此車隊管理員！');
+      alert('已刪除此車隊管理員！該帳號將無法登錄');
     }
 
-    // 8. 載入已審核的車隊管理員列表（新增刪除按鈕）
+    // 8. 載入已審核的車隊管理員列表
     function loadFleetAdmins() {
       const adminList = JSON.parse(localStorage.getItem(FLEET_ADMIN_KEY) || '[]');
       const keyword = document.getElementById('search-fleet-manager').value.trim();
@@ -539,14 +570,26 @@
         tbody.appendChild(row);
       });
 
-      // 綁定狀態切換按鈕事件
+      // 綁定狀態切換按鈕事件（同步更新登錄驗證列表的狀態）
       document.querySelectorAll('.status-btn').forEach(btn => {
         btn.addEventListener('click', function() {
           const id = this.getAttribute('data-id');
           const nextStatus = this.getAttribute('data-next-status');
+          // 1. 更新原列表狀態
           const list = JSON.parse(localStorage.getItem(FLEET_ADMIN_KEY) || '[]');
           const updated = list.map(item => item.id === id ? { ...item, status: nextStatus } : item);
           localStorage.setItem(FLEET_ADMIN_KEY, JSON.stringify(updated));
+          
+          // 2. 同步更新登錄驗證列表的狀態
+          const targetAdmin = list.find(item => item.id === id);
+          if (targetAdmin) {
+            const approvedAdmins = JSON.parse(localStorage.getItem(APPROVED_FLEET_ADMINS_KEY) || '[]');
+            const updatedApproved = approvedAdmins.map(item => 
+              item.username === targetAdmin.account ? { ...item, status: nextStatus } : item
+            );
+            localStorage.setItem(APPROVED_FLEET_ADMINS_KEY, JSON.stringify(updatedApproved));
+          }
+
           loadFleetAdmins();
         });
       });
@@ -555,17 +598,32 @@
       document.querySelectorAll('.delete-btn').forEach(btn => {
         btn.addEventListener('click', function() {
           const id = this.getAttribute('data-id');
-          if (confirm('確定要刪除此車隊管理員嗎？')) {
+          if (confirm('確定要刪除此車隊管理員嗎？刪除後該帳號將無法登錄！')) {
             deleteFleetAdmin(id);
           }
         });
       });
     }
 
-    // 9. 搜尋註冊申請
+    // 9. 同步已審核列表到登錄驗證用的 approvedFleetAdmins（解決歷史數據同步問題）
+    function syncApprovedFleetAdmins() {
+      const adminList = JSON.parse(localStorage.getItem(FLEET_ADMIN_KEY) || '[]');
+      const approvedAdmins = adminList.map(item => ({
+        teamName: item.fleetName,
+        name: item.managerName,
+        phone: item.phone,
+        email: item.email,
+        username: item.account,
+        password: item.password,
+        status: item.status
+      }));
+      localStorage.setItem(APPROVED_FLEET_ADMINS_KEY, JSON.stringify(approvedAdmins));
+    }
+
+    // 10. 搜尋註冊申請
     document.getElementById('search-register-apply').addEventListener('input', loadRegisterApply);
 
-    // 10. 載入既有設定（新增分行欄位還原）
+    // 11. 載入既有設定（新增分行欄位還原）
     window.addEventListener('load', () => {
       const storedPrice = JSON.parse(localStorage.getItem(PRICE_KEY) || '{}');
       document.getElementById('monthly-price').value = storedPrice.monthly || 9500;
@@ -579,6 +637,8 @@
       document.getElementById('bank-account-name').value = storedBank.accountName || '';
       document.getElementById('bank-account-number').value = storedBank.accountNumber || '';
 
+      // 初始化時同步一次已審核列表
+      syncApprovedFleetAdmins();
       document.querySelector('[data-panel="fleet-register-apply"]').click();
     });
   </script>
