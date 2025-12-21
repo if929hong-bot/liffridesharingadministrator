@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -59,6 +59,10 @@
         }
         .bank-info-card:hover {
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        /* 費用設定卡片樣式 */
+        .fare-setting-card {
+            border-left: 4px solid #00C300;
         }
     </style>
 </head>
@@ -202,6 +206,69 @@
                 </div>
             </div>
 
+            <!-- 新增：搭車費用設定欄位 -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- 日間費用設定 -->
+                <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-100 fare-setting-card">
+                    <h2 class="text-lg font-bold text-text-dark mb-4">日間費用設定 (6:00-22:00)</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-text-dark mb-1">起步價格 (元)</label>
+                            <input type="number" id="dayStartPrice" placeholder="請輸入起步價" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" value="80">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-text-dark mb-1">距離費用 (元/km)</label>
+                            <input type="number" id="dayDistancePrice" placeholder="請輸入每公里價" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" value="20">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-text-dark mb-1">時間費用 (元/min)</label>
+                            <input type="number" id="dayTimePrice" placeholder="請輸入每分鐘價" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" value="5">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-text-dark mb-1">固定回給 (元)</label>
+                            <input type="number" id="dayFixedReturn" placeholder="請輸入固定回給" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" value="10">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-text-dark mb-1">百回金額 (元)</label>
+                            <input type="number" id="dayHundredReturn" placeholder="請輸入百回金額" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" value="500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 夜間費用設定 -->
+                <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-100 fare-setting-card">
+                    <h2 class="text-lg font-bold text-text-dark mb-4">夜間費用設定 (22:01-5:59)</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-text-dark mb-1">起步價格 (元)</label>
+                            <input type="number" id="nightStartPrice" placeholder="請輸入起步價" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" value="100">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-text-dark mb-1">距離費用 (元/km)</label>
+                            <input type="number" id="nightDistancePrice" placeholder="請輸入每公里價" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" value="25">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-text-dark mb-1">時間費用 (元/min)</label>
+                            <input type="number" id="nightTimePrice" placeholder="請輸入每分鐘價" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" value="8">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-text-dark mb-1">固定回給 (元)</label>
+                            <input type="number" id="nightFixedReturn" placeholder="請輸入固定回給" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" value="15">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-text-dark mb-1">百回金額 (元)</label>
+                            <input type="number" id="nightHundredReturn" placeholder="請輸入百回金額" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" value="800">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- 費用設定保存按鈕 -->
+            <div class="mb-6">
+                <button type="button" id="saveFareSettings" class="py-2 px-6 bg-primary text-white rounded-lg font-medium hover:bg-secondary transition-all">
+                    保存搭車費用設定
+                </button>
+            </div>
+
             <!-- 原有：數據統計卡片 -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
@@ -321,6 +388,67 @@
             
             // 初始化租金套餐金額計算
             initRentPackageCalculator();
+
+            // 加載已保存的搭車費用設定
+            loadFareSettings();
+        });
+
+        // 新增：加載搭車費用設定
+        function loadFareSettings() {
+            const savedFares = JSON.parse(localStorage.getItem('rideFareSettings')) || {
+                day: {
+                    startPrice: 80,
+                    distancePrice: 20,
+                    timePrice: 5,
+                    fixedReturn: 10,
+                    hundredReturn: 500
+                },
+                night: {
+                    startPrice: 100,
+                    distancePrice: 25,
+                    timePrice: 8,
+                    fixedReturn: 15,
+                    hundredReturn: 800
+                }
+            };
+
+            // 填充日間費用
+            document.getElementById('dayStartPrice').value = savedFares.day.startPrice;
+            document.getElementById('dayDistancePrice').value = savedFares.day.distancePrice;
+            document.getElementById('dayTimePrice').value = savedFares.day.timePrice;
+            document.getElementById('dayFixedReturn').value = savedFares.day.fixedReturn;
+            document.getElementById('dayHundredReturn').value = savedFares.day.hundredReturn;
+
+            // 填充夜間費用
+            document.getElementById('nightStartPrice').value = savedFares.night.startPrice;
+            document.getElementById('nightDistancePrice').value = savedFares.night.distancePrice;
+            document.getElementById('nightTimePrice').value = savedFares.night.timePrice;
+            document.getElementById('nightFixedReturn').value = savedFares.night.fixedReturn;
+            document.getElementById('nightHundredReturn').value = savedFares.night.hundredReturn;
+        }
+
+        // 新增：保存搭車費用設定
+        document.getElementById('saveFareSettings').addEventListener('click', function() {
+            const fareSettings = {
+                day: {
+                    startPrice: Number(document.getElementById('dayStartPrice').value),
+                    distancePrice: Number(document.getElementById('dayDistancePrice').value),
+                    timePrice: Number(document.getElementById('dayTimePrice').value),
+                    fixedReturn: Number(document.getElementById('dayFixedReturn').value),
+                    hundredReturn: Number(document.getElementById('dayHundredReturn').value)
+                },
+                night: {
+                    startPrice: Number(document.getElementById('nightStartPrice').value),
+                    distancePrice: Number(document.getElementById('nightDistancePrice').value),
+                    timePrice: Number(document.getElementById('nightTimePrice').value),
+                    fixedReturn: Number(document.getElementById('nightFixedReturn').value),
+                    hundredReturn: Number(document.getElementById('nightHundredReturn').value)
+                }
+            };
+
+            // 保存到localStorage，供司機端頁面使用
+            localStorage.setItem('rideFareSettings', JSON.stringify(fareSettings));
+            alert('搭車費用設定已保存！司機端頁面將自動同步更新');
         });
 
         // 新增：租金套餐金額自動計算
