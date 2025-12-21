@@ -48,8 +48,8 @@
         .bank-info-card:hover {
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
-        /* 登入驗證遮罩 */
-        .auth-overlay {
+        /* 未登錄提示遮罩 */
+        .unauth-overlay {
             position: fixed;
             inset: 0;
             background: white;
@@ -60,42 +60,25 @@
             justify-content: center;
             padding: 2rem;
         }
-        .auth-card {
-            background: white;
-            padding: 2rem;
-            border-radius: 10px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 400px;
-        }
     </style>
 </head>
 <body class="bg-gray-50 font-sans">
-    <!-- 登入驗證遮罩（預設顯示，驗證通過後隱藏） -->
-    <div id="authOverlay" class="auth-overlay">
-        <div class="auth-card">
-            <h2 class="text-2xl font-bold text-center mb-6 text-text-dark">管理員身份驗證</h2>
-            <div class="space-y-4">
-                <div>
-                    <label for="authAccount" class="block text-sm font-medium text-text-dark mb-1">管理員帳號</label>
-                    <input type="text" id="authAccount" name="authAccount" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary" placeholder="輸入管理員帳號">
-                </div>
-                <div>
-                    <label for="authPassword" class="block text-sm font-medium text-text-dark mb-1">密碼</label>
-                    <input type="password" id="authPassword" name="authPassword" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary" placeholder="輸入管理員密碼">
-                </div>
-                <div id="authError" class="text-red-500 text-sm text-center hidden">帳號或密碼錯誤，請重新輸入</div>
-                <button type="button" id="authSubmit" class="w-full py-3 bg-primary text-white rounded-lg font-medium hover:bg-secondary transition-all">
-                    驗證身份
-                </button>
-            </div>
+    <!-- 未登錄提示遮罩（未登錄時顯示） -->
+    <div id="unauthOverlay" class="unauth-overlay hidden">
+        <div class="text-center max-w-md">
+            <i class="fa fa-exclamation-circle text-4xl text-red-500 mb-4"></i>
+            <h2 class="text-2xl font-bold text-text-dark mb-2">未登錄或登錄已過期</h2>
+            <p class="text-text-light mb-6">請先在首頁完成車隊管理員登錄</p>
+            <a href="../index.html" class="inline-block py-3 px-6 bg-primary text-white rounded-lg font-medium hover:bg-secondary transition-all">
+                返回首頁登錄
+            </a>
         </div>
     </div>
 
     <!-- 頁首 -->
     <header class="bg-white shadow-sm py-3 px-4 fixed top-0 w-full z-10">
         <div class="flex justify-between items-center">
-            <h1 class="text-xl font-bold text-text-dark" id="systemTitle">LINE多元化搭車管理員登入系統</h1>
+            <h1 class="text-xl font-bold text-text-dark" id="systemTitle">LINE多元化搭車管理員後台</h1>
             <div class="flex items-center space-x-4">
                 <button type="button" class="text-text-light hover:text-primary">
                     <i class="fa fa-bell text-lg"></i>
@@ -110,7 +93,7 @@
 
     <!-- 主容器 -->
     <div class="pt-16 flex">
-        <!-- 側邊菜單（修正重複連結及icon） -->
+        <!-- 側邊菜單 -->
         <aside class="sidebar w-56 bg-white shadow-sm p-4">
             <nav class="space-y-1">
                 <a href="admin-dashboard.html" class="block py-2 px-3 rounded-md menu-active font-medium text-white">
@@ -134,7 +117,7 @@
                 <a href="admin-report.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
                     <i class="fa fa-bar-chart mr-2"></i>報表統計
                 </a>
-                <a href="../managerindex.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all mt-4" id="logoutLink">
+                <a href="../index.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all mt-4" id="logoutLink">
                     <i class="fa fa-sign-out mr-2"></i>退出登入
                 </a>
             </nav>
@@ -288,65 +271,43 @@
     </div>
 
     <script>
-        // 管理員身份驗證
-        const VALID_ADMINS = [
-            { account: "admin001", password: "admin123" },
-            { account: "superadmin", password: "super123" }
-        ];
-
-        // 驗證按鈕點擊事件
-        document.getElementById('authSubmit').addEventListener('click', function() {
-            const account = document.getElementById('authAccount').value.trim();
-            const password = document.getElementById('authPassword').value.trim();
-            const errorEl = document.getElementById('authError');
-
-            const validAdmin = VALID_ADMINS.find(admin => admin.account === account && admin.password === password);
-            
-            if (validAdmin) {
-                localStorage.setItem('isAdminAuthenticated', 'true');
-                document.getElementById('authOverlay').style.display = 'none';
-                errorEl.classList.add('hidden');
-            } else {
-                errorEl.classList.remove('hidden');
-            }
-        });
-
-        // 頁面加載時檢查是否已驗證
+        // 頁面加載時檢查登錄狀態
         window.addEventListener('load', function() {
-            const isAuthenticated = localStorage.getItem('isAdminAuthenticated') === 'true';
-            if (isAuthenticated) {
-                document.getElementById('authOverlay').style.display = 'none';
+            // 讀取 index.html 登錄時存儲的車隊管理員信息
+            const currentFleetAdmin = JSON.parse(localStorage.getItem('currentFleetAdmin'));
+            const isLoggedIn = localStorage.getItem('loggedInRole') === 'fleetAdmin';
+
+            // 未登錄/信息缺失 → 顯示未登錄提示
+            if (!isLoggedIn || !currentFleetAdmin) {
+                document.getElementById('unauthOverlay').classList.remove('hidden');
+                return;
             }
+
+            // 已登錄 → 加載管理員信息
+            loadFleetAdminInfo(currentFleetAdmin);
+            initCharts();
+            simulateRealTimeData();
         });
 
-        // 退出登入時清除驗證狀態
+        // 加載車隊管理員信息到頁面
+        function loadFleetAdminInfo(adminInfo) {
+            document.getElementById('currentManagerName').textContent = adminInfo.name || '車隊管理員';
+            document.getElementById('systemTitle').textContent = `${adminInfo.teamName || 'LINE多元化搭車'}管理員後台`;
+        }
+
+        // 退出登入 → 清除登錄狀態
         document.getElementById('logoutLink').addEventListener('click', function(e) {
             e.preventDefault();
-            localStorage.removeItem('isAdminAuthenticated');
-            localStorage.removeItem('currentFleetManager');
+            localStorage.removeItem('loggedInRole');
+            localStorage.removeItem('currentFleetAdmin');
             window.location.href = this.href;
         });
 
-        // 動態加載系統標題與當前管理員信息
-        function loadSystemInfo() {
-            const savedTitle = localStorage.getItem('systemTitle') || 'LINE多元化搭車管理員登入系統';
-            document.getElementById('systemTitle').textContent = savedTitle;
-            
-            // 直接設置管理員名稱（與頁面截圖一致）
-            document.getElementById('currentManagerName').textContent = '王小明';
-            
-            window.addEventListener('storage', (e) => {
-                if (e.key === 'systemTitle') {
-                    document.getElementById('systemTitle').textContent = e.newValue || 'LINE多元化搭車管理員登入系統';
-                }
-            });
-        }
-
         // 初始化圖表
         function initCharts() {
-            // 訂單趨勢圖（與截圖一致）
+            // 訂單趨勢圖
             const trendCtx = document.getElementById('trendChart').getContext('2d');
-            const trendChart = new Chart(trendCtx, {
+            new Chart(trendCtx, {
                 type: 'line',
                 data: {
                     labels: ['08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00'],
@@ -364,9 +325,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
+                    plugins: { legend: { display: false } },
                     scales: {
                         y: { beginAtZero: true, max: 10, grid: { color: 'rgba(0, 0, 0, 0.05)' } },
                         x: { grid: { display: false } }
@@ -374,9 +333,9 @@
                 }
             });
 
-            // 收入統計圖（與截圖一致）
+            // 收入統計圖
             const incomeCtx = document.getElementById('incomeChart').getContext('2d');
-            const incomeChart = new Chart(incomeCtx, {
+            new Chart(incomeCtx, {
                 type: 'bar',
                 data: {
                     labels: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
@@ -391,9 +350,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
+                    plugins: { legend: { display: false } },
                     scales: {
                         y: { beginAtZero: true, max: 1300, grid: { color: 'rgba(0, 0, 0, 0.05)' } },
                         x: { grid: { display: false } }
@@ -467,18 +424,6 @@
                 document.getElementById('todayIncome').textContent = `${todayIncome.toLocaleString()}元`;
             }, 300000); // 5分鐘更新一次
         }
-
-        // 頁面加載初始化
-        window.onload = () => {
-            loadSystemInfo();
-            initCharts();
-            simulateRealTimeData();
-            
-            const isAuthenticated = localStorage.getItem('isAdminAuthenticated') === 'true';
-            if (!isAuthenticated) {
-                document.getElementById('authOverlay').style.display = 'flex';
-            }
-        };
     </script>
 </body>
 </html>
