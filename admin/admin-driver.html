@@ -88,95 +88,6 @@
       margin-bottom: 20px;
       color: #333;
     }
-    /* 分頁標籤 */
-    .tab-group {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 24px;
-    }
-    .tab-btn {
-      padding: 8px 16px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      transition: all 0.2s;
-      background: #f5f5f5;
-      color: #666;
-      border: 1px solid #e6e6e6;
-    }
-    .tab-btn.active {
-      background: #00C300;
-      color: #fff;
-      border-color: #00C300;
-    }
-    /* 表格樣式 */
-    .data-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-      min-width: 600px;
-    }
-    .data-table th {
-      background: #fafafa;
-      color: #666;
-      padding: 12px 15px;
-      text-align: left;
-      border-bottom: 1px solid #e6e6e6;
-      font-weight: 600;
-    }
-    .data-table td {
-      padding: 12px 15px;
-      border-bottom: 1px solid #f0f0f0;
-      color: #333;
-    }
-    /* 按鈕樣式 */
-    .btn {
-      height: 28px;
-      padding: 0 12px;
-      border: none;
-      border-radius: 4px;
-      font-size: 13px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .btn-success {
-      background: #52c41a;
-      color: #fff;
-    }
-    .btn-success:hover {
-      background: #47a819;
-    }
-    .btn-danger {
-      background: #fff;
-      color: #ff4d4f;
-      border: 1px solid #ff4d4f;
-    }
-    .btn-danger:hover {
-      background: #fff2f0;
-    }
-    .btn-default {
-      background: #f5f5f5;
-      color: #666;
-      border: 1px solid #e6e6e6;
-    }
-    .btn-default:hover {
-      background: #f0f0f0;
-    }
-    .btn-warning {
-      background: #fff;
-      color: #faad14;
-      border: 1px solid #faad14;
-    }
-    .btn-warning:hover {
-      background: #fffbe6;
-    }
-    .btn-primary {
-      background: #1890ff;
-      color: #fff;
-    }
-    .btn-primary:hover {
-      background: #096dd9;
-    }
     /* 隱藏類 */
     .hidden {
       display: none !important;
@@ -185,220 +96,31 @@
 </head>
 <body>
   <div class="app-container">
-    <!-- 側邊欄（修正區域管理連結） -->
+    <!-- 側邊欄（修復所有語法錯誤） -->
     <div class="sidebar">
       <div class="sidebar-logo">LINE多元化搭車管理員</div>
       <ul class="sidebar-menu">
-        <li><a href="index.html"><<i class="fa fa-home"></</i>首頁</a></li>
-        <!-- 修正：區域管理連結到當前目錄的admin-area.html -->
-        <li><a href="admin-area.html"><<i class="fa fa-map-marker"></</i>區域管理</a></li>
-        <li><a href="admin-driver.html" class="active"><<i class="fa fa-car"></</i>司機管理</a></li>
-        <li><a href="admin-order.html"><<i class="fa fa-list"></</i>訂單管理</a></li>
-        <li><a href="finance-management.html"><<i class="fa fa-money"></</i>財務管理</a></li>
-        <li><a href="admin-report.html"><<i class="fa fa-bar-chart"></</i>報表統計</a></li>
-        <li><a href="../managerindex.html"><<i class="fa fa-sign-out"></</i>退出登入</a></li>
+        <li><a href="index.html"><i class="fa fa-home"></i>首頁</a></li>
+        <li><a href="admin-area.html"><i class="fa fa-map-marker"></i>區域管理</a></li>
+        <li><a href="admin-driver.html" class="active"><i class="fa fa-car"></i>司機管理</a></li>
+        <li><a href="admin-order.html"><i class="fa fa-list"></i>訂單管理</a></li>
+        <li><a href="finance-management.html"><i class="fa fa-money"></i>財務管理</a></li>
+        <li><a href="admin-report.html"><i class="fa fa-bar-chart"></i>報表統計</a></li>
+        <li><a href="../managerindex.html"><i class="fa fa-sign-out"></i>退出登入</a></li>
       </ul>
     </div>
 
-    <!-- 主內容區（優化排版） -->
+    <!-- 主內容區（清空所有數據，只保留標題） -->
     <div class="main-content">
       <div class="card">
         <div class="card-title">司機管理</div>
-        
-        <!-- 分頁標籤 -->
-        <div class="tab-group">
-          <div class="tab-btn active" onclick="switchTab('pending')">待審核司機 (5)</div>
-          <div class="tab-btn" onclick="switchTab('approved')">已通過司機 (32)</div>
-          <div class="tab-btn" onclick="switchTab('rejected')">已拒絕司機 (8)</div>
-        </div>
-
-        <!-- 待審核司機列表 -->
-        <div id="pendingTab">
-          <div class="overflow-x-auto">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <<th>申請人</</th>
-                  <<th>帳號</</th>
-                  <<th>車牌號碼</</th>
-                  <<th>車型</</th>
-                  <<th>申請時間</</th>
-                  <<th>操作</</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>陳XX</td>
-                  <td>chen_driver</td>
-                  <td>ABC-1234</td>
-                  <td>Toyota Corolla</td>
-                  <td>2025-12-12 10:23</td>
-                  <td>
-                    <button class="btn btn-success mr-2" onclick="approveDriver(this)">通過</button>
-                    <button class="btn btn-danger" onclick="rejectDriver(this)">拒絕</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>李XX</td>
-                  <td>li_driver</td>
-                  <td>XYZ-5678</td>
-                  <td>Honda Civic</td>
-                  <td>2025-12-12 09:15</td>
-                  <td>
-                    <button class="btn btn-success mr-2" onclick="approveDriver(this)">通過</button>
-                    <button class="btn btn-danger" onclick="rejectDriver(this)">拒絕</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>王XX</td>
-                  <td>wang_driver</td>
-                  <td>123-ABC</td>
-                  <td>Nissan Tiida</td>
-                  <td>2025-12-11 16:48</td>
-                  <td>
-                    <button class="btn btn-success mr-2" onclick="approveDriver(this)">通過</button>
-                    <button class="btn btn-danger" onclick="rejectDriver(this)">拒絕</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- 已通過司機列表（預設隱藏） -->
-        <div id="approvedTab" class="hidden">
-          <div class="overflow-x-auto">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <<th>司機姓名</</th>
-                  <<th>帳號</</th>
-                  <<th>車牌號碼</</th>
-                  <<th>車型</</th>
-                  <<th>通過時間</</th>
-                  <<th>操作</</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>張XX</td>
-                  <td>zhang_driver</td>
-                  <td>DEF-4321</td>
-                  <td>Mazda 3</td>
-                  <td>2025-12-11 14:30</td>
-                  <td>
-                    <button class="btn btn-default mr-2">查看詳情</button>
-                    <button class="btn btn-warning">停權</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>黃XX</td>
-                  <td>huang_driver</td>
-                  <td>GHI-8765</td>
-                  <td>Volkswagen Golf</td>
-                  <td>2025-12-11 11:20</td>
-                  <td>
-                    <button class="btn btn-default mr-2">查看詳情</button>
-                    <button class="btn btn-warning">停權</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- 已拒絕司機列表（預設隱藏） -->
-        <div id="rejectedTab" class="hidden">
-          <div class="overflow-x-auto">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <<th>申請人</</th>
-                  <<th>帳號</</th>
-                  <<th>車牌號碼</</th>
-                  <<th>拒絕時間</</th>
-                  <<th>操作</</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>劉XX</td>
-                  <td>liu_driver</td>
-                  <td>JKL-9012</td>
-                  <td>2025-12-10 09:45</td>
-                  <td>
-                    <button class="btn btn-primary">重新審核</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
       </div>
     </div>
   </div>
 
+  <!-- 清空所有JS交互邏輯（僅保留基礎頁面框架） -->
   <script>
-    // 切換分頁標籤
-    function switchTab(tabName) {
-      // 隱藏所有標籤頁
-      document.querySelectorAll('[id$="Tab"]').forEach(tab => {
-        tab.classList.add('hidden');
-      });
-      // 移除所有標籤按鈕的active狀態
-      document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-      });
-      // 顯示當前標籤頁 + 激活按鈕
-      document.getElementById(`${tabName}Tab`).classList.remove('hidden');
-      event.target.classList.add('active');
-    }
-
-    // 通過司機審核
-    function approveDriver(btn) {
-      const tr = btn.closest('tr');
-      const name = tr.querySelector('td:first-child').textContent;
-      if (confirm(`確定要通過「${name}」的司機註冊申請嗎？`)) {
-        // 模擬移動到已通過列表
-        tr.remove();
-        const approvedTable = document.getElementById('approvedTab').querySelector('tbody');
-        approvedTable.innerHTML += `
-          <tr>
-            <td>${name}</td>
-            <td>${tr.querySelector('td:nth-child(2)').textContent}</td>
-            <td>${tr.querySelector('td:nth-child(3)').textContent}</td>
-            <td>${tr.querySelector('td:nth-child(4)').textContent}</td>
-            <td>${new Date().toLocaleDateString('zh-TW') + ' ' + new Date().toLocaleTimeString('zh-TW').slice(0, 8)}</td>
-            <td>
-              <button class="btn btn-default mr-2">查看詳情</button>
-              <button class="btn btn-warning">停權</button>
-            </td>
-          </tr>
-        `;
-      }
-    }
-
-    // 拒絕司機審核
-    function rejectDriver(btn) {
-      const tr = btn.closest('tr');
-      const name = tr.querySelector('td:first-child').textContent;
-      if (confirm(`確定要拒絕「${name}」的司機註冊申請嗎？`)) {
-        // 模擬移動到已拒絕列表
-        tr.remove();
-        const rejectedTable = document.getElementById('rejectedTab').querySelector('tbody');
-        rejectedTable.innerHTML += `
-          <tr>
-            <td>${name}</td>
-            <td>${tr.querySelector('td:nth-child(2)').textContent}</td>
-            <td>${tr.querySelector('td:nth-child(3)').textContent}</td>
-            <td>${new Date().toLocaleDateString('zh-TW') + ' ' + new Date().toLocaleTimeString('zh-TW').slice(0, 8)}</td>
-            <td>
-              <button class="btn btn-primary">重新審核</button>
-            </td>
-          </tr>
-        `;
-      }
-    }
+    // 僅保留空腳本標籤，無任何交互邏輯
   </script>
 </body>
 </html>

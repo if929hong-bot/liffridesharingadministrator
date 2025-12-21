@@ -21,7 +21,6 @@
                     },
                     boxShadow: {
                         'card': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-                        'card-hover': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
                     }
                 }
             }
@@ -72,26 +71,13 @@
             transition: left 0.3s ease;
         }
         
-        /* 區域卡片動畫優化 */
+        /* 區域卡片樣式簡化 */
         .area-item {
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-        .area-item:hover {
-            background-color: #F3F4F6;
-            box-shadow: var(--tw-shadow-card-hover);
-            transform: translateY(-2px);
-        }
-        
-        /* 按鈕顯示動畫優化 */
-        .area-action-btn {
-            opacity: 0;
-            transition: opacity 0.3s ease, transform 0.3s ease;
-            transform: translateX(5px);
-        }
-        .area-item:hover .area-action-btn {
-            opacity: 1;
-            transform: translateX(0);
+            background-color: white;
+            border: 1px solid #E5E7EB;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
         }
         
         /* 響應式适配 (平板/手機) */
@@ -117,42 +103,21 @@
         .mobile-menu-btn {
             display: none;
         }
-        
-        /* 加載動畫 */
-        .loader {
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #00C300;
-            border-radius: 50%;
-            width: 16px;
-            height: 16px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
     </style>
 </head>
 <body>
-    <!-- 頁首 (優化響應式 + 新增手機菜單按鈕) -->
+    <!-- 頁首 (保留基礎結構，移除交互按鈕) -->
     <div class="header">
         <div class="flex items-center gap-3">
             <!-- 手機端菜單按鈕 -->
             <button class="mobile-menu-btn text-text-dark hover:text-primary" id="mobileMenuBtn">
                 <i class="fa fa-bars text-lg"></i>
             </button>
-            <h1 class="text-lg font-bold text-text-dark" id="systemTitle">LINE多元化搭車管理員系統</h1>
+            <h1 class="text-lg font-bold text-text-dark">LINE多元化搭車管理員系統</h1>
         </div>
         
         <div class="flex items-center space-x-4">
-            <!-- 通知按鈕 (新增點擊反饋) -->
-            <button class="text-text-light hover:text-primary relative transition-colors" id="notificationBtn">
-                <i class="fa fa-bell text-lg"></i>
-                <!-- 通知角標 -->
-                <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">3</span>
-            </button>
-            
-            <!-- 管理員信息 (優化顯示) -->
+            <!-- 管理員信息 (保留基礎顯示) -->
             <div class="flex items-center space-x-2">
                 <img src="https://via.placeholder.com/32" alt="管理員頭像" class="w-8 h-8 rounded-full border-2 border-primary">
                 <span class="text-text-dark" id="managerName">管理員</span>
@@ -160,7 +125,7 @@
         </div>
     </div>
 
-    <!-- 側邊菜單 (統一跳轉路徑) -->
+    <!-- 側邊菜單 (保留基礎導航，移除多餘交互) -->
     <div class="sidebar" id="sidebar">
         <nav class="space-y-1 px-4">
             <a href="admin-dashboard.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all flex items-center">
@@ -194,266 +159,57 @@
         </nav>
     </div>
 
-    <!-- 主內容區 (優化佈局 + 交互) -->
+    <!-- 主內容區 (只保留區域名稱，清空所有其他數據/按鈕) -->
     <div class="main-content">
-        <!-- 頁面標題區 (優化顯示) -->
-        <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between">
-            <div>
-                <h2 class="text-xl font-bold text-text-dark">區域管理</h2>
-                <p class="text-sm text-text-light mt-1">(點選區域可查看該區域的司機、訂單、財務數據)</p>
-            </div>
-            <!-- 新增刷新按鈕 -->
-            <button class="mt-3 md:mt-0 px-4 py-2 bg-white border border-border-color rounded-md text-text-dark hover:bg-hover-bg flex items-center gap-2 transition-colors" id="refreshBtn">
-                <i class="fa fa-refresh"></i>
-                <span>刷新數據</span>
-            </button>
+        <!-- 頁面標題區 (簡化顯示) -->
+        <div class="mb-6">
+            <h2 class="text-xl font-bold text-text-dark">區域管理</h2>
         </div>
 
-        <!-- 加載狀態提示 -->
-        <div id="loadingState" class="flex justify-center items-center py-10 hidden">
-            <div class="loader mr-2"></div>
-            <span class="text-text-light">正在加載區域數據...</span>
-        </div>
-
-        <!-- 區域列表 (優化響應式 + 卡片樣式) -->
+        <!-- 區域列表 (只保留各地區名稱，移除所有數據/按鈕/交互) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" id="areaList">
             <!-- 台北市 -->
-            <div class="area-item card-bg border border-border-color rounded-lg p-4 shadow-card" onclick="goToAreaPage('台北市', 'driver')">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <h3 class="font-medium text-text-dark text-lg">台北市</h3>
-                        <div class="mt-2 text-sm text-text-light space-y-1">
-                            <p class="flex items-center">
-                                <i class="fa fa-car mr-1 text-primary"></i>
-                                司機：<span class="font-medium">28</span>人
-                            </p>
-                            <p class="flex items-center">
-                                <i class="fa fa-shopping-cart mr-1 text-primary"></i>
-                                訂單：<span class="font-medium">126</span>單
-                            </p>
-                            <!-- 新增財務數據 -->
-                            <p class="flex items-center">
-                                <i class="fa fa-money mr-1 text-primary"></i>
-                                收入：<span class="font-medium">32,560</span>元
-                            </p>
-                        </div>
-                    </div>
-                    <div class="area-action-btn flex space-x-1">
-                        <button onclick="event.stopPropagation(); goToAreaPage('台北市', 'driver')" class="p-1.5 text-primary hover:bg-gray-100 rounded transition-colors" title="查看司機">
-                            <i class="fa fa-car text-sm"></i>
-                        </button>
-                        <button onclick="event.stopPropagation(); goToAreaPage('台北市', 'order')" class="p-1.5 text-primary hover:bg-gray-100 rounded transition-colors" title="查看訂單">
-                            <i class="fa fa-shopping-cart text-sm"></i>
-                        </button>
-                        <button onclick="event.stopPropagation(); goToAreaPage('台北市', 'finance')" class="p-1.5 text-primary hover:bg-gray-100 rounded transition-colors" title="查看財務">
-                            <i class="fa fa-money text-sm"></i>
-                        </button>
-                    </div>
-                </div>
+            <div class="area-item">
+                <h3 class="font-medium text-text-dark text-lg">台北市</h3>
             </div>
 
             <!-- 新北市 -->
-            <div class="area-item card-bg border border-border-color rounded-lg p-4 shadow-card" onclick="goToAreaPage('新北市', 'driver')">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <h3 class="font-medium text-text-dark text-lg">新北市</h3>
-                        <div class="mt-2 text-sm text-text-light space-y-1">
-                            <p class="flex items-center">
-                                <i class="fa fa-car mr-1 text-primary"></i>
-                                司機：<span class="font-medium">35</span>人
-                            </p>
-                            <p class="flex items-center">
-                                <i class="fa fa-shopping-cart mr-1 text-primary"></i>
-                                訂單：<span class="font-medium">158</span>單
-                            </p>
-                            <p class="flex items-center">
-                                <i class="fa fa-money mr-1 text-primary"></i>
-                                收入：<span class="font-medium">41,280</span>元
-                            </p>
-                        </div>
-                    </div>
-                    <div class="area-action-btn flex space-x-1">
-                        <button onclick="event.stopPropagation(); goToAreaPage('新北市', 'driver')" class="p-1.5 text-primary hover:bg-gray-100 rounded transition-colors" title="查看司機">
-                            <i class="fa fa-car text-sm"></i>
-                        </button>
-                        <button onclick="event.stopPropagation(); goToAreaPage('新北市', 'order')" class="p-1.5 text-primary hover:bg-gray-100 rounded transition-colors" title="查看訂單">
-                            <i class="fa fa-shopping-cart text-sm"></i>
-                        </button>
-                        <button onclick="event.stopPropagation(); goToAreaPage('新北市', 'finance')" class="p-1.5 text-primary hover:bg-gray-100 rounded transition-colors" title="查看財務">
-                            <i class="fa fa-money text-sm"></i>
-                        </button>
-                    </div>
-                </div>
+            <div class="area-item">
+                <h3 class="font-medium text-text-dark text-lg">新北市</h3>
             </div>
 
             <!-- 桃園市 -->
-            <div class="area-item card-bg border border-border-color rounded-lg p-4 shadow-card" onclick="goToAreaPage('桃園市', 'driver')">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <h3 class="font-medium text-text-dark text-lg">桃園市</h3>
-                        <div class="mt-2 text-sm text-text-light space-y-1">
-                            <p class="flex items-center">
-                                <i class="fa fa-car mr-1 text-primary"></i>
-                                司機：<span class="font-medium">22</span>人
-                            </p>
-                            <p class="flex items-center">
-                                <i class="fa fa-shopping-cart mr-1 text-primary"></i>
-                                訂單：<span class="font-medium">96</span>單
-                            </p>
-                            <p class="flex items-center">
-                                <i class="fa fa-money mr-1 text-primary"></i>
-                                收入：<span class="font-medium">24,800</span>元
-                            </p>
-                        </div>
-                    </div>
-                    <div class="area-action-btn flex space-x-1">
-                        <button onclick="event.stopPropagation(); goToAreaPage('桃園市', 'driver')" class="p-1.5 text-primary hover:bg-gray-100 rounded transition-colors" title="查看司機">
-                            <i class="fa fa-car text-sm"></i>
-                        </button>
-                        <button onclick="event.stopPropagation(); goToAreaPage('桃園市', 'order')" class="p-1.5 text-primary hover:bg-gray-100 rounded transition-colors" title="查看訂單">
-                            <i class="fa fa-shopping-cart text-sm"></i>
-                        </button>
-                        <button onclick="event.stopPropagation(); goToAreaPage('桃園市', 'finance')" class="p-1.5 text-primary hover:bg-gray-100 rounded transition-colors" title="查看財務">
-                            <i class="fa fa-money text-sm"></i>
-                        </button>
-                    </div>
-                </div>
+            <div class="area-item">
+                <h3 class="font-medium text-text-dark text-lg">桃園市</h3>
             </div>
 
             <!-- 台中市 -->
-            <div class="area-item card-bg border border-border-color rounded-lg p-4 shadow-card" onclick="goToAreaPage('台中市', 'driver')">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <h3 class="font-medium text-text-dark text-lg">台中市</h3>
-                        <div class="mt-2 text-sm text-text-light space-y-1">
-                            <p class="flex items-center">
-                                <i class="fa fa-car mr-1 text-primary"></i>
-                                司機：<span class="font-medium">32</span>人
-                            </p>
-                            <p class="flex items-center">
-                                <i class="fa fa-shopping-cart mr-1 text-primary"></i>
-                                訂單：<span class="font-medium">142</span>單
-                            </p>
-                            <p class="flex items-center">
-                                <i class="fa fa-money mr-1 text-primary"></i>
-                                收入：<span class="font-medium">38,500</span>元
-                            </p>
-                        </div>
-                    </div>
-                    <div class="area-action-btn flex space-x-1">
-                        <button onclick="event.stopPropagation(); goToAreaPage('台中市', 'driver')" class="p-1.5 text-primary hover:bg-gray-100 rounded transition-colors" title="查看司機">
-                            <i class="fa fa-car text-sm"></i>
-                        </button>
-                        <button onclick="event.stopPropagation(); goToAreaPage('台中市', 'order')" class="p-1.5 text-primary hover:bg-gray-100 rounded transition-colors" title="查看訂單">
-                            <i class="fa fa-shopping-cart text-sm"></i>
-                        </button>
-                        <button onclick="event.stopPropagation(); goToAreaPage('台中市', 'finance')" class="p-1.5 text-primary hover:bg-gray-100 rounded transition-colors" title="查看財務">
-                            <i class="fa fa-money text-sm"></i>
-                        </button>
-                    </div>
-                </div>
+            <div class="area-item">
+                <h3 class="font-medium text-text-dark text-lg">台中市</h3>
             </div>
 
             <!-- 台南市 -->
-            <div class="area-item card-bg border border-border-color rounded-lg p-4 shadow-card" onclick="goToAreaPage('台南市', 'driver')">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <h3 class="font-medium text-text-dark text-lg">台南市</h3>
-                        <div class="mt-2 text-sm text-text-light space-y-1">
-                            <p class="flex items-center">
-                                <i class="fa fa-car mr-1 text-primary"></i>
-                                司機：<span class="font-medium">18</span>人
-                            </p>
-                            <p class="flex items-center">
-                                <i class="fa fa-shopping-cart mr-1 text-primary"></i>
-                                訂單：<span class="font-medium">85</span>單
-                            </p>
-                            <p class="flex items-center">
-                                <i class="fa fa-money mr-1 text-primary"></i>
-                                收入：<span class="font-medium">21,600</span>元
-                            </p>
-                        </div>
-                    </div>
-                    <div class="area-action-btn flex space-x-1">
-                        <button onclick="event.stopPropagation(); goToAreaPage('台南市', 'driver')" class="p-1.5 text-primary hover:bg-gray-100 rounded transition-colors" title="查看司機">
-                            <i class="fa fa-car text-sm"></i>
-                        </button>
-                        <button onclick="event.stopPropagation(); goToAreaPage('台南市', 'order')" class="p-1.5 text-primary hover:bg-gray-100 rounded transition-colors" title="查看訂單">
-                            <i class="fa fa-shopping-cart text-sm"></i>
-                        </button>
-                        <button onclick="event.stopPropagation(); goToAreaPage('台南市', 'finance')" class="p-1.5 text-primary hover:bg-gray-100 rounded transition-colors" title="查看財務">
-                            <i class="fa fa-money text-sm"></i>
-                        </button>
-                    </div>
-                </div>
+            <div class="area-item">
+                <h3 class="font-medium text-text-dark text-lg">台南市</h3>
             </div>
 
             <!-- 高雄市 -->
-            <div class="area-item card-bg border border-border-color rounded-lg p-4 shadow-card" onclick="goToAreaPage('高雄市', 'driver')">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <h3 class="font-medium text-text-dark text-lg">高雄市</h3>
-                        <div class="mt-2 text-sm text-text-light space-y-1">
-                            <p class="flex items-center">
-                                <i class="fa fa-car mr-1 text-primary"></i>
-                                司機：<span class="font-medium">40</span>人
-                            </p>
-                            <p class="flex items-center">
-                                <i class="fa fa-shopping-cart mr-1 text-primary"></i>
-                                訂單：<span class="font-medium">178</span>單
-                            </p>
-                            <p class="flex items-center">
-                                <i class="fa fa-money mr-1 text-primary"></i>
-                                收入：<span class="font-medium">46,800</span>元
-                            </p>
-                        </div>
-                    </div>
-                    <div class="area-action-btn flex space-x-1">
-                        <button onclick="event.stopPropagation(); goToAreaPage('高雄市', 'driver')" class="p-1.5 text-primary hover:bg-gray-100 rounded transition-colors" title="查看司機">
-                            <i class="fa fa-car text-sm"></i>
-                        </button>
-                        <button onclick="event.stopPropagation(); goToAreaPage('高雄市', 'order')" class="p-1.5 text-primary hover:bg-gray-100 rounded transition-colors" title="查看訂單">
-                            <i class="fa fa-shopping-cart text-sm"></i>
-                        </button>
-                        <button onclick="event.stopPropagation(); goToAreaPage('高雄市', 'finance')" class="p-1.5 text-primary hover:bg-gray-100 rounded transition-colors" title="查看財務">
-                            <i class="fa fa-money text-sm"></i>
-                        </button>
-                    </div>
-                </div>
+            <div class="area-item">
+                <h3 class="font-medium text-text-dark text-lg">高雄市</h3>
             </div>
         </div>
     </div>
 
     <script>
-        // 全局變量
-        const AREA_DATA_KEY = 'areaStatistics'; // 區域數據存儲鍵名
-        const CURRENT_MANAGER_KEY = 'currentFleetManager'; // 當前管理員鍵名
-
-        // 1. 初始化頁面
+        // 僅保留基礎頁面初始化，移除所有數據加載/交互邏輯
         window.onload = () => {
-            loadSystemTitle();      // 加載系統標題
-            loadManagerInfo();      // 加載管理員信息
-            initMobileMenu();       // 初始化手機菜單
-            initLogout();           // 初始化退出登入
-            initRefreshButton();    // 初始化刷新按鈕
-            checkLoginStatus();     // 校驗登入狀態
+            // 初始化手機菜單（基礎顯示）
+            initMobileMenu();
+            // 初始化退出登入（基礎功能）
+            initLogout();
         };
 
-        // 2. 加載系統標題
-        function loadSystemTitle() {
-            const savedTitle = localStorage.getItem('systemTitle') || 'LINE多元化搭車管理員系統';
-            document.getElementById('systemTitle').textContent = savedTitle;
-        }
-
-        // 3. 加載當前管理員信息
-        function loadManagerInfo() {
-            const currentManager = JSON.parse(localStorage.getItem(CURRENT_MANAGER_KEY) || '{}');
-            if (currentManager.managerName) {
-                document.getElementById('managerName').textContent = currentManager.managerName;
-            }
-        }
-
-        // 4. 初始化手機端菜單
+        // 初始化手機端菜單（僅基礎顯示切換）
         function initMobileMenu() {
             const mobileMenuBtn = document.getElementById('mobileMenuBtn');
             const sidebar = document.getElementById('sidebar');
@@ -470,112 +226,15 @@
             });
         }
 
-        // 5. 初始化退出登入
+        // 初始化退出登入（基礎功能）
         function initLogout() {
             document.getElementById('logoutLink').addEventListener('click', function(e) {
                 e.preventDefault();
                 if (confirm('確定要退出登入嗎？')) {
-                    // 清除登入狀態
-                    localStorage.removeItem(CURRENT_MANAGER_KEY);
-                    // 跳轉到登入頁
                     window.location.href = this.href;
                 }
             });
         }
-
-        // 6. 初始化刷新按鈕
-        function initRefreshButton() {
-            const refreshBtn = document.getElementById('refreshBtn');
-            const loadingState = document.getElementById('loadingState');
-            const areaList = document.getElementById('areaList');
-
-            refreshBtn.addEventListener('click', async () => {
-                // 顯示加載狀態
-                loadingState.classList.remove('hidden');
-                areaList.classList.add('opacity-50');
-                
-                try {
-                    // 模擬API請求延遲
-                    await new Promise(resolve => setTimeout(resolve, 1500));
-                    
-                    // 更新區域數據（隨機模擬變化）
-                    updateAreaData();
-                    
-                    // 提示刷新成功
-                    alert('數據已成功刷新！');
-                } catch (error) {
-                    console.error('刷新數據失敗：', error);
-                    alert('刷新失敗，請稍後再試！');
-                } finally {
-                    // 隱藏加載狀態
-                    loadingState.classList.add('hidden');
-                    areaList.classList.remove('opacity-50');
-                }
-            });
-        }
-
-        // 7. 更新區域數據（模擬後端數據同步）
-        function updateAreaData() {
-            const areas = ['台北市', '新北市', '桃園市', '台中市', '台南市', '高雄市'];
-            const areaElements = document.querySelectorAll('.area-item');
-            
-            areaElements.forEach((el, index) => {
-                const areaName = areas[index];
-                // 隨機更新數據（模擬真實數據變化）
-                const drivers = Math.floor(Math.random() * 10) + parseInt(el.querySelector('.fa-car + span').textContent);
-                const orders = Math.floor(Math.random() * 20) + parseInt(el.querySelector('.fa-shopping-cart + span').textContent);
-                const income = Math.floor(Math.random() * 5000) + parseInt(el.querySelector('.fa-money + span').textContent.replace(/,/g, ''));
-                
-                // 更新DOM顯示
-                el.querySelector('.fa-car + span').textContent = drivers;
-                el.querySelector('.fa-shopping-cart + span').textContent = orders;
-                el.querySelector('.fa-money + span').textContent = income.toLocaleString();
-                
-                // 保存到本地存儲
-                const areaData = JSON.parse(localStorage.getItem(AREA_DATA_KEY) || '{}');
-                areaData[areaName] = { drivers, orders, income };
-                localStorage.setItem(AREA_DATA_KEY, JSON.stringify(areaData));
-            });
-        }
-
-        // 8. 區域頁面跳轉（增強版）
-        function goToAreaPage(areaName, type) {
-            // 保存當前選擇的區域
-            localStorage.setItem('currentArea', areaName);
-            
-            // 根據類型跳轉對應頁面
-            let targetPage = '';
-            switch(type) {
-                case 'driver':
-                    targetPage = 'admin-driver.html';
-                    break;
-                case 'order':
-                    targetPage = 'admin-order.html';
-                    break;
-                case 'finance':
-                    targetPage = 'admin-report.html'; // 對應財務管理頁
-                    break;
-                default:
-                    targetPage = 'admin-driver.html';
-            }
-            
-            // 跳轉並添加區域參數（便於目標頁面獲取）
-            window.location.href = `${targetPage}?area=${encodeURIComponent(areaName)}`;
-        }
-
-        // 9. 校驗登入狀態
-        function checkLoginStatus() {
-            const currentManager = JSON.parse(localStorage.getItem(CURRENT_MANAGER_KEY) || 'null');
-            if (!currentManager) {
-                // 未登入，跳轉到登入頁
-                window.location.href = '../managerindex.html';
-            }
-        }
-
-        // 10. 通知按鈕交互
-        document.getElementById('notificationBtn').addEventListener('click', () => {
-            alert('您有3條未讀通知：\n1. 台北市新增5名司機\n2. 高雄市訂單量異常增長\n3. 本月財務報表已生成');
-        });
     </script>
 </body>
 </html>
