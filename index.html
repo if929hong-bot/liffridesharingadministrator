@@ -24,7 +24,7 @@
   <style type="text/tailwindcss">
     @layer utilities {
       .input-field {
-        @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none transition-all;
+        @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none transition-all cursor-pointer;
       }
       .input-field-primary {
         @apply focus:ring-2 focus:ring-primary/50 focus:border-primary;
@@ -32,27 +32,44 @@
       .btn-primary {
         @apply bg-primary text-white py-3 px-6 rounded-lg font-medium transition-all duration-300 hover:bg-primary/90 active:scale-95 shadow-md w-full;
       }
-      .map-container {
-        @apply w-full h-48 rounded-lg border border-gray-200 mt-2;
+      /* 地圖彈窗樣式 */
+      .map-modal {
+        @apply fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4;
+      }
+      .map-modal-content {
+        @apply bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col;
+      }
+      .map-modal-header {
+        @apply px-6 py-4 border-b border-gray-200 flex justify-between items-center;
+      }
+      .map-modal-body {
+        @apply flex-1 overflow-hidden;
+      }
+      .map-modal-footer {
+        @apply px-6 py-4 border-t border-gray-200 flex justify-end gap-3;
+      }
+      .map-inner-container {
+        @apply w-full h-[400px] lg:h-[500px];
+      }
+      .location-btn {
+        @apply bg-primary/90 text-white py-2 px-4 rounded-lg hover:bg-primary transition-colors flex items-center gap-2;
       }
     }
   </style>
 </head>
 <body class="bg-gray-50 font-sans min-h-screen">
-  <!-- 頁頭導航（標準HTML標籤，無語法錯誤） -->
+  <!-- 頁頭導航 -->
   <header class="w-full max-w-6xl mx-auto px-4 py-6">
     <div class="flex items-center justify-between flex-wrap">
       <div class="flex items-center">
-        <!-- 核心修正：使用標準<i>標籤，無多餘/缺失符號 -->
         <i class="fa fa-car text-primary text-2xl mr-2"></i>
         <h1 class="text-xl font-bold">搭車自由</h1>
       </div>
-      <!-- 刪除右上角的角色按鈕 -->
     </div>
   </header>
 
   <main class="w-full max-w-6xl mx-auto px-4 pb-12">
-    <!-- 只保留乘客叫車區塊 -->
+    <!-- 乘客叫車區塊 -->
     <section id="passenger-section" class="max-w-md mx-auto">
       <div class="bg-white rounded-xl shadow-md p-8 text-center">
         <h2 class="text-2xl font-bold text-primary mb-2">乘客叫車</h2>
@@ -68,18 +85,16 @@
             <input type="tel" class="input-field input-field-primary" placeholder="輸入您的聯絡電話" required>
           </div>
           
-          <!-- 上車地點 -->
+          <!-- 上車地點（點擊輸入框彈出地圖） -->
           <div class="text-left">
             <label class="block text-sm font-medium text-gray-700 mb-1">上車地點</label>
-            <input type="text" class="input-field input-field-primary" id="pickup-location" placeholder="點擊地圖選擇位置" required>
-            <div id="pickup-map" class="map-container"></div>
+            <input type="text" class="input-field input-field-primary" id="pickup-location" placeholder="點擊選擇上車位置" required readonly>
           </div>
           
-          <!-- 下車地點 -->
+          <!-- 下車地點（點擊輸入框彈出地圖） -->
           <div class="text-left">
             <label class="block text-sm font-medium text-gray-700 mb-1">下車地點</label>
-            <input type="text" class="input-field input-field-primary" id="dropoff-location" placeholder="點擊地圖選擇位置" required>
-            <div id="dropoff-map" class="map-container"></div>
+            <input type="text" class="input-field input-field-primary" id="dropoff-location" placeholder="點擊選擇下車位置" required readonly>
           </div>
           
           <div class="text-left">
@@ -109,43 +124,188 @@
     </div>
   </footer>
 
+  <!-- 地圖選擇彈窗 -->
+  <div id="map-modal" class="map-modal hidden">
+    <div class="map-modal-content">
+      <div class="map-modal-header">
+        <h3 class="font-medium text-lg" id="modal-title">選擇上車位置</h3>
+        <button id="close-modal" class="text-gray-500 hover:text-gray-700">
+          <i class="fa fa-times text-xl"></i>
+        </button>
+      </div>
+      <div class="map-modal-body">
+        <div class="px-6 py-3">
+          <button id="locate-me" class="location-btn">
+            <i class="fa fa-location-arrow"></i> 定位我的當前位置
+          </button>
+        </div>
+        <div id="modal-map" class="map-inner-container"></div>
+      </div>
+      <div class="map-modal-footer">
+        <button id="confirm-location" class="btn-primary w-auto px-6 py-2">
+          確認選擇
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const APP = {
       mapboxToken: 'pk.eyJ1IjoiaWY5Mjlob25nIiwiYSI6ImNtamQxczU2cjAweDMzZnM1Z3BvY2JkejgifQ.q-GNcs0rqWrZ3HtjhmysEQ',
+      currentTarget: null, // 當前選擇的是上車/下車地點
+      modalMap: null,      // 彈窗地圖實例
+      taichungCenter: [120.6704, 24.1319], // 台中經緯度
+      
       init: function() {
-        this.initPassengerMap();
+        this.initModalMap();
+        this.initInputHandlers();
+        this.initModalHandlers();
         this.initFormHandlers();
       },
       
-      initPassengerMap: function() {
+      // 初始化彈窗地圖
+      initModalMap: function() {
         if (!mapboxgl) return;
         
         mapboxgl.accessToken = this.mapboxToken;
-        const taichungCenter = [120.6704, 24.1319];
-
-        // 上車地圖
-        const pickupMap = new mapboxgl.Map({
-          container: 'pickup-map',
+        
+        // 創建彈窗地圖實例
+        this.modalMap = new mapboxgl.Map({
+          container: 'modal-map',
           style: 'mapbox://styles/mapbox/streets-v12',
-          center: taichungCenter,
+          center: this.taichungCenter,
           zoom: 14,
           attributionControl: false
         });
-        pickupMap.addControl(new mapboxgl.AttributionControl({ compact: true }));
-        pickupMap.on('click', (e) => this.getAddressFromLngLat(e.lngLat.lng, e.lngLat.lat, 'pickup-location'));
-
-        // 下車地圖
-        const dropoffMap = new mapboxgl.Map({
-          container: 'dropoff-map',
-          style: 'mapbox://styles/mapbox/streets-v12',
-          center: taichungCenter,
-          zoom: 14,
-          attributionControl: false
+        
+        // 添加地圖控制元件
+        this.modalMap.addControl(new mapboxgl.AttributionControl({ compact: true }));
+        this.modalMap.addControl(new mapboxgl.NavigationControl());
+        
+        // 地圖點擊事件 - 選擇位置
+        this.modalMap.on('click', (e) => {
+          this.selectedLngLat = e.lngLat; // 保存選擇的經緯度
         });
-        dropoffMap.addControl(new mapboxgl.AttributionControl({ compact: true }));
-        dropoffMap.on('click', (e) => this.getAddressFromLngLat(e.lngLat.lng, e.lngLat.lat, 'dropoff-location'));
       },
       
+      // 初始化輸入框點擊事件
+      initInputHandlers: function() {
+        // 上車地點輸入框
+        document.getElementById('pickup-location').addEventListener('click', () => {
+          this.currentTarget = 'pickup-location';
+          this.openModal('選擇上車位置');
+        });
+        
+        // 下車地點輸入框
+        document.getElementById('dropoff-location').addEventListener('click', () => {
+          this.currentTarget = 'dropoff-location';
+          this.openModal('選擇下車位置');
+        });
+      },
+      
+      // 初始化彈窗控制事件
+      initModalHandlers: function() {
+        const modal = document.getElementById('map-modal');
+        
+        // 關閉彈窗
+        document.getElementById('close-modal').addEventListener('click', () => {
+          modal.classList.add('hidden');
+        });
+        
+        // 點擊彈窗外層關閉
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) {
+            modal.classList.add('hidden');
+          }
+        });
+        
+        // 定位當前位置
+        document.getElementById('locate-me').addEventListener('click', () => {
+          this.locateCurrentPosition();
+        });
+        
+        // 確認選擇位置
+        document.getElementById('confirm-location').addEventListener('click', () => {
+          if (this.selectedLngLat && this.currentTarget) {
+            // 解析地址並回填
+            this.getAddressFromLngLat(
+              this.selectedLngLat.lng, 
+              this.selectedLngLat.lat, 
+              this.currentTarget
+            );
+            // 關閉彈窗
+            modal.classList.add('hidden');
+          } else {
+            alert('請先在地圖上點擊選擇位置');
+          }
+        });
+      },
+      
+      // 打開地圖彈窗
+      openModal: function(title) {
+        document.getElementById('modal-title').textContent = title;
+        document.getElementById('map-modal').classList.remove('hidden');
+        
+        // 重置地圖中心點
+        this.modalMap.jumpTo({
+          center: this.taichungCenter,
+          zoom: 14
+        });
+        
+        // 刷新地圖大小（解決彈窗打開時地圖空白問題）
+        setTimeout(() => {
+          this.modalMap.resize();
+        }, 100);
+        
+        // 重置選擇的位置
+        this.selectedLngLat = null;
+      },
+      
+      // 定位當前位置
+      locateCurrentPosition: function() {
+        if (!navigator.geolocation) {
+          alert('您的瀏覽器不支援定位功能');
+          return;
+        }
+        
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const lng = position.coords.longitude;
+            const lat = position.coords.latitude;
+            
+            // 移動地圖到當前位置
+            this.modalMap.jumpTo({
+              center: [lng, lat],
+              zoom: 17
+            });
+            
+            // 保存定位的位置
+            this.selectedLngLat = { lng, lat };
+            
+            // 添加定位標記
+            new mapboxgl.Marker({ color: '#00A86B' })
+              .setLngLat([lng, lat])
+              .addTo(this.modalMap);
+          },
+          (error) => {
+            switch(error.code) {
+              case error.PERMISSION_DENIED:
+                alert('您拒絕了定位權限，請開啟後重新嘗試');
+                break;
+              case error.POSITION_UNAVAILABLE:
+                alert('無法獲取您的位置信息');
+                break;
+              case error.TIMEOUT:
+                alert('定位請求超時，請重新嘗試');
+                break;
+              default:
+                alert('定位失敗，請手動選擇位置');
+            }
+          }
+        );
+      },
+      
+      // 經緯度轉換為地址
       getAddressFromLngLat: function(lng, lat, inputId) {
         fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${this.mapboxToken}&language=zh-TW`)
           .then(res => res.json())
@@ -159,8 +319,8 @@
           });
       },
       
+      // 表單提交處理
       initFormHandlers: function() {
-        // 乘客叫車表單提交
         const passengerForm = document.getElementById('passenger-order-form');
         if (passengerForm) {
           passengerForm.addEventListener('submit', (e) => {
