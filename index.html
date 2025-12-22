@@ -126,7 +126,7 @@
         <h2 class="text-2xl font-bold text-primary mb-2">司機入口</h2>
         <div class="flex justify-end mb-6">
           <a href="#" class="text-gray-500 hover:text-primary transition-colors mr-4">登錄</a>
-          <a href="driver/driver-register.html" class="text-primary font-medium">註冊</a>
+          <a href="driver-register.html" class="text-primary font-medium">註冊</a>
         </div>
         
         <form id="driver-login-form" class="space-y-4">
@@ -255,24 +255,26 @@
           superAdmin: document.getElementById('nav-super-admin')
         };
 
+        // 初始化：所有區塊隱藏，所有導航還原
         Object.values(sections).forEach(section => section.classList.add('section-hidden'));
         Object.values(navButtons).forEach(btn => {
-          btn.classList.remove('text-primary', 'text-super', 'font-medium', 'bg-gray-100', 'px-3', 'py-1', 'rounded');
+          btn.classList.remove('text-primary', 'text-super', 'font-medium', 'bg-gray-100');
           btn.classList.add('text-gray-600');
         });
 
+        // 根據登錄狀態顯示對應區塊
         if (loggedInRole === 'driver') {
           sections.driver.classList.remove('section-hidden');
-          navButtons.driver.classList.add('text-primary', 'font-medium', 'bg-gray-100', 'px-3', 'py-1', 'rounded');
+          navButtons.driver.classList.add('text-primary', 'font-medium', 'bg-gray-100');
         } else if (loggedInRole === 'fleetAdmin') {
           sections.fleetAdmin.classList.remove('section-hidden');
-          navButtons.fleetAdmin.classList.add('text-primary', 'font-medium', 'bg-gray-100', 'px-3', 'py-1', 'rounded');
+          navButtons.fleetAdmin.classList.add('text-primary', 'font-medium', 'bg-gray-100');
         } else if (loggedInRole === 'superAdmin') {
           sections.superAdmin.classList.remove('section-hidden');
-          navButtons.superAdmin.classList.add('text-super', 'font-medium', 'bg-gray-100', 'px-3', 'py-1', 'rounded');
+          navButtons.superAdmin.classList.add('text-super', 'font-medium', 'bg-gray-100');
         } else {
           sections.passenger.classList.remove('section-hidden');
-          navButtons.passenger.classList.add('text-primary', 'font-medium', 'bg-gray-100', 'px-3', 'py-1', 'rounded');
+          navButtons.passenger.classList.add('text-primary', 'font-medium', 'bg-gray-100');
         }
       },
 
@@ -301,6 +303,7 @@
           superAdmin: document.getElementById('nav-super-admin')
         };
 
+        // 重置所有區塊和導航的狀態
         const resetSections = () => {
           Object.values(sections).forEach(section => section.classList.add('section-hidden'));
           Object.values(navButtons).forEach(btn => {
@@ -309,31 +312,36 @@
           });
         };
 
+        // 乘客導航
         navButtons.passenger.addEventListener('click', () => {
-          localStorage.removeItem('loggedInRole');
+          localStorage.removeItem('loggedInRole'); // 清除登錄狀態
           resetSections();
           sections.passenger.classList.remove('section-hidden');
           navButtons.passenger.classList.add('text-primary', 'font-medium', 'bg-gray-100');
         });
 
+        // 司機導航
         navButtons.driver.addEventListener('click', () => {
           resetSections();
           sections.driver.classList.remove('section-hidden');
           navButtons.driver.classList.add('text-primary', 'font-medium', 'bg-gray-100');
         });
 
+        // 車隊管理員導航
         navButtons.fleetAdmin.addEventListener('click', () => {
           resetSections();
           sections.fleetAdmin.classList.remove('section-hidden');
           navButtons.fleetAdmin.classList.add('text-primary', 'font-medium', 'bg-gray-100');
         });
 
+        // 超級管理員導航
         navButtons.superAdmin.addEventListener('click', () => {
           resetSections();
           sections.superAdmin.classList.remove('section-hidden');
           navButtons.superAdmin.classList.add('text-super', 'font-medium', 'bg-gray-100');
         });
 
+        // 司機區塊內的「切換到車隊管理員」按鈕
         document.getElementById('switch-to-fleet')?.addEventListener('click', () => {
           resetSections();
           sections.fleetAdmin.classList.remove('section-hidden');
@@ -347,6 +355,7 @@
         mapboxgl.accessToken = this.mapboxToken;
         const taichungCenter = [120.6704, 24.1319];
 
+        // 上車地圖
         const pickupMap = new mapboxgl.Map({
           container: 'pickup-map',
           style: 'mapbox://styles/mapbox/streets-v12',
@@ -357,6 +366,7 @@
         pickupMap.addControl(new mapboxgl.AttributionControl({ compact: true }));
         pickupMap.on('click', (e) => this.getAddressFromLngLat(e.lngLat.lng, e.lngLat.lat, 'pickup-location'));
 
+        // 下車地圖
         const dropoffMap = new mapboxgl.Map({
           container: 'dropoff-map',
           style: 'mapbox://styles/mapbox/streets-v12',
@@ -382,16 +392,16 @@
       },
       
       initFormHandlers: function() {
-        // 乘客叫車表單
+        // 1. 乘客叫車表單提交
         const passengerForm = document.getElementById('passenger-order-form');
         if (passengerForm) {
           passengerForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            window.location.href = 'passenger/passenger-order.html';
+            window.location.href = 'passenger-order.html'; // 移除passenger/前綴
           });
         }
 
-        // 司機登錄表單（跳轉到driver-order.html）
+        // 2. 司機登錄表單提交
         const driverLoginForm = document.getElementById('driver-login-form');
         if (driverLoginForm) {
           driverLoginForm.addEventListener('submit', (e) => {
@@ -405,17 +415,16 @@
               return;
             }
             
-            // 儲存登錄狀態
+            // 儲存司機登錄狀態
             localStorage.setItem('loggedInRole', 'driver');
             localStorage.setItem('driverPhone', phone);
             
-            // 跳轉到driver-order.html
             alert(`司機 ${phone} 登錄成功！`);
-            window.location.href = 'driver/driver-order.html';
+            window.location.href = 'driver-order.html'; // 移除driver/前綴
           });
         }
 
-        // 車隊管理員登錄表單
+        // 3. 車隊管理員登錄表單提交
         const fleetForm = document.getElementById('fleet-admin-login-form');
         if (fleetForm) {
           fleetForm.addEventListener('submit', (e) => {
@@ -431,7 +440,7 @@
             if (matchedAdmin) {
               localStorage.setItem('loggedInRole', 'fleetAdmin');
               localStorage.setItem('currentFleetAdmin', JSON.stringify(matchedAdmin));
-              window.location.href = 'admin/admin-dashboard.html';
+              window.location.href = 'admin-dashboard.html'; // 移除admin/前綴
             } else {
               alert('帳號未審核或密碼錯誤！');
               document.getElementById('fleet-password').value = '';
@@ -439,7 +448,7 @@
           });
         }
 
-        // 超級管理員登錄表單
+        // 4. 超級管理員登錄表單提交
         const superForm = document.getElementById('super-admin-login-form');
         if (superForm) {
           superForm.addEventListener('submit', (e) => {
@@ -463,6 +472,7 @@
       }
     };
 
+    // 頁面加載完成後初始化
     document.addEventListener('DOMContentLoaded', () => {
       APP.init();
     });

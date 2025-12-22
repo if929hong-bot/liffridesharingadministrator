@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理員後台 - LINE多元化搭車</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#00C300',
+                        secondary: '#00A600',
+                        accent: '#008700',
+                        'text-dark': '#333333',
+                        'text-light': '#666666',
+                        'card-bg': '#F8F9FA'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 側邊欄固定 */
+        .sidebar {
+            height: calc(100vh - 60px);
+            position: sticky;
+            top: 60px;
+        }
+        /* 菜單活躍狀態 */
+        .menu-active {
+            background-color: #00C300 !important;
+            color: white !important;
+        }
+        /* 未登錄提示遮罩 */
+        .unauth-overlay {
+            position: fixed;
+            inset: 0;
+            background: white;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        /* 繳費表單樣式 */
+        .payment-form input:focus,
+        .payment-form select:focus,
+        .payment-form textarea:focus {
+            outline: 2px solid #00C300;
+            outline-offset: 1px;
+        }
+        .bank-info-card {
+            transition: all 0.2s ease;
+        }
+        .bank-info-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        /* 費用設定卡片樣式 */
+        .fare-setting-card {
+            border-left: 4px solid #00C300;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- 未登錄提示遮罩（未登錄時顯示） -->
+    <div id="unauthOverlay" class="unauth-overlay hidden">
+        <div class="text-center max-w-md">
+            <i class="fa fa-exclamation-circle text-4xl text-red-500 mb-4"></i>
+            <h2 class="text-2xl font-bold text-text-dark mb-2">未登錄或登錄已過期</h2>
+            <p class="text-text-light mb-6">請先在首頁完成車隊管理員登錄</p>
+            <a href="../index.html" class="inline-block py-3 px-6 bg-primary text-white rounded-lg font-medium hover:bg-secondary transition-all">
+                返回首頁登錄
+            </a>
+        </div>
+    </div>
+
+    <!-- 頁首 -->
+    <header class="bg-white shadow-sm py-3 px-4 fixed top-0 w-full z-10">
+        <div class="flex justify-between items-center">
+            <h1 class="text-xl font-bold text-text-dark" id="systemTitle">LINE多元化搭車管理員後台</h1>
+            <div class="flex items-center space-x-4">
+                <button type="button" class="text-text-light hover:text-primary">
+                    <i class="fa fa-bell text-lg"></i>
+                </button>
+                <div class="flex items-center space-x-2">
+                    <img src="https://via.placeholder.com/32" alt="管理員頭像" class="w-8 h-8 rounded-full">
+                    <span class="text-text-dark" id="currentManagerName">王小明</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主容器 -->
+    <div class="pt-16 flex">
+        <!-- 側邊菜單（更新財務/報表連結） -->
+        <aside class="sidebar w-56 bg-white shadow-sm p-4">
+            <nav class="space-y-1">
+                <a href="admin-dashboard.html" class="block py-2 px-3 rounded-md menu-active font-medium text-white">
+                    <i class="fa fa-home mr-2"></i>首頁
+                </a>
+                <a href="admin-area.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
+                    <i class="fa fa-map-marker mr-2"></i>區域管理
+                </a>
+                <a href="admin-driver.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
+                    <i class="fa fa-car mr-2"></i>司機管理
+                </a>
+                <a href="admin-order.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
+                    <i class="fa fa-list-alt mr-2"></i>訂單管理
+                </a>
+                <!-- 修正：財務管理連結為同目錄admin-finance.html -->
+                <a href="admin-finance.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
+                    <i class="fa fa-money mr-2"></i>財務管理
+                </a>
+                <!-- 修正：報表統計連結為同目錄admin-report.html -->
+                <a href="admin-report.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
+                    <i class="fa fa-bar-chart mr-2"></i>報表統計
+                </a>
+                <a href="../index.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all mt-4" id="logoutLink">
+                    <i class="fa fa-sign-out mr-2"></i>退出登入
+                </a>
+            </nav>
+        </aside>
+
+        <!-- 主內容區 -->
+        <main class="flex-1 p-6 max-w-7xl mx-auto">
+            <!-- 租金繳費區域（同步administrator.html設定） -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                <!-- 左側：租金價格選擇 + 繳費表單 -->
+                <div class="lg:col-span-2 bg-white rounded-lg p-5 shadow-sm border border-gray-100 payment-form">
+                    <h2 class="text-lg font-bold text-text-dark mb-4">車隊租金繳費</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- 租金套餐選擇 -->
+                        <div>
+                            <label class="block text-sm font-medium text-text-dark mb-1">繳費套餐</label>
+                            <select id="rentPackage" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none">
+                                <option value="month">月繳 - 10000元/月</option>
+                                <option value="quarter">季繳 - 28500元/3個月 (9500元/月)</option>
+                                <option value="halfyear">半年繳 - 54000元/6個月 (9000元/月)</option>
+                                <option value="year">年繳 - 102000元/12個月 (8500元/月)</option>
+                            </select>
+                        </div>
+                        <!-- 應繳金額（自動計算） -->
+                        <div>
+                            <label class="block text-sm font-medium text-text-dark mb-1">應繳金額</label>
+                            <input type="text" id="rentAmount" value="10000元" readonly class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none">
+                        </div>
+                        <!-- 匯款帳號後五碼 -->
+                        <div>
+                            <label class="block text-sm font-medium text-text-dark mb-1">匯款帳號後五碼</label>
+                            <input type="text" id="bankLast5" placeholder="請輸入匯款帳號後五碼" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none">
+                        </div>
+                        <!-- 繳費截圖上傳 -->
+                        <div>
+                            <label class="block text-sm font-medium text-text-dark mb-1">繳費截圖上傳</label>
+                            <input type="file" id="paymentScreenshot" accept="image/*" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none">
+                        </div>
+                    </div>
+                    <button type="button" class="mt-4 py-2 px-6 bg-primary text-white rounded-lg font-medium hover:bg-secondary transition-all">
+                        提交繳費資訊
+                    </button>
+                </div>
+
+                <!-- 右側：銀行帳戶資訊（同步administrator.html設定） -->
+                <div class="bank-info-card bg-white rounded-lg p-5 shadow-sm border border-gray-100">
+                    <h2 class="text-lg font-bold text-text-dark mb-4">匯款帳戶資訊</h2>
+                    <div class="space-y-3">
+                        <div class="flex items-start">
+                            <i class="fa fa-bank text-primary mt-1 mr-3"></i>
+                            <div>
+                                <p class="text-sm text-text-light">銀行名稱</p>
+                                <p class="text-text-dark font-medium" id="bankName">中國信託 - 營業部</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fa fa-credit-card text-primary mt-1 mr-3"></i>
+                            <div>
+                                <p class="text-sm text-text-light">帳戶名稱</p>
+                                <p class="text-text-dark font-medium" id="accountName">洪語涵</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fa fa-hashtag text-primary mt-1 mr-3"></i>
+                            <div>
+                                <p class="text-sm text-text-light">銀行帳號</p>
+                                <p class="text-text-dark font-medium" id="bankAccount">901566141052</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fa fa-mobile text-primary mt-1 mr-3"></i>
+                            <div>
+                                <p class="text-sm text-text-light">聯繫電話</p>
+                                <p class="text-text-dark font-medium" id="contactPhone">0975-521-219</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4 p-3 bg-gray-50 rounded-lg text-sm text-text-light">
+                        <i class="fa fa-info-circle text-primary mr-2"></i>
+                        繳費後請務必上傳截圖並填寫匯款帳號後五碼，以便核對確認
+                    </div>
+                </div>
+            </div>
+
+            <!-- 新增：搭車費用設定欄位 -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- 日間費用設定 -->
+                <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-100 fare-setting-card">
+                    <h2 class="text-lg font-bold text-text-dark mb-4">日間費用設定 (6:00-22:00)</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-text-dark mb-1">起步價格 (元)</label>
+                            <input type="number" id="dayStartPrice" placeholder="請輸入起步價" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" value="80">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-text-dark mb-1">距離費用 (元/km)</label>
+                            <input type="number" id="dayDistancePrice" placeholder="請輸入每公里價" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" value="20">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-text-dark mb-1">時間費用 (元/min)</label>
+                            <input type="number" id="dayTimePrice" placeholder="請輸入每分鐘價" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" value="5">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-text-dark mb-1">固定回給 (元)</label>
+                            <input type="number" id="dayFixedReturn" placeholder="請輸入固定回給" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" value="10">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-text-dark mb-1">百回金額 (元)</label>
+                            <input type="number" id="dayHundredReturn" placeholder="請輸入百回金額" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" value="500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 夜間費用設定 -->
+                <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-100 fare-setting-card">
+                    <h2 class="text-lg font-bold text-text-dark mb-4">夜間費用設定 (22:01-5:59)</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-text-dark mb-1">起步價格 (元)</label>
+                            <input type="number" id="nightStartPrice" placeholder="請輸入起步價" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" value="100">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-text-dark mb-1">距離費用 (元/km)</label>
+                            <input type="number" id="nightDistancePrice" placeholder="請輸入每公里價" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" value="25">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-text-dark mb-1">時間費用 (元/min)</label>
+                            <input type="number" id="nightTimePrice" placeholder="請輸入每分鐘價" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" value="8">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-text-dark mb-1">固定回給 (元)</label>
+                            <input type="number" id="nightFixedReturn" placeholder="請輸入固定回給" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" value="15">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-text-dark mb-1">百回金額 (元)</label>
+                            <input type="number" id="nightHundredReturn" placeholder="請輸入百回金額" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none" value="800">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- 費用設定保存按鈕 -->
+            <div class="mb-6">
+                <button type="button" id="saveFareSettings" class="py-2 px-6 bg-primary text-white rounded-lg font-medium hover:bg-secondary transition-all">
+                    保存搭車費用設定
+                </button>
+            </div>
+
+            <!-- 原有：數據統計卡片 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-3">
+                        <p class="text-text-light text-sm">線上司機人數</p>
+                        <i class="fa fa-car text-primary text-xl"></i>
+                    </div>
+                    <p class="text-2xl font-bold text-text-dark" id="onlineDriverCount">加載中...</p>
+                </div>
+                <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-3">
+                        <p class="text-text-light text-sm">今日訂單</p>
+                        <i class="fa fa-shopping-cart text-primary text-xl"></i>
+                    </div>
+                    <p class="text-2xl font-bold text-text-dark" id="todayOrderCount">加載中...</p>
+                </div>
+                <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-3">
+                        <p class="text-text-light text-sm">今日收入</p>
+                        <i class="fa fa-yen text-primary text-xl"></i>
+                    </div>
+                    <p class="text-2xl font-bold text-text-dark" id="todayIncome">加載中...</p>
+                </div>
+            </div>
+
+            <!-- 原有：圖表區域 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <!-- 趨勢圖 -->
+                <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-4">
+                        <p class="font-medium text-text-dark">訂單趨勢（今日）</p>
+                        <select id="trendTimeRange" name="trendTimeRange" class="text-sm border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary">
+                            <option value="today">今日</option>
+                            <option value="week">本周</option>
+                            <option value="month">本月</option>
+                        </select>
+                    </div>
+                    <div class="h-60">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- 收入圖 -->
+                <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-4">
+                        <p class="font-medium text-text-dark">收入統計（本周）</p>
+                        <select id="incomeTimeRange" name="incomeTimeRange" class="text-sm border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-primary">
+                            <option value="week">本周</option>
+                            <option value="month">本月</option>
+                            <option value="quarter">本季度</option>
+                        </select>
+                    </div>
+                    <div class="h-60">
+                        <canvas id="incomeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 原有：訂單列表 -->
+            <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-100">
+                <div class="flex justify-between items-center mb-5">
+                    <p class="font-medium text-text-dark">今日訂單列表</p>
+                    <div class="flex items-center space-x-3">
+                        <input type="text" id="orderSearch" name="orderSearch" placeholder="搜索訂單號" class="text-sm border border-gray-200 rounded px-3 py-2 w-44 focus:outline-none focus:ring-1 focus:ring-primary">
+                        <a href="admin-order.html" class="text-primary text-sm hover:underline">查看全部</a>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr class="border-b border-gray-200 bg-gray-50">
+                                <th class="text-left py-3 px-4 text-sm text-text-light">訂單編號</th>
+                                <th class="text-left py-3 px-4 text-sm text-text-light">司機</th>
+                                <th class="text-left py-3 px-4 text-sm text-text-light">乘客</th>
+                                <th class="text-left py-3 px-4 text-sm text-text-light">金額</th>
+                                <th class="text-left py-3 px-4 text-sm text-text-light">狀態</th>
+                                <th class="text-left py-3 px-4 text-sm text-text-light">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orderListBody">
+                            <tr>
+                                <td colspan="6" class="py-6 text-center text-text-light">訂單數據加載中...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="flex justify-between items-center mt-5 text-sm" id="orderPagination" style="display: none;">
+                    <p class="text-text-light">顯示 1-4 條，共 <span id="totalOrderCount">0</span> 條</p>
+                    <div class="flex space-x-2">
+                        <button type="button" class="px-3 py-1 border border-gray-200 rounded text-text-light disabled:opacity-50" disabled>上一頁</button>
+                        <button type="button" class="px-3 py-1 border border-primary bg-primary text-white rounded">1</button>
+                        <button type="button" class="px-3 py-1 border border-gray-200 rounded text-text-dark hover:bg-gray-50">2</button>
+                        <button type="button" class="px-3 py-1 border border-gray-200 rounded text-text-dark hover:bg-gray-50">3</button>
+                        <button type="button" class="px-3 py-1 border border-gray-200 rounded text-text-dark hover:bg-gray-50">下一頁</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // 頁面加載時檢查登錄狀態
+        window.addEventListener('load', function() {
+            // 讀取 index.html 登錄時存儲的車隊管理員信息
+            const currentFleetAdmin = JSON.parse(localStorage.getItem('currentFleetAdmin'));
+            const isLoggedIn = localStorage.getItem('loggedInRole') === 'fleetAdmin';
+
+            // 未登錄/信息缺失 → 顯示未登錄提示
+            if (!isLoggedIn || !currentFleetAdmin) {
+                document.getElementById('unauthOverlay').classList.remove('hidden');
+                return;
+            }
+
+            // 已登錄 → 加載管理員信息 + 真實數據
+            loadFleetAdminInfo(currentFleetAdmin);
+            loadRealData(); // 加載真實數據
+            
+            // 初始化租金套餐金額計算
+            initRentPackageCalculator();
+
+            // 加載已保存的搭車費用設定
+            loadFareSettings();
+
+            // 加載銀行帳戶資訊（同步administrator.html）
+            loadBankAccountInfo();
+        });
+
+        // 新增：加載銀行帳戶資訊（同步administrator.html）
+        function loadBankAccountInfo() {
+            // 讀取localStorage中保存的銀行帳戶資訊
+            const savedBankInfo = JSON.parse(localStorage.getItem('bankAccountInfo')) || {
+                bankName: '中國信託 - 營業部',
+                accountName: '洪語涵',
+                bankAccount: '901566141052',
+                contactPhone: '0975-521-219'
+            };
+
+            // 更新頁面顯示
+            document.getElementById('bankName').textContent = savedBankInfo.bankName;
+            document.getElementById('accountName').textContent = savedBankInfo.accountName;
+            document.getElementById('bankAccount').textContent = savedBankInfo.bankAccount;
+            document.getElementById('contactPhone').textContent = savedBankInfo.contactPhone;
+        }
+
+        // 新增：加載搭車費用設定
+        function loadFareSettings() {
+            const savedFares = JSON.parse(localStorage.getItem('rideFareSettings')) || {
+                day: {
+                    startPrice: 80,
+                    distancePrice: 20,
+                    timePrice: 5,
+                    fixedReturn: 10,
+                    hundredReturn: 500
+                },
+                night: {
+                    startPrice: 100,
+                    distancePrice: 25,
+                    timePrice: 8,
+                    fixedReturn: 15,
+                    hundredReturn: 800
+                }
+            };
+
+            // 填充日間費用
+            document.getElementById('dayStartPrice').value = savedFares.day.startPrice;
+            document.getElementById('dayDistancePrice').value = savedFares.day.distancePrice;
+            document.getElementById('dayTimePrice').value = savedFares.day.timePrice;
+            document.getElementById('dayFixedReturn').value = savedFares.day.fixedReturn;
+            document.getElementById('dayHundredReturn').value = savedFares.day.hundredReturn;
+
+            // 填充夜間費用
+            document.getElementById('nightStartPrice').value = savedFares.night.startPrice;
+            document.getElementById('nightDistancePrice').value = savedFares.night.distancePrice;
+            document.getElementById('nightTimePrice').value = savedFares.night.timePrice;
+            document.getElementById('nightFixedReturn').value = savedFares.night.fixedReturn;
+            document.getElementById('nightHundredReturn').value = savedFares.night.hundredReturn;
+        }
+
+        // 新增：保存搭車費用設定
+        document.getElementById('saveFareSettings').addEventListener('click', function() {
+            const fareSettings = {
+                day: {
+                    startPrice: Number(document.getElementById('dayStartPrice').value),
+                    distancePrice: Number(document.getElementById('dayDistancePrice').value),
+                    timePrice: Number(document.getElementById('dayTimePrice').value),
+                    fixedReturn: Number(document.getElementById('dayFixedReturn').value),
+                    hundredReturn: Number(document.getElementById('dayHundredReturn').value)
+                },
+                night: {
+                    startPrice: Number(document.getElementById('nightStartPrice').value),
+                    distancePrice: Number(document.getElementById('nightDistancePrice').value),
+                    timePrice: Number(document.getElementById('nightTimePrice').value),
+                    fixedReturn: Number(document.getElementById('nightFixedReturn').value),
+                    hundredReturn: Number(document.getElementById('nightHundredReturn').value)
+                }
+            };
+
+            // 保存到localStorage，供司機端頁面使用
+            localStorage.setItem('rideFareSettings', JSON.stringify(fareSettings));
+            alert('搭車費用設定已保存！司機端頁面將自動同步更新');
+        });
+
+        // 新增：租金套餐金額自動計算
+        function initRentPackageCalculator() {
+            const packageSelect = document.getElementById('rentPackage');
+            const amountInput = document.getElementById('rentAmount');
+            
+            // 套餐對應金額
+            const packageAmounts = {
+                month: '10000元',
+                quarter: '28500元',
+                halfyear: '54000元',
+                year: '102000元'
+            };
+            
+            // 初始值
+            amountInput.value = packageAmounts[packageSelect.value];
+            
+            // 選擇變更時更新金額
+            packageSelect.addEventListener('change', function() {
+                amountInput.value = packageAmounts[this.value];
+            });
+        }
+
+        // 加載車隊管理員信息到頁面
+        function loadFleetAdminInfo(adminInfo) {
+            document.getElementById('currentManagerName').textContent = adminInfo.name || '車隊管理員';
+            document.getElementById('systemTitle').textContent = `${adminInfo.teamName || 'LINE多元化搭車'}管理員後台`;
+        }
+
+        // 加載真實數據（從localStorage讀取對應數據）
+        function loadRealData() {
+            // 1. 加載統計數據
+            const statsData = JSON.parse(localStorage.getItem('fleetStats')) || {
+                onlineDriver: 0,
+                todayOrder: 0,
+                todayIncome: 0
+            };
+            document.getElementById('onlineDriverCount').textContent = `${statsData.onlineDriver || 0}人`;
+            document.getElementById('todayOrderCount').textContent = `${statsData.todayOrder || 0}單`;
+            document.getElementById('todayIncome').textContent = `${(statsData.todayIncome || 0).toLocaleString()}元`;
+
+            // 2. 加載訂單數據
+            const orderData = JSON.parse(localStorage.getItem('fleetOrders')) || [];
+            renderOrderList(orderData);
+
+            // 3. 初始化圖表（基於真實數據）
+            initChartsWithRealData();
+        }
+
+        // 渲染訂單列表
+        function renderOrderList(orders) {
+            const tbody = document.getElementById('orderListBody');
+            const pagination = document.getElementById('orderPagination');
+            const totalCount = document.getElementById('totalOrderCount');
+
+            if (orders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-text-light">今日無訂單</td></tr>';
+                pagination.style.display = 'none';
+                return;
+            }
+
+            // 渲染訂單列表（取前4條）
+            tbody.innerHTML = '';
+            const displayOrders = orders.slice(0, 4);
+            displayOrders.forEach(order => {
+                const row = document.createElement('tr');
+                row.className = 'border-b border-gray-200 hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="py-3 px-4 text-sm">${order.orderId}</td>
+                    <td class="py-3 px-4 text-sm">${order.driver || '-'}</td>
+                    <td class="py-3 px-4 text-sm">${order.passenger}</td>
+                    <td class="py-3 px-4 text-sm font-medium">${order.amount.toLocaleString()}元</td>
+                    <td class="py-3 px-4 text-sm">
+                        <span class="px-2 py-1 ${getStatusBadgeClass(order.status)} rounded-full text-xs">${order.status}</span>
+                    </td>
+                    <td class="py-3 px-4 text-sm">
+                        <a href="admin-order.html?orderId=${order.orderId}" class="text-primary hover:underline">查看</a>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            // 顯示分頁
+            totalCount.textContent = orders.length;
+            pagination.style.display = 'flex';
+        }
+
+        // 根據訂單狀態返回對應樣式
+        function getStatusBadgeClass(status) {
+            switch(status) {
+                case '已完成': return 'bg-green-100 text-green-600';
+                case '行駛中': return 'bg-blue-100 text-blue-600';
+                case '待接單': return 'bg-yellow-100 text-yellow-600';
+                case '已取消': return 'bg-gray-100 text-gray-600';
+                default: return 'bg-gray-100 text-gray-600';
+            }
+        }
+
+        // 基於真實數據初始化圖表
+        function initChartsWithRealData() {
+            // 讀取圖表數據
+            const chartData = JSON.parse(localStorage.getItem('fleetChartData')) || {
+                trend: {
+                    today: { labels: [], data: [] },
+                    week: { labels: [], data: [] },
+                    month: { labels: [], data: [] }
+                },
+                income: {
+                    week: { labels: [], data: [] },
+                    month: { labels: [], data: [] },
+                    quarter: { labels: [], data: [] }
+                }
+            };
+
+            // 訂單趨勢圖
+            const trendCtx = document.getElementById('trendChart').getContext('2d');
+            const trendChart = new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: chartData.trend.today.labels,
+                    datasets: [{
+                        label: '訂單數',
+                        data: chartData.trend.today.data,
+                        borderColor: '#00C300',
+                        backgroundColor: 'rgba(0, 195, 0, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#00C300',
+                        pointRadius: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // 收入統計圖
+            const incomeCtx = document.getElementById('incomeChart').getContext('2d');
+            const incomeChart = new Chart(incomeCtx, {
+                type: 'bar',
+                data: {
+                    labels: chartData.income.week.labels,
+                    datasets: [{
+                        label: '收入（元）',
+                        data: chartData.income.week.data,
+                        backgroundColor: '#00C300',
+                        borderRadius: 4,
+                        barPercentage: 0.6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // 圖表時間範圍切換
+            document.getElementById('trendTimeRange').addEventListener('change', (e) => {
+                const value = e.target.value;
+                trendChart.data.labels = chartData.trend[value].labels;
+                trendChart.data.datasets[0].data = chartData.trend[value].data;
+                trendChart.update();
+            });
+
+            document.getElementById('incomeTimeRange').addEventListener('change', (e) => {
+                const value = e.target.value;
+                incomeChart.data.labels = chartData.income[value].labels;
+                incomeChart.data.datasets[0].data = chartData.income[value].data;
+                incomeChart.update();
+            });
+        }
+
+        // 退出登入 → 清除登錄狀態
+        document.getElementById('logoutLink').addEventListener('click', function(e) {
+            e.preventDefault();
+            localStorage.removeItem('loggedInRole');
+            localStorage.removeItem('currentFleetAdmin');
+            window.location.href = this.href;
+        });
+    </script>
+</body>
+</html>

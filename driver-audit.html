@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>註冊審核中</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .audit-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 40px 32px;
+      width: 100%;
+      max-width: 450px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen py-8 px-4">
+  <div class="audit-card mx-auto">
+    <h1 class="text-2xl font-bold text-gray-900 mb-3">註冊資料審核中</h1>
+    <p class="text-gray-600 mb-8">
+      您的司機註冊資料已提交，後台管理員將於1-3個工作天內完成審核<br>
+      審核結果將透過您填寫的Line ID通知您
+    </p>
+    <!-- 核心修改：路徑改為 ../driver.html（返回上級目錄的driver.html） -->
+    <button onclick="window.location.href='../driver.html'" class="px-6 py-3 bg-gray-100 text-gray-800 rounded-lg font-medium hover:bg-gray-200 transition">
+      返回首頁
+    </button>
+  </div>
+</body>
+</html>

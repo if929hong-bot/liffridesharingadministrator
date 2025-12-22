@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>LINE多元化搭車管理員 - 訂單管理</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <style>
+    /* 全局重置 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background-color: #f5f5f5;
+      font-family: "Microsoft JhengHei", "PingFang SC", sans-serif;
+      color: #333;
+    }
+    /* 布局容器 */
+    .app-container {
+      display: flex;
+      min-height: 100vh;
+    }
+    /* 側邊欄 - 優化固定效果 */
+    .sidebar {
+      width: 200px;
+      background: #fff;
+      border-right: 1px solid #e6e6e6;
+      padding: 20px 0;
+      height: 100vh;
+      position: sticky;
+      top: 0;
+    }
+    .sidebar-logo {
+      padding: 0 20px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 24px;
+    }
+    .sidebar-menu {
+      list-style: none;
+    }
+    .sidebar-menu li {
+      margin-bottom: 4px;
+    }
+    .sidebar-menu a {
+      display: flex;
+      align-items: center;
+      padding: 12px 20px;
+      color: #666;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .sidebar-menu a:hover {
+      background: #f8f8f8;
+    }
+    .sidebar-menu a.active {
+      background: #00C300;
+      color: #fff;
+    }
+    .sidebar-menu a i {
+      margin-right: 10px;
+      font-size: 14px;
+      width: 16px;
+      text-align: center;
+    }
+    /* 主內容區 */
+    .main-content {
+      flex: 1;
+      padding: 24px;
+    }
+    /* 卡片組件 */
+    .card {
+      background: #fff;
+      border-radius: 6px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- 側邊欄 - 修正財務管理連結為admin-finance.html，統一路徑規則 -->
+    <div class="sidebar">
+      <div class="sidebar-logo">LINE多元化搭車管理員</div>
+      <ul class="sidebar-menu">
+        <li><a href="index.html"><i class="fa fa-home"></i>首頁</a></li>
+        <li><a href="admin-area.html"><i class="fa fa-map-marker"></i>區域管理</a></li>
+        <li><a href="admin-driver.html"><i class="fa fa-car"></i>司機管理</a></li>
+        <li><a href="admin-order.html" class="active"><i class="fa fa-list"></i>訂單管理</a></li>
+        <!-- 核心修正：財務管理連結改為admin-finance.html -->
+        <li><a href="admin-finance.html"><i class="fa fa-money"></i>財務管理</a></li>
+        <li><a href="admin-report.html"><i class="fa fa-bar-chart"></i>報表統計</a></li>
+        <li><a href="../managerindex.html"><i class="fa fa-sign-out"></i>退出登入</a></li>
+      </ul>
+    </div>
+
+    <!-- 主內容區 - 清空所有訂單相關數據，只保留標題 -->
+    <div class="main-content">
+      <div class="card">
+        <div class="card-title">訂單管理</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 清空所有JS交互邏輯 -->
+  <script>
+    // 僅保留空腳本標籤，無任何交互邏輯
+  </script>
+</body>
+</html>

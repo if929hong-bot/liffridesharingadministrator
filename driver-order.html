@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>搭車自由 - 司機端</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js"></script>
+
+  <script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoiaWY5Mjlob25nIiwiYSI6ImNtamQxczU2cjAweDMzZnM1Z3BvY2JkejgifQ.q-GNcs0rqWrZ3HtjhmysEQ';
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#00A86B',
+            dark: '#333333',
+            light: '#F5F5F5'
+          },
+        },
+      }
+    }
+  </script>
+
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .btn-primary { @apply bg-primary text-white py-3 px-6 rounded-lg font-medium transition-all duration-300 hover:bg-primary/90 active:scale-95 shadow-md; }
+      .card { @apply bg-white rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg; }
+      .order-item { @apply border border-gray-200 rounded-lg p-4 mb-3 bg-white shadow-sm hover:border-primary cursor-pointer; }
+      #driver-map { @apply w-full h-[250px] rounded-lg mb-4; }
+    }
+  </style>
+</head>
+<body class="bg-light font-sans text-dark min-h-screen">
+  <header class="bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
+    <div class="container mx-auto px-4 py-3 flex items-center">
+      <i class="fa fa-car text-primary text-2xl mr-2"></i>
+      <h1 class="text-xl font-bold">搭車自由 - 司機端</h1>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-4 pt-24 pb-16">
+    <div class="max-w-md mx-auto">
+      <div class="card">
+        <h2 class="text-xl font-bold mb-6 text-center">待接訂單</h2>
+        
+        <!-- 移除「你的姓名/電話」輸入框 -->
+        
+        <!-- 訂單列表（直接顯示乘客訂單） -->
+        <div id="orders-list">
+          <p class="text-gray-500 text-center">監聽中，等待乘客訂單...</p>
+        </div>
+        
+        <div id="driver-map"></div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Firebase配置（替換為你的真實配置）
+    const firebaseConfig = {
+      apiKey: "你的API Key",
+      authDomain: "你的Auth Domain",
+      databaseURL: "你的Database URL",
+      projectId: "你的Project ID",
+      storageBucket: "你的Storage Bucket",
+      messagingSenderId: "你的Sender ID",
+      appId: "你的App ID"
+    };
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.database();
+
+    let driverMap = null;
+    let allOrders = {};
+
+    // 初始化地圖
+    function initDriverMap() {
+      driverMap = new mapboxgl.Map({
+        container: 'driver-map',
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: [121.5654, 25.0330],
+        zoom: 14
+      });
+      driverMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      document.getElementById('driver-map').style.display = 'none';
+    }
+
+    // 實時監聽乘客訂單（核心修復：確保能收到訂單）
+    function listenActiveOrders() {
+      // 監聽Firebase中activeOrders節點的變化
+      db.ref('activeOrders').on('value', function(snapshot) {
+        allOrders = snapshot.val() || {};
+        const ordersListEl = document.getElementById('orders-list');
+        const pendingOrders = Object.keys(allOrders).filter(key => allOrders[key].status === '待接單');
+
+        if (pendingOrders.length === 0) {
+          ordersListEl.innerHTML = '<p class="text-gray-500 text-center">暫無待接訂單</p>';
+          document.getElementById('driver-map').style.display = 'none';
+          return;
+        }
+
+        // 渲染乘客訂單
+        let html = '';
+        pendingOrders.forEach(orderId => {
+          const order = allOrders[orderId];
+          html += `
+            <div class="order-item" onclick="selectOrder('${orderId}')">
+              <div class="flex justify-between mb-1">
+                <span class="font-medium">訂單ID：${order.orderId || orderId}</span>
+                <span class="text-primary text-xs">待接單</span>
+              </div>
+              <div class="text-sm mb-1"><i class="fa fa-user mr-1"></i> 乘客姓名：${order.name}</div>
+              <div class="text-sm mb-1"><i class="fa fa-phone mr-1"></i> 乘客電話：${order.phone}</div>
+              <div class="text-sm mb-1"><i class="fa fa-map-marker mr-1"></i> 上車：${order.pickup}</div>
+              <div class="text-sm mb-1"><i class="fa fa-flag mr-1"></i> 下車：${order.dropoff}</div>
+              <button onclick="acceptOrder('${orderId}')" class="btn-primary w-full mt-2 py-2 text-sm">接此訂單</button>
+            </div>
+          `;
+        });
+        ordersListEl.innerHTML = html;
+      });
+    }
+
+    // 選擇訂單顯示地圖
+    function selectOrder(orderId) {
+      const order = allOrders[orderId];
+      if (!order) return;
+      document.getElementById('driver-map').style.display = 'block';
+      const pickupPoint = [121.5654, 25.0330];
+      const dropoffPoint = [121.5700, 25.0400];
+      driverMap.setCenter(pickupPoint);
+      driverMap.setZoom(14);
+      document.querySelectorAll('.mapboxgl-marker').forEach(marker => marker.remove());
+      new mapboxgl.Marker({className: 'mapbox-marker-pickup'})
+        .setLngLat(pickupPoint)
+        .setPopup(new mapboxgl.Popup().setHTML(`<b>上車地點</b><br>${order.pickup}`))
+        .addTo(driverMap)
+        .togglePopup();
+      new mapboxgl.Marker({className: 'mapbox-marker-dropoff'})
+        .setLngLat(dropoffPoint)
+        .setPopup(new mapboxgl.Popup().setHTML(`<b>下車地點</b><br>${order.dropoff}`))
+        .addTo(driverMap);
+    }
+
+    // 接單功能
+    function acceptOrder(orderId) {
+      event.stopPropagation();
+      // 這裡可以直接用司機登錄的手機號作為標識（無需姓名輸入框）
+      const driverPhone = localStorage.getItem('driverPhone');
+      if (!driverPhone) {
+        alert('請先登錄司機帳號！');
+        window.location.href = '../index.html#driver';
+        return;
+      }
+      if (confirm('確定接此訂單？')) {
+        db.ref(`activeOrders/${orderId}`).update({
+          status: '已接單',
+          driverPhone: driverPhone,
+          acceptTime: new Date().toLocaleString('zh-TW')
+        }).then(() => {
+          alert(`接單成功！乘客電話：${allOrders[orderId].phone}`);
+        });
+      }
+    }
+
+    // 頁面加載初始化
+    document.addEventListener('DOMContentLoaded', function() {
+      initDriverMap();
+      listenActiveOrders(); // 啟動訂單監聽
+    });
+  </script>
+</body>
+</html>

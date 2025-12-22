@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LINE多元化搭車管理員 - 報表統計</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <!-- 引入圖表庫（穩定版CDN） -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+  <style>
+    /* 全局重置 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background-color: #f5f5f5;
+      font-family: "Microsoft JhengHei", "PingFang SC", sans-serif;
+      color: #333;
+    }
+    /* 布局容器 */
+    .app-container {
+      display: flex;
+      min-height: 100vh;
+    }
+    /* 側邊欄 */
+    .sidebar {
+      width: 200px;
+      background: #fff;
+      border-right: 1px solid #e6e6e6;
+      padding: 20px 0;
+      height: 100vh;
+      position: sticky;
+      top: 0;
+    }
+    .sidebar-logo {
+      padding: 0 20px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 24px;
+    }
+    .sidebar-menu {
+      list-style: none;
+    }
+    .sidebar-menu li {
+      margin-bottom: 4px;
+    }
+    .sidebar-menu a {
+      display: flex;
+      align-items: center;
+      padding: 12px 20px;
+      color: #666;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .sidebar-menu a:hover {
+      background: #f8f8f8;
+    }
+    .sidebar-menu a.active {
+      background: #00C300;
+      color: #fff;
+    }
+    .sidebar-menu a i {
+      margin-right: 10px;
+      font-size: 14px;
+      width: 16px;
+      text-align: center;
+    }
+    /* 主內容區 */
+    .main-content {
+      flex: 1;
+      padding: 24px;
+      max-width: calc(100vw - 200px);
+    }
+    /* 卡片組件 */
+    .card {
+      background: #fff;
+      border-radius: 6px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: #333;
+    }
+    /* 時間週期切換 */
+    .period-tabs {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid #e6e6e6;
+      padding-bottom: 8px;
+    }
+    .period-tab {
+      padding: 4px 8px;
+      cursor: pointer;
+      font-weight: 500;
+      color: #666;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+      font-size: 14px;
+    }
+    .period-tab.active {
+      color: #00C300;
+      border-bottom-color: #00C300;
+    }
+    /* 數據統計卡片 */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      padding: 16px;
+      border-radius: 6px;
+      background-color: #fafafa;
+      border: 1px solid #f0f0f0;
+    }
+    .stat-title {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #333;
+    }
+    /* 圖表容器 */
+    .chart-container {
+      height: 300px;
+      margin-top: 16px;
+      width: 100%;
+    }
+    .chart-subtitle {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 12px;
+    }
+    /* 圓形圖表容器 */
+    .pie-chart-wrapper {
+      width: 80px;
+      height: 80px;
+      position: relative;
+      margin: 0 auto;
+    }
+    /* 空數據提示 */
+    .empty-data {
+      text-align: center;
+      color: #999;
+      padding: 40px 0;
+      font-size: 16px;
+    }
+    .empty-data i {
+      font-size: 48px;
+      margin-bottom: 16px;
+      color: #ddd;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- 側邊欄 (移除退出確認提示框) -->
+    <div class="sidebar">
+      <div class="sidebar-logo">LINE多元化搭車管理員</div>
+      <ul class="sidebar-menu">
+        <li><a href="admin-dashboard.html"><i class="fa fa-home"></i>首頁</a></li>
+        <li><a href="admin-area.html"><i class="fa fa-map-marker"></i>區域管理</a></li>
+        <li><a href="admin-driver.html"><i class="fa fa-car"></i>司機管理</a></li>
+        <li><a href="admin-order.html"><i class="fa fa-list"></i>訂單管理</a></li>
+        <li><a href="admin-finance.html"><i class="fa fa-money"></i>財務管理</a></li>
+        <li><a href="admin-report.html" class="active"><i class="fa fa-bar-chart"></i>報表統計</a></li>
+        <!-- 移除退出確認提示框 -->
+        <li><a href="../managerindex.html"><i class="fa fa-sign-out"></i>退出登入</a></li>
+      </ul>
+    </div>
+
+    <!-- 主內容區 (重置所有虛擬數據為空) -->
+    <div class="main-content">
+      <div class="card">
+        <div class="card-title">報表統計</div>
+        
+        <!-- 時間週期切換 (保留結構，移除點擊事件) -->
+        <div class="period-tabs">
+          <div class="period-tab active">本日</div>
+          <div class="period-tab">本周</div>
+          <div class="period-tab">本月</div>
+        </div>
+
+        <!-- 數據統計卡片 (重置為空數據) -->
+        <div class="stat-grid">
+          <!-- 所有訂單 -->
+          <div class="stat-card">
+            <div class="stat-title">所有訂單</div>
+            <div class="stat-value">-</div>
+          </div>
+          <!-- 訂單完成數 -->
+          <div class="stat-card">
+            <div class="stat-title">訂單完成數</div>
+            <div class="stat-value">-</div>
+          </div>
+          <!-- 訂單取消數 -->
+          <div class="stat-card">
+            <div class="stat-title">訂單取消數</div>
+            <div class="stat-value">-</div>
+          </div>
+          <!-- 司機接單量 -->
+          <div class="stat-card">
+            <div class="stat-title">司機接單量</div>
+            <div class="stat-value">-</div>
+          </div>
+        </div>
+
+        <!-- 收入統計 (重置為空數據) -->
+        <div class="mb-8">
+          <div class="chart-subtitle">收入統計</div>
+          <div class="stat-grid">
+            <!-- 全部收入 -->
+            <div class="stat-card">
+              <div class="stat-title">全部收入</div>
+              <div class="stat-value">-</div>
+            </div>
+            <!-- 現金收入 -->
+            <div class="stat-card">
+              <div class="stat-title">現金收入</div>
+              <div class="stat-value">-</div>
+            </div>
+            <!-- 電子支付收入 -->
+            <div class="stat-card">
+              <div class="stat-title">電子支付收入</div>
+              <div class="stat-value">-</div>
+            </div>
+            <!-- 收入佔比 (空圖表提示) -->
+            <div class="stat-card">
+              <div class="stat-title">收入佔比</div>
+              <div class="pie-chart-wrapper flex items-center justify-center">
+                <span class="text-sm text-gray-400">無數據</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 訂單趨勢圖 (空數據提示) -->
+        <div>
+          <div class="chart-subtitle">訂單趨勢</div>
+          <div class="chart-container flex items-center justify-center bg-gray-50 rounded-lg">
+            <div class="empty-data">
+              <i class="fa fa-bar-chart"></i>
+              <p>暫無統計數據</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 清空所有JS邏輯，僅保留基礎初始化（無任何提示框、無數據加載）
+    document.addEventListener('DOMContentLoaded', () => {
+      try {
+        // 移除所有圖表初始化邏輯，避免生成虛擬圖表
+        // 移除登錄狀態校驗，避免跳轉提示
+      } catch (error) {
+        console.error('頁面初始化錯誤：', error);
+      }
+    });
+  </script>
+</body>
+</html>

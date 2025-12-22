@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LINE多元化搭車 - 行程完成</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#00C300',
+                        'text-dark': '#333333',
+                        'text-light': '#666666'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-white font-sans">
+    <!-- 頁首 -->
+    <header class="py-4 px-4">
+        <h1 class="text-xl font-bold text-text-dark text-center">LINE多元化搭車</h1>
+    </header>
+
+    <!-- 主內容 -->
+    <main class="max-w-xs mx-auto my-8 px-4">
+        <div class="bg-white rounded-lg shadow-md p-5 border border-gray-200">
+            <!-- 行程狀態 -->
+            <div class="text-center mb-5">
+                <p class="text-base font-medium text-text-dark">已到達目的地</p>
+                <p class="text-2xl font-bold text-primary mt-2" id="finalAmount">000元</p>
+            </div>
+
+            <!-- 操作按鈕 -->
+            <div class="space-y-3">
+                <!-- 1. 乘客已支付金額（選擇支付方式） -->
+                <button id="paymentBtn" class="w-full py-3 bg-primary text-white font-medium rounded-none">
+                    乘客已支付金額
+                </button>
+                
+                <!-- 2. 乘客已下車（上傳截圖） -->
+                <button id="passengerOffBtn" class="w-full py-3 bg-primary text-white font-medium rounded-none">
+                    乘客已下車
+                </button>
+                
+                <!-- 3. 我要接單（連結driver-order.html） -->
+                <button id="takeOrderBtn" class="w-full py-3 bg-primary text-white font-medium rounded-none">
+                    我要接單 (回到接單頁面)
+                </button>
+                
+                <!-- 4. 我要下班（連結driver-login.html） -->
+                <button id="offWorkBtn" class="w-full py-3 bg-primary text-white font-medium rounded-none">
+                    我要下班 (登出頁面)
+                </button>
+            </div>
+
+            <!-- 備註 -->
+            <p class="text-xs text-text-light mt-4 text-center">
+                (下班前請將今日行程截圖上傳給管理員核對金額)
+            </p>
+        </div>
+    </main>
+
+    <!-- 支付方式選擇彈窗 -->
+    <div id="paymentModal" class="fixed inset-0 bg-black/50 flex justify-center items-center z-50 hidden">
+        <div class="bg-white rounded-lg p-5 max-w-sm w-full mx-4">
+            <h3 class="text-lg font-bold text-text-dark mb-4 text-center">選擇支付方式</h3>
+            <div class="space-y-3">
+                <button class="w-full py-2 border border-gray-200 rounded-md flex items-center justify-center gap-2" onclick="setPayment('現金')">
+                    <i class="fa fa-money"></i>
+                    <span>現金支付</span>
+                </button>
+                <button class="w-full py-2 border border-gray-200 rounded-md flex items-center justify-center gap-2" onclick="setPayment('電子支付')">
+                    <i class="fa fa-credit-card"></i>
+                    <span>電子支付</span>
+                </button>
+                <button class="w-full py-2 bg-gray-200 rounded-md" onclick="closeModal()">
+                    取消
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 截圖上傳彈窗 -->
+    <div id="screenshotModal" class="fixed inset-0 bg-black/50 flex justify-center items-center z-50 hidden">
+        <div class="bg-white rounded-lg p-5 max-w-sm w-full mx-4">
+            <h3 class="text-lg font-bold text-text-dark mb-4 text-center">上傳行程截圖</h3>
+            <div class="border-2 border-dashed border-gray-300 rounded-md p-4 text-center mb-3">
+                <input type="file" id="screenshotFile" accept="image/*" class="hidden">
+                <button class="text-primary" onclick="document.getElementById('screenshotFile').click()">
+                    <i class="fa fa-upload text-2xl"></i>
+                    <p>點擊選擇截圖</p>
+                </button>
+                <p id="fileInfo" class="text-xs text-text-light mt-2">未選擇文件</p>
+            </div>
+            <button class="w-full py-2 bg-primary text-white rounded-md" onclick="uploadScreenshot()">
+                確認上傳
+            </button>
+            <button class="w-full py-2 bg-gray-200 rounded-md mt-2" onclick="closeScreenshotModal()">
+                取消
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 讀取最終金額
+        function loadFinalAmount() {
+            const finalAmount = localStorage.getItem('totalAmount') || '000';
+            document.getElementById('finalAmount').textContent = `${finalAmount}元`;
+        }
+
+        // 支付方式彈窗控制
+        const paymentModal = document.getElementById('paymentModal');
+        document.getElementById('paymentBtn').addEventListener('click', () => {
+            paymentModal.classList.remove('hidden');
+        });
+        function setPayment(type) {
+            alert(`已記錄支付方式：${type}`);
+            paymentModal.classList.add('hidden');
+        }
+        function closeModal() {
+            paymentModal.classList.add('hidden');
+        }
+
+        // 截圖上傳彈窗控制
+        const screenshotModal = document.getElementById('screenshotModal');
+        document.getElementById('passengerOffBtn').addEventListener('click', () => {
+            screenshotModal.classList.remove('hidden');
+        });
+        // 監聽文件選擇
+        document.getElementById('screenshotFile').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                document.getElementById('fileInfo').textContent = `已選擇：${file.name}`;
+            }
+        });
+        // 上傳截圖
+        function uploadScreenshot() {
+            const file = document.getElementById('screenshotFile').files[0];
+            if (!file) {
+                alert('請選擇要上傳的截圖');
+                return;
+            }
+            alert('截圖已成功上傳！');
+            screenshotModal.classList.add('hidden');
+        }
+        function closeScreenshotModal() {
+            screenshotModal.classList.add('hidden');
+        }
+
+        // 我要接單：連結driver-order.html
+        document.getElementById('takeOrderBtn').addEventListener('click', () => {
+            window.location.href = 'driver-order.html';
+        });
+
+        // 我要下班：連結driver-login.html
+        document.getElementById('offWorkBtn').addEventListener('click', () => {
+            alert('即將登出，請確認已上傳今日行程截圖');
+            window.location.href = 'driver-login.html';
+        });
+
+        // 初始化
+        window.onload = () => {
+            loadFinalAmount();
+        };
+    </script>
+</body>
+</html>

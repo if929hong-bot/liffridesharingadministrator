@@ -1,0 +1,82 @@
+<!-- driver/login.html（司機登入頁 - 改造後） -->
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>司機入口 - 多元化乘車管理系統</title>
+  <style>
+    body { font-family: 'Noto Sans TC', sans-serif; background: #f5f5f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    .login-card { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+    .login-card h1 { margin: 0 0 1.5rem; font-size: 1.5rem; color: #333; }
+    .input-group { margin-bottom: 1rem; }
+    .input-group label { display: block; margin-bottom: 0.5rem; color: #666; }
+    .input-group input { width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 4px; }
+    .btn-login { width: 100%; padding: 0.8rem; background: #228B22; color: white; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; }
+    .link-area { text-align: right; margin: 0.5rem 0; }
+    .link-area a { color: #228B22; text-decoration: none; }
+    .note { margin-top: 1.5rem; text-align: center; font-size: 0.875rem; color: #666; }
+    .header-area { display: flex; justify-content: space-between; align-items: center; }
+    .header-area a { color: #228B22; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <div class="header-area">
+      <h1>司機入口</h1>
+      <a href="register.html">註冊</a>
+    </div>
+    <form id="driver-login-form">
+      <div class="input-group">
+        <label>帳號 (手機號碼)</label>
+        <input type="text" id="driver-username" placeholder="請輸入手機號碼" required>
+      </div>
+      <div class="input-group">
+        <label>密碼</label>
+        <input type="password" id="driver-password" placeholder="請輸入密碼" required>
+      </div>
+      <div class="link-area">
+        <a href="#">忘記密碼？</a>
+      </div>
+      <button type="submit" class="btn-login">登錄</button>
+    </form>
+    <div class="note">
+      註冊申請提交後，我們將在3個工作天內進行審核<br>
+      審核通過後將以簡訊通知您，敬請耐心等候
+    </div>
+  </div>
+
+  <script>
+    // 司機帳號儲存鍵名（與管理員後台同步）
+    const DRIVER_PASS_KEY = 'driverPassedList';
+    const DRIVER_LOGIN_KEY = 'driverLoggedIn';
+
+    const loginForm = document.getElementById('driver-login-form');
+    const usernameInput = document.getElementById('driver-username');
+    const passwordInput = document.getElementById('driver-password');
+
+    loginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const inputUsername = usernameInput.value.trim();
+      const inputPassword = passwordInput.value.trim();
+
+      // 從 LocalStorage 獲取已審核通過的司機列表
+      const passedDrivers = JSON.parse(localStorage.getItem(DRIVER_PASS_KEY) || '[]');
+      // 校驗帳號密碼
+      const validDriver = passedDrivers.find(
+        driver => driver.phone === inputUsername && driver.password === inputPassword
+      );
+
+      if (validDriver) {
+        // 儲存司機登錄狀態
+        localStorage.setItem(DRIVER_LOGIN_KEY, JSON.stringify(validDriver));
+        // 跳轉到訂單頁
+        window.location.href = 'order.html';
+      } else {
+        alert('帳號或密碼錯誤，或您的申請尚未通過審核！');
+        passwordInput.value = '';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>計費頁面 - 多元化乘車管理系統</title>
+    <!-- 引入 Tailwind CSS 簡化樣式 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Font Awesome 圖標 -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- 引入 Mapbox GL JS -->
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel='stylesheet'>
+    <script src='https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js'></script>
+    <!-- 引入 html2canvas 實現截圖功能 -->
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: #f5f5f5;
+        }
+        .meter-card {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            background: white;
+        }
+        .amount-display {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #22c55e;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .time-display {
+            font-size: 1.25rem;
+            color: #64748b;
+        }
+        .mileage-display {
+            font-size: 1.5rem;
+            color: #334155;
+        }
+        .btn-primary {
+            background: #22c55e;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background: #16a34a;
+        }
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn-warning:hover {
+            background: #d97706;
+        }
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        .btn-screenshot {
+            background: #3b82f6;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn-screenshot:hover {
+            background: #2563eb;
+        }
+        .btn-close {
+            background: #64748b;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn-close:hover {
+            background: #475569;
+        }
+        .timer-animation {
+            animation: pulse 1s infinite alternate;
+        }
+        @keyframes pulse {
+            from { opacity: 1; }
+            to { opacity: 0.8; }
+        }
+        /* Mapbox地圖樣式 */
+        #ride-map {
+            width: 100%;
+            height: 200px;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
+    </style>
+    <script>
+        // 配置Mapbox Token
+        mapboxgl.accessToken = 'pk.eyJ1IjoiaWY5Mjlob25nIiwiYSI6ImNtamQxczU2cjAweDMzZnM1Z3BvY2JkejgifQ.q-GNcs0rqWrZ3HtjhmysEQ';
+    </script>
+</head>
+<body class="min-h-screen">
+    <!-- 頁頭 -->
+    <header class="bg-green-600 text-white py-4 px-6 shadow-md">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <a href="javascript:history.back()" class="text-white hover:text-gray-100">
+                    <i class="fa fa-arrow-left text-xl"></i>
+                </a>
+                <h1 class="text-xl font-bold">實時計費系統</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <span id="driver-name" class="hidden md:inline-block">您好，司機</span>
+                <button id="logout-btn" class="bg-white text-green-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2">
+                    <i class="fa fa-sign-out"></i>
+                    <span>退出登錄</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要內容 -->
+    <main class="max-w-4xl mx-auto px-4 py-8" id="meter-page"> <!-- 新增ID用於截圖 -->
+        <!-- 訂單基本信息 -->
+        <div class="meter-card p-6 mb-6">
+            <div class="flex flex-wrap justify-between items-center mb-4">
+                <div>
+                    <h2 class="text-lg font-bold text-gray-800">訂單編號：<span id="order-id" class="text-green-600"></span></h2>
+                    <p class="text-gray-600 mt-1">乘客：<span id="passenger-name"></span> | 聯繫電話：<span id="passenger-phone"></span></p>
+                </div>
+                <div class="mt-4 sm:mt-0">
+                    <span id="order-status" class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-medium">
+                        已抵達上車點
+                    </span>
+                </div>
+            </div>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-gray-600">上車地點：<span id="pickup-location"></span></p>
+                    <p class="text-gray-600 mt-1">下車地點：<span id="dropoff-location"></span></p>
+                </div>
+                <div>
+                    <p class="text-gray-600">抵達時間：<span id="arrive-time"></span></p>
+                    <p class="text-gray-600 mt-1">乘車開始時間：<span id="ride-start-time" class="text-red-500">未開始</span></p>
+                </div>
+            </div>
+            
+            <!-- 新增行程地圖 -->
+            <div class="mt-4">
+                <p class="text-gray-600 mb-1">行程地圖：</p>
+                <div id="ride-map"></div>
+            </div>
+        </div>
+
+        <!-- 計費核心區域 -->
+        <div class="meter-card p-8 mb-6 text-center">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">實時計費</h3>
+            
+            <!-- 金額顯示 -->
+            <div class="mb-6">
+                <span class="amount-display" id="current-amount">0</span>
+                <span class="text-xl text-gray-700 ml-2">NT$</span>
+            </div>
+            
+            <!-- 計時和里程 -->
+            <div class="grid md:grid-cols-2 gap-8 mb-8">
+                <div>
+                    <p class="text-gray-600 mb-2">乘車時長</p>
+                    <div class="time-display timer-animation" id="ride-duration">00:00:00</div>
+                </div>
+                <div>
+                    <p class="text-gray-600 mb-2">行駛里程</p>
+                    <div class="mileage-display" id="ride-mileage">0.0 KM</div>
+                </div>
+            </div>
+            
+            <!-- 計費規則 -->
+            <div class="text-left text-sm text-gray-500 mb-6">
+                <p>📋 計費規則：起步價 80 NT$ (前1公里)，之後每公里 25 NT$，每分鐘等待費 2 NT$</p>
+            </div>
+            
+            <!-- 操作按鈕 -->
+            <div class="flex flex-wrap justify-center gap-4">
+                <button id="start-ride-btn" class="btn-primary px-8 py-3 rounded-lg text-lg font-medium flex items-center gap-2">
+                    <i class="fa fa-play-circle"></i>
+                    <span>開始乘車</span>
+                </button>
+                <button id="pause-ride-btn" class="btn-warning px-8 py-3 rounded-lg text-lg font-medium flex items-center gap-2 hidden">
+                    <i class="fa fa-pause-circle"></i>
+                    <span>暫停計費</span>
+                </button>
+                <button id="resume-ride-btn" class="btn-warning px-8 py-3 rounded-lg text-lg font-medium flex items-center gap-2 hidden">
+                    <i class="fa fa-play-circle"></i>
+                    <span>恢復計費</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 到達目的地操作 -->
+        <div class="meter-card p-6 text-center">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">行程操作</h3>
+            <div class="flex flex-wrap justify-center gap-4">
+                <!-- 新增截圖按鈕 -->
+                <button id="screenshot-btn" class="btn-screenshot px-6 py-3 rounded-lg text-lg font-medium flex items-center gap-2">
+                    <i class="fa fa-camera"></i>
+                    <span>截圖保存</span>
+                </button>
+                <!-- 到達目的地按鈕 -->
+                <button id="arrive-destination-btn" class="btn-danger px-6 py-3 rounded-lg text-lg font-medium flex items-center gap-2">
+                    <i class="fa fa-flag-checkered"></i>
+                    <span>到達目的地</span>
+                </button>
+                <!-- 新增關閉按鈕 -->
+                <button id="close-page-btn" class="btn-close px-6 py-3 rounded-lg text-lg font-medium flex items-center gap-2">
+                    <i class="fa fa-times-circle"></i>
+                    <span>關閉頁面</span>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- 操作成功提示 -->
+    <div id="success-toast" class="fixed bottom-6 right-6 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 z-50 hidden">
+        <i class="fa fa-check-circle"></i>
+        <span id="toast-message">操作成功！</span>
+    </div>
+
+    <!-- 截圖加載提示 -->
+    <div id="screenshot-loading" class="fixed inset-0 bg-black/50 flex justify-center items-center z-50 hidden">
+        <div class="bg-white rounded-xl p-6 flex flex-col items-center">
+            <i class="fa fa-spinner refresh-animation text-3xl text-blue-600 mb-3"></i>
+            <p class="text-lg font-medium text-gray-800">正在生成截圖...</p>
+        </div>
+    </div>
+
+    <script>
+        // 核心常量定義
+        const DRIVER_ORDER_KEY = 'driverOrders';
+        const DRIVER_LOGIN_KEY = 'driverLoggedIn';
+        let currentOrder = null; // 當前訂單數據
+        let rideMap = null; // Mapbox地圖實例
+        
+        // 計費相關變量
+        let rideStarted = false;        // 是否開始乘車
+        let ridePaused = false;         // 是否暫停計費
+        let startTime = null;           // 乘車開始時間
+        let pauseTime = null;           // 暫停時間
+        let totalPauseTime = 0;         // 總暫停時間（毫秒）
+        let currentAmount = 0;          // 當前金額
+        let currentMileage = 0;         // 當前里程
+        let timerInterval = null;       // 計時器
+        
+        // 計費規則
+        const FARE_RULES = {
+            startPrice: 80,             // 起步價
+            startMileage: 1,            // 起步里程（公里）
+            perKmPrice: 25,             // 每公里價格
+            perMinutePrice: 2           // 每分鐘等待費
+        };
+
+        // DOM 元素獲取
+        const driverNameEl = document.getElementById('driver-name');
+        const logoutBtn = document.getElementById('logout-btn');
+        const orderIdEl = document.getElementById('order-id');
+        const orderStatusEl = document.getElementById('order-status');
+        const passengerNameEl = document.getElementById('passenger-name');
+        const passengerPhoneEl = document.getElementById('passenger-phone');
+        const pickupLocationEl = document.getElementById('pickup-location');
+        const dropoffLocationEl = document.getElementById('dropoff-location');
+        const arriveTimeEl = document.getElementById('arrive-time');
+        const rideStartTimeEl = document.getElementById('ride-start-time');
+        const currentAmountEl = document.getElementById('current-amount');
+        const rideDurationEl = document.getElementById('ride-duration');
+        const rideMileageEl = document.getElementById('ride-mileage');
+        const startRideBtn = document.getElementById('start-ride-btn');
+        const pauseRideBtn = document.getElementById('pause-ride-btn');
+        const resumeRideBtn = document.getElementById('resume-ride-btn');
+        const arriveDestinationBtn = document.getElementById('arrive-destination-btn');
+        const screenshotBtn = document.getElementById('screenshot-btn'); // 新增截圖按鈕
+        const closePageBtn = document.getElementById('close-page-btn');   // 新增關閉按鈕
+        const successToast = document.getElementById('success-toast');
+        const toastMessage = document.getElementById('toast-message');
+        const screenshotLoading = document.getElementById('screenshot-loading');
+        const meterPage = document.getElementById('meter-page'); // 截圖區域
+
+        // 初始化行程地圖
+        function initRideMap(pickupAddr, dropoffAddr) {
+            // 默認坐標（台北）
+            const pickup = [121.5654, 25.0330];
+            const dropoff = [121.5700, 25.0400];
+
+            // 創建地圖
+            rideMap = new mapboxgl.Map({
+                container: 'ride-map',
+                style: 'mapbox://styles/mapbox/streets-v12',
+                center: pickup,
+                zoom: 14
+            });
+
+            // 添加導航控件
+            rideMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+            // 地圖加載完成
+            rideMap.on('load', () => {
+                // 上車點標記
+                new mapboxgl.Marker({ color: '#00C300' })
+                    .setLngLat(pickup)
+                    .setPopup(new mapboxgl.Popup().setHTML(`<b>上車地點</b><br>${pickupAddr}`))
+                    .addTo(rideMap)
+                    .togglePopup();
+
+                // 下車點標記
+                new mapboxgl.Marker({ color: '#EF4444' })
+                    .setLngLat(dropoff)
+                    .setPopup(new mapboxgl.Popup().setHTML(`<b>下車地點</b><br>${dropoffAddr}`))
+                    .addTo(rideMap);
+
+                // 調整視野
+                const bounds = new mapboxgl.LngLatBounds().extend(pickup).extend(dropoff);
+                rideMap.fitBounds(bounds, { padding: 50 });
+            });
+        }
+
+        // 初始化頁面
+        window.addEventListener('load', () => {
+            // 1. 驗證司機登錄狀態
+            const loggedInDriver = JSON.parse(localStorage.getItem(DRIVER_LOGIN_KEY));
+            if (!loggedInDriver) {
+                alert('請先登錄司機賬號！');
+                window.location.href = 'driver-login.html';
+                return;
+            }
+            driverNameEl.textContent = `您好，${loggedInDriver.name || '司機'}`;
+
+            // 2. 获取URL中的訂單ID
+            const urlParams = new URLSearchParams(window.location.search);
+            const orderId = urlParams.get('orderId');
+            
+            if (!orderId) {
+                alert('訂單ID不存在，請返回訂單列表！');
+                window.location.href = 'driver-order.html';
+                return;
+            }
+
+            // 3. 加載訂單數據
+            loadOrderData(orderId);
+        });
+
+        // 加載訂單數據
+        function loadOrderData(orderId) {
+            const orders = JSON.parse(localStorage.getItem(DRIVER_ORDER_KEY) || '[]');
+            currentOrder = orders.find(order => order.id === orderId);
+
+            if (!currentOrder) {
+                alert('訂單信息不存在，請返回訂單列表！');
+                window.location.href = 'driver-order.html';
+                return;
+            }
+
+            // 渲染訂單基本信息
+            orderIdEl.textContent = currentOrder.id;
+            passengerNameEl.textContent = currentOrder.passengerName || '-';
+            passengerPhoneEl.textContent = currentOrder.passengerPhone || '-';
+            pickupLocationEl.textContent = currentOrder.pickup || '-';
+            dropoffLocationEl.textContent = currentOrder.dropoff || '-';
+            arriveTimeEl.textContent = currentOrder.arriveTime || '未記錄';
+            
+            // 初始化行程地圖
+            initRideMap(currentOrder.pickup || '未知地點', currentOrder.dropoff || '未知地點');
+            
+            // 設置初始金額（起步價）
+            currentAmount = FARE_RULES.startPrice;
+            currentAmountEl.textContent = currentAmount;
+
+            // 更新訂單狀態顯示
+            updateOrderStatusDisplay();
+        }
+
+        // 更新訂單狀態顯示
+        function updateOrderStatusDisplay() {
+            switch (currentOrder.status) {
+                case 'arrived':
+                    orderStatusEl.className = 'bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-medium';
+                    orderStatusEl.textContent = '已抵達上車點';
+                    break;
+                case 'riding':
+                    orderStatusEl.className = 'bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium';
+                    orderStatusEl.textContent = '乘車中';
+                    break;
+                case 'completed':
+                    orderStatusEl.className = 'bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium';
+                    orderStatusEl.textContent = '已完成';
+                    break;
+                default:
+                    orderStatusEl.className = 'bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-medium';
+                    orderStatusEl.textContent = '未知狀態';
+            }
+        }
+
+        // 顯示提示框
+        function showToast(message) {
+            toastMessage.textContent = message;
+            successToast.classList.remove('hidden');
+            
+            // 3秒後隱藏
+            setTimeout(() => {
+                successToast.classList.add('hidden');
+            }, 3000);
+        }
+
+        // 格式化時間（秒數轉為 HH:MM:SS）
+        function formatTime(seconds) {
+            const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
+            const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+            const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+            return `${h}:${m}:${s}`;
+        }
+
+        // 計算當前金額
+        function calculateAmount(durationSeconds, mileage) {
+            let amount = FARE_RULES.startPrice;
+            
+            // 超過起步里程的部分計費
+            if (mileage > FARE_RULES.startMileage) {
+                const extraMileage = mileage - FARE_RULES.startMileage;
+                amount += extraMileage * FARE_RULES.perKmPrice;
+            }
+            
+            // 時間費用（每分鐘）
+            const minutes = Math.floor(durationSeconds / 60);
+            amount += minutes * FARE_RULES.perMinutePrice;
+            
+            return Math.round(amount);
+        }
+
+        // 更新計費顯示
+        function updateMeterDisplay() {
+            if (!rideStarted || ridePaused) return;
+            
+            // 計算已過時間（扣除暫停時間）
+            const now = new Date().getTime();
+            const elapsedTime = now - startTime - totalPauseTime;
+            const elapsedSeconds = Math.floor(elapsedTime / 1000);
+            
+            // 更新時長顯示
+            rideDurationEl.textContent = formatTime(elapsedSeconds);
+            
+            // 模擬里程增長（每10秒增加0.1公里）
+            if (elapsedSeconds % 10 === 0) {
+                currentMileage += 0.1;
+                rideMileageEl.textContent = `${currentMileage.toFixed(1)} KM`;
+                
+                // 更新地圖視角（模擬移動）
+                if (rideMap && rideStarted) {
+                    const currentLng = 121.5654 + (currentMileage * 0.001);
+                    const currentLat = 25.0330 + (currentMileage * 0.001);
+                    rideMap.panTo([currentLng, currentLat]);
+                    
+                    // 添加移動軌跡
+                    if (rideMap.getSource('track')) {
+                        const trackSource = rideMap.getSource('track');
+                        const trackData = trackSource._data;
+                        trackData.geometry.coordinates.push([currentLng, currentLat]);
+                        trackSource.setData(trackData);
+                    } else {
+                        rideMap.addSource('track', {
+                            type: 'geojson',
+                            data: {
+                                type: 'Feature',
+                                geometry: {
+                                    type: 'LineString',
+                                    coordinates: [[121.5654, 25.0330], [currentLng, currentLat]]
+                                }
+                            }
+                        });
+                        rideMap.addLayer({
+                            id: 'track',
+                            type: 'line',
+                            source: 'track',
+                            paint: {
+                                'line-color': '#3b82f6',
+                                'line-width': 4,
+                                'line-opacity': 0.7
+                            }
+                        });
+                    }
+                }
+            }
+            
+            // 計算並更新金額
+            currentAmount = calculateAmount(elapsedSeconds, currentMileage);
+            currentAmountEl.textContent = currentAmount;
+        }
+
+        // 開始乘車
+        startRideBtn.addEventListener('click', () => {
+            if (rideStarted) return;
+
+            if (confirm('確認開始乘車？將開始計費！')) {
+                // 更新訂單狀態
+                const orders = JSON.parse(localStorage.getItem(DRIVER_ORDER_KEY) || '[]');
+                const orderIndex = orders.findIndex(order => order.id === currentOrder.id);
+                
+                if (orderIndex !== -1) {
+                    rideStarted = true;
+                    startTime = new Date().getTime();
+                    orders[orderIndex].status = 'riding';
+                    orders[orderIndex].rideStartTime = new Date().toLocaleString('zh-TW');
+                    localStorage.setItem(DRIVER_ORDER_KEY, JSON.stringify(orders));
+                    
+                    // 更新當前訂單數據
+                    currentOrder = orders[orderIndex];
+                    
+                    // 更新頁面顯示
+                    rideStartTimeEl.textContent = currentOrder.rideStartTime;
+                    updateOrderStatusDisplay();
+                    showToast('已開始乘車，計費中...');
+                    
+                    // 切換按鈕狀態
+                    startRideBtn.classList.add('hidden');
+                    pauseRideBtn.classList.remove('hidden');
+                    
+                    // 啟動計時器（每秒更新一次）
+                    timerInterval = setInterval(updateMeterDisplay, 1000);
+                    updateMeterDisplay(); // 立即更新一次
+                }
+            }
+        });
+
+        // 暫停計費
+        pauseRideBtn.addEventListener('click', () => {
+            if (!rideStarted || ridePaused) return;
+
+            ridePaused = true;
+            pauseTime = new Date().getTime();
+            
+            // 切換按鈕狀態
+            pauseRideBtn.classList.add('hidden');
+            resumeRideBtn.classList.remove('hidden');
+            
+            showToast('已暫停計費');
+        });
+
+        // 恢復計費
+        resumeRideBtn.addEventListener('click', () => {
+            if (!rideStarted || !ridePaused) return;
+
+            const resumeTime = new Date().getTime();
+            totalPauseTime += resumeTime - pauseTime;
+            ridePaused = false;
+            
+            // 切換按鈕狀態
+            resumeRideBtn.classList.add('hidden');
+            pauseRideBtn.classList.remove('hidden');
+            
+            showToast('已恢復計費');
+        });
+
+        // 新增：截圖保存功能
+        screenshotBtn.addEventListener('click', async () => {
+            try {
+                // 顯示加載提示
+                screenshotLoading.classList.remove('hidden');
+                
+                // 使用 html2canvas 生成頁面截圖
+                const canvas = await html2canvas(meterPage, {
+                    scale: 2, // 提高截圖分辨率
+                    useCORS: true, // 解決跨域圖片問題
+                    logging: false
+                });
+                
+                // 創建下載鏈接
+                const link = document.createElement('a');
+                // 設置文件名（訂單ID + 當前時間）
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                const fileName = `計費頁面_${currentOrder.id}_${timestamp}.png`;
+                
+                // 設置下載屬性
+                link.download = fileName;
+                link.href = canvas.toDataURL('image/png');
+                
+                // 觸發下載
+                link.click();
+                
+                // 隱藏加載提示
+                screenshotLoading.classList.add('hidden');
+                showToast('截圖已保存到手機！');
+                
+            } catch (error) {
+                // 隱藏加載提示
+                screenshotLoading.classList.add('hidden');
+                alert('截圖失敗：' + error.message);
+            }
+        });
+
+        // 到達目的地（結束行程）
+        arriveDestinationBtn.addEventListener('click', () => {
+            if (!rideStarted) {
+                alert('尚未開始乘車，無法結束行程！');
+                return;
+            }
+
+            if (confirm(`確認到達目的地？最終費用：NT$ ${currentAmount}`)) {
+                // 停止計時器
+                clearInterval(timerInterval);
+                
+                // 更新訂單狀態
+                const orders = JSON.parse(localStorage.getItem(DRIVER_ORDER_KEY) || '[]');
+                const orderIndex = orders.findIndex(order => order.id === currentOrder.id);
+                
+                if (orderIndex !== -1) {
+                    // 計算總行程時間
+                    const endTime = new Date().getTime();
+                    const totalRideTime = Math.floor((endTime - startTime - totalPauseTime) / 1000);
+                    
+                    // 更新訂單數據
+                    orders[orderIndex].status = 'completed';
+                    orders[orderIndex].rideEndTime = new Date().toLocaleString('zh-TW');
+                    orders[orderIndex].totalRideTime = formatTime(totalRideTime);
+                    orders[orderIndex].totalMileage = currentMileage.toFixed(1);
+                    orders[orderIndex].finalAmount = currentAmount;
+                    localStorage.setItem(DRIVER_ORDER_KEY, JSON.stringify(orders));
+                    
+                    showToast(`行程結束！最終費用：NT$ ${currentAmount}`);
+                    
+                    // 延遲跳轉到完成頁
+                    setTimeout(() => {
+                        // 攜帶訂單ID和最終金額跳轉
+                        window.location.href = `driver-complete.html?orderId=${currentOrder.id}&finalAmount=${currentAmount}`;
+                    }, 2000);
+                }
+            }
+        });
+
+        // 新增：關閉頁面跳轉到 driver-complete.html
+        closePageBtn.addEventListener('click', () => {
+            if (confirm('確認關閉計費頁面？將跳轉到行程完成頁！')) {
+                // 停止計時器（如果正在計時）
+                if (timerInterval) clearInterval(timerInterval);
+                
+                // 跳轉到完成頁（攜帶訂單ID）
+                window.location.href = `driver-complete.html?orderId=${currentOrder.id}`;
+            }
+        });
+
+        // 退出登錄
+        logoutBtn.addEventListener('click', () => {
+            if (confirm('確認退出登錄嗎？')) {
+                // 停止計時器（如果正在計時）
+                if (timerInterval) clearInterval(timerInterval);
+                
+                localStorage.removeItem(DRIVER_LOGIN_KEY);
+                window.location.href = 'driver-login.html';
+            }
+        });
+
+        // 頁面關閉時停止計時器
+        window.addEventListener('beforeunload', () => {
+            if (timerInterval) clearInterval(timerInterval);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>訂單詳情 - 多元化乘車管理系統</title>
+    <!-- 引入 Tailwind CSS 簡化樣式 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Font Awesome 圖標 -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- 引入 Mapbox GL JS -->
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel='stylesheet'>
+    <script src='https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js'></script>
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        .detail-card {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+        /* 新增Mapbox地图样式 */
+        #order-map {
+            width: 100%;
+            height: 250px;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
+    </style>
+    <script>
+        // 配置Mapbox Token
+        mapboxgl.accessToken = 'pk.eyJ1IjoiaWY5Mjlob25nIiwiYSI6ImNtamQxczU2cjAweDMzZnM1Z3BvY2JkejgifQ.q-GNcs0rqWrZ3HtjhmysEQ';
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- 頁頭 -->
+    <header class="bg-green-600 text-white py-4 px-6 shadow-md">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <a href="driver-order.html" class="text-white hover:text-gray-100">
+                    <i class="fa fa-arrow-left text-xl"></i>
+                </a>
+                <h1 class="text-xl font-bold">訂單詳情</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <span id="driver-name" class="hidden md:inline-block">您好，司機</span>
+                <button id="logout-btn" class="bg-white text-green-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2">
+                    <i class="fa fa-sign-out"></i>
+                    <span>退出登錄</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要內容 -->
+    <main class="max-w-4xl mx-auto px-4 py-8">
+        <!-- 訂單狀態欄 -->
+        <div class="mb-6 flex justify-between items-center">
+            <h2 class="text-xl font-semibold text-gray-800">訂單編號：<span id="order-id" class="text-green-600"></span></h2>
+            <div id="order-status" class="status-badge bg-blue-100 text-blue-800">
+                進行中
+            </div>
+        </div>
+
+        <!-- 訂單詳情卡片 -->
+        <div class="bg-white rounded-xl p-6 detail-card mb-6">
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- 乘客信息 -->
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <i class="fa fa-user text-blue-500"></i>
+                        乘客信息
+                    </h3>
+                    <div class="space-y-3">
+                        <div>
+                            <span class="text-gray-600 font-medium">姓名：</span>
+                            <span id="passenger-name">-</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600 font-medium">聯繫電話：</span>
+                            <span id="passenger-phone">-</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600 font-medium">乘客人數：</span>
+                            <span id="passenger-count">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 乘車信息 -->
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <i class="fa fa-map-marker text-red-500"></i>
+                        乘車信息
+                    </h3>
+                    <div class="space-y-3">
+                        <div>
+                            <span class="text-gray-600 font-medium">上車地點：</span>
+                            <span id="pickup-location">-</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600 font-medium">下車地點：</span>
+                            <span id="dropoff-location">-</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600 font-medium">預計乘車時間：</span>
+                            <span id="order-time">-</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600 font-medium">接單時間：</span>
+                            <span id="accept-time">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 新增Mapbox地图展示區 -->
+            <div class="mt-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
+                    <i class="fa fa-map text-green-500"></i>
+                    行程地圖
+                </h3>
+                <div id="order-map"></div>
+            </div>
+        </div>
+
+        <!-- 費用信息 -->
+        <div class="bg-white rounded-xl p-6 detail-card mb-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <i class="fa fa-money text-green-500"></i>
+                費用信息
+            </h3>
+            <div class="space-y-3">
+                <div>
+                    <span class="text-gray-600 font-medium">預計金額：</span>
+                    <span id="order-amount" class="text-green-600 font-bold">-</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 操作按鈕區 -->
+        <div class="flex flex-wrap gap-4 justify-center">
+            <button id="arrive-btn" class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2">
+                <i class="fa fa-map-marker"></i>
+                <span>抵達上車點</span>
+            </button>
+            <button id="start-service-btn" class="bg-yellow-600 text-white px-6 py-3 rounded-lg hover:bg-yellow-700 transition-colors flex items-center gap-2">
+                <i class="fa fa-play"></i>
+                <span>開始接駁</span>
+            </button>
+            <button id="complete-order-btn" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
+                <i class="fa fa-check"></i>
+                <span>完成訂單</span>
+            </button>
+            <button id="cancel-order-btn" class="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2">
+                <i class="fa fa-times"></i>
+                <span>取消訂單</span>
+            </button>
+        </div>
+    </main>
+
+    <!-- 操作成功提示 -->
+    <div id="success-toast" class="fixed bottom-6 right-6 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 z-50 hidden">
+        <i class="fa fa-check-circle"></i>
+        <span id="toast-message">操作成功！</span>
+    </div>
+
+    <script>
+        // 核心常量定義
+        const DRIVER_ORDER_KEY = 'driverOrders';
+        const DRIVER_LOGIN_KEY = 'driverLoggedIn';
+        let currentOrder = null; // 當前訂單數據
+        let orderMap = null; // Mapbox地圖實例
+
+        // DOM 元素獲取
+        const driverNameEl = document.getElementById('driver-name');
+        const logoutBtn = document.getElementById('logout-btn');
+        const orderIdEl = document.getElementById('order-id');
+        const orderStatusEl = document.getElementById('order-status');
+        const passengerNameEl = document.getElementById('passenger-name');
+        const passengerPhoneEl = document.getElementById('passenger-phone');
+        const passengerCountEl = document.getElementById('passenger-count');
+        const pickupLocationEl = document.getElementById('pickup-location');
+        const dropoffLocationEl = document.getElementById('dropoff-location');
+        const orderTimeEl = document.getElementById('order-time');
+        const acceptTimeEl = document.getElementById('accept-time');
+        const orderAmountEl = document.getElementById('order-amount');
+        const arriveBtn = document.getElementById('arrive-btn'); // 新增抵達按鈕
+        const startServiceBtn = document.getElementById('start-service-btn');
+        const completeOrderBtn = document.getElementById('complete-order-btn');
+        const cancelOrderBtn = document.getElementById('cancel-order-btn');
+        const successToast = document.getElementById('success-toast');
+        const toastMessage = document.getElementById('toast-message');
+
+        // 初始化頁面
+        window.addEventListener('load', () => {
+            // 1. 驗證司機登錄狀態
+            const loggedInDriver = JSON.parse(localStorage.getItem(DRIVER_LOGIN_KEY));
+            if (!loggedInDriver) {
+                alert('請先登錄司機賬號！');
+                window.location.href = 'driver-login.html';
+                return;
+            }
+            driverNameEl.textContent = `您好，${loggedInDriver.name || '司機'}`;
+
+            // 2. 获取URL中的訂單ID
+            const urlParams = new URLSearchParams(window.location.search);
+            const orderId = urlParams.get('orderId');
+            
+            if (!orderId) {
+                alert('訂單ID不存在，請返回訂單列表！');
+                window.location.href = 'driver-order.html';
+                return;
+            }
+
+            // 3. 加載訂單數據
+            loadOrderData(orderId);
+        });
+
+        // 初始化Mapbox地圖
+        function initOrderMap(pickupAddr, dropoffAddr) {
+            // 默認坐標（台北）
+            const defaultPickup = [121.5654, 25.0330];
+            const defaultDropoff = [121.5700, 25.0400];
+
+            // 創建地圖
+            orderMap = new mapboxgl.Map({
+                container: 'order-map',
+                style: 'mapbox://styles/mapbox/streets-v12',
+                center: defaultPickup,
+                zoom: 14
+            });
+
+            // 添加導航控件
+            orderMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+            // 地圖加載完成後添加標記
+            orderMap.on('load', () => {
+                // 上車點標記（綠色）
+                new mapboxgl.Marker({ color: '#00A86B' })
+                    .setLngLat(defaultPickup)
+                    .setPopup(new mapboxgl.Popup().setHTML(`<b>上車地點</b><br>${pickupAddr}`))
+                    .addTo(orderMap)
+                    .togglePopup();
+
+                // 下車點標記（紅色）
+                new mapboxgl.Marker({ color: '#EF4444' })
+                    .setLngLat(defaultDropoff)
+                    .setPopup(new mapboxgl.Popup().setHTML(`<b>下車地點</b><br>${dropoffAddr}`))
+                    .addTo(orderMap);
+
+                // 繪製路線
+                orderMap.addSource('route', {
+                    type: 'geojson',
+                    data: {
+                        type: 'Feature',
+                        geometry: {
+                            type: 'LineString',
+                            coordinates: [defaultPickup, defaultDropoff]
+                        }
+                    }
+                });
+
+                orderMap.addLayer({
+                    id: 'route',
+                    type: 'line',
+                    source: 'route',
+                    layout: {
+                        'line-join': 'round',
+                        'line-cap': 'round'
+                    },
+                    paint: {
+                        'line-color': '#00A86B',
+                        'line-width': 3
+                    }
+                });
+
+                // 調整視野包含兩個點
+                const bounds = new mapboxgl.LngLatBounds()
+                    .extend(defaultPickup)
+                    .extend(defaultDropoff);
+                orderMap.fitBounds(bounds, { padding: 50 });
+            });
+        }
+
+        // 加載訂單數據
+        function loadOrderData(orderId) {
+            const orders = JSON.parse(localStorage.getItem(DRIVER_ORDER_KEY) || '[]');
+            currentOrder = orders.find(order => order.id === orderId);
+
+            if (!currentOrder) {
+                alert('訂單信息不存在，請返回訂單列表！');
+                window.location.href = 'driver-order.html';
+                return;
+            }
+
+            // 渲染訂單數據到頁面
+            orderIdEl.textContent = currentOrder.id;
+            passengerNameEl.textContent = currentOrder.passengerName || '-';
+            passengerPhoneEl.textContent = currentOrder.passengerPhone || '-';
+            passengerCountEl.textContent = currentOrder.passengerCount || '1人';
+            pickupLocationEl.textContent = currentOrder.pickup || '-';
+            dropoffLocationEl.textContent = currentOrder.dropoff || '-';
+            orderTimeEl.textContent = currentOrder.orderTime || '未設定';
+            acceptTimeEl.textContent = currentOrder.startTime || '未記錄';
+            orderAmountEl.textContent = `NT$ ${currentOrder.amount || 0}`;
+
+            // 初始化地圖
+            initOrderMap(currentOrder.pickup || '未知地點', currentOrder.dropoff || '未知地點');
+
+            // 更新訂單狀態顯示
+            updateOrderStatusDisplay();
+
+            // 根據訂單狀態調整按鈕狀態
+            adjustButtonState();
+        }
+
+        // 更新訂單狀態顯示
+        function updateOrderStatusDisplay() {
+            switch (currentOrder.status) {
+                case 'pending':
+                    orderStatusEl.className = 'status-badge bg-yellow-100 text-yellow-800';
+                    orderStatusEl.textContent = '待接單';
+                    break;
+                case 'active':
+                    orderStatusEl.className = 'status-badge bg-blue-100 text-blue-800';
+                    orderStatusEl.textContent = '進行中';
+                    break;
+                case 'arrived': // 新增抵達狀態
+                    orderStatusEl.className = 'status-badge bg-purple-100 text-purple-800';
+                    orderStatusEl.textContent = '已抵達上車點';
+                    break;
+                case 'serving':
+                    orderStatusEl.className = 'status-badge bg-purple-100 text-purple-800';
+                    orderStatusEl.textContent = '接駁中';
+                    break;
+                case 'completed':
+                    orderStatusEl.className = 'status-badge bg-green-100 text-green-800';
+                    orderStatusEl.textContent = '已完成';
+                    break;
+                case 'cancelled':
+                    orderStatusEl.className = 'status-badge bg-red-100 text-red-800';
+                    orderStatusEl.textContent = '已取消';
+                    break;
+                default:
+                    orderStatusEl.className = 'status-badge bg-gray-100 text-gray-800';
+                    orderStatusEl.textContent = '未知狀態';
+            }
+        }
+
+        // 調整按鈕狀態
+        function adjustButtonState() {
+            // 重置所有按鈕狀態
+            arriveBtn.disabled = false;
+            startServiceBtn.disabled = false;
+            completeOrderBtn.disabled = false;
+            cancelOrderBtn.disabled = false;
+            arriveBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            startServiceBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            completeOrderBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            cancelOrderBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+
+            switch (currentOrder.status) {
+                case 'arrived': // 已抵達上車點
+                    arriveBtn.disabled = true;
+                    arriveBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    break;
+                case 'serving': // 接駁中
+                    arriveBtn.disabled = true;
+                    startServiceBtn.disabled = true;
+                    arriveBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    startServiceBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    break;
+                case 'completed': // 已完成
+                case 'cancelled': // 已取消
+                    arriveBtn.disabled = true;
+                    startServiceBtn.disabled = true;
+                    completeOrderBtn.disabled = true;
+                    cancelOrderBtn.disabled = true;
+                    arriveBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    startServiceBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    completeOrderBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    cancelOrderBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    break;
+            }
+        }
+
+        // 顯示提示框
+        function showToast(message) {
+            toastMessage.textContent = message;
+            successToast.classList.remove('hidden');
+            
+            // 3秒後隱藏
+            setTimeout(() => {
+                successToast.classList.add('hidden');
+            }, 3000);
+        }
+
+        // 新增：抵達上車點操作（跳轉計費頁）
+        arriveBtn.addEventListener('click', () => {
+            if (!currentOrder) return;
+
+            if (confirm('確認已抵達乘客上車點？將進入計費頁面！')) {
+                const orders = JSON.parse(localStorage.getItem(DRIVER_ORDER_KEY) || '[]');
+                const orderIndex = orders.findIndex(order => order.id === currentOrder.id);
+                
+                if (orderIndex !== -1) {
+                    // 更新訂單狀態為「已抵達上車點」
+                    orders[orderIndex].status = 'arrived';
+                    orders[orderIndex].arriveTime = new Date().toLocaleString('zh-TW');
+                    localStorage.setItem(DRIVER_ORDER_KEY, JSON.stringify(orders));
+                    
+                    // 跳轉到計費頁面（傳遞訂單ID）
+                    window.location.href = `driver-meter.html?orderId=${currentOrder.id}`;
+                }
+            }
+        });
+
+        // 開始接駁操作
+        startServiceBtn.addEventListener('click', () => {
+            if (!currentOrder) return;
+
+            if (confirm('確認開始接駁乘客嗎？')) {
+                const orders = JSON.parse(localStorage.getItem(DRIVER_ORDER_KEY) || '[]');
+                const orderIndex = orders.findIndex(order => order.id === currentOrder.id);
+                
+                if (orderIndex !== -1) {
+                    // 更新訂單狀態為「接駁中」
+                    orders[orderIndex].status = 'serving';
+                    orders[orderIndex].serviceStartTime = new Date().toLocaleString('zh-TW');
+                    localStorage.setItem(DRIVER_ORDER_KEY, JSON.stringify(orders));
+                    
+                    // 更新當前訂單數據
+                    currentOrder = orders[orderIndex];
+                    
+                    // 刷新頁面顯示
+                    updateOrderStatusDisplay();
+                    adjustButtonState();
+                    
+                    // 顯示成功提示
+                    showToast('已開始接駁乘客！');
+                }
+            }
+        });
+
+        // 完成訂單操作
+        completeOrderBtn.addEventListener('click', () => {
+            if (!currentOrder) return;
+
+            if (confirm('確認完成此訂單嗎？完成後將無法修改！')) {
+                const orders = JSON.parse(localStorage.getItem(DRIVER_ORDER_KEY) || '[]');
+                const orderIndex = orders.findIndex(order => order.id === currentOrder.id);
+                
+                if (orderIndex !== -1) {
+                    // 更新訂單狀態為「已完成」
+                    orders[orderIndex].status = 'completed';
+                    orders[orderIndex].finishTime = new Date().toLocaleString('zh-TW');
+                    localStorage.setItem(DRIVER_ORDER_KEY, JSON.stringify(orders));
+                    
+                    // 更新當前訂單數據
+                    currentOrder = orders[orderIndex];
+                    
+                    // 刷新頁面顯示
+                    updateOrderStatusDisplay();
+                    adjustButtonState();
+                    
+                    // 顯示成功提示
+                    showToast('訂單已完成！');
+                }
+            }
+        });
+
+        // 取消訂單操作
+        cancelOrderBtn.addEventListener('click', () => {
+            if (!currentOrder) return;
+
+            const cancelReason = prompt('請輸入取消訂單的原因：', '');
+            if (!cancelReason) return; // 用戶取消輸入
+            
+            if (confirm(`確認取消訂單？原因：${cancelReason}`)) {
+                const orders = JSON.parse(localStorage.getItem(DRIVER_ORDER_KEY) || '[]');
+                const orderIndex = orders.findIndex(order => order.id === currentOrder.id);
+                
+                if (orderIndex !== -1) {
+                    // 更新訂單狀態為「已取消」
+                    orders[orderIndex].status = 'cancelled';
+                    orders[orderIndex].cancelReason = cancelReason;
+                    orders[orderIndex].cancelTime = new Date().toLocaleString('zh-TW');
+                    localStorage.setItem(DRIVER_ORDER_KEY, JSON.stringify(orders));
+                    
+                    // 更新當前訂單數據
+                    currentOrder = orders[orderIndex];
+                    
+                    // 刷新頁面顯示
+                    updateOrderStatusDisplay();
+                    adjustButtonState();
+                    
+                    // 顯示成功提示
+                    showToast('訂單已取消！');
+                }
+            }
+        });
+
+        // 退出登錄
+        logoutBtn.addEventListener('click', () => {
+            if (confirm('確認退出登錄嗎？')) {
+                localStorage.removeItem(DRIVER_LOGIN_KEY);
+                window.location.href = 'driver-login.html';
+            }
+        });
+    </script>
+</body>
+</html>
