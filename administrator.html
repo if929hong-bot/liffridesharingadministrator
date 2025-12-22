@@ -3,644 +3,557 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>超級管理員後台</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    /* 全域樣式 */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: "Microsoft JhengHei", sans-serif;
-      color: #333;
-    }
-    body {
-      background: #f0f2f5;
-      display: flex;
-      min-height: 100vh;
-    }
+  <title>搭車自由 - 超級管理員後台</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js"></script>
 
-    /* 左側菜單 */
-    .sidebar {
-      width: 220px;
-      background: #228B22;
-      padding: 1.5rem 0;
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#00A86B',
+            secondary: '#1E40AF',
+          },
+        },
+      }
     }
-    .sidebar h2 {
-      color: #fff;
-      text-align: center;
-      font-size: 1.2rem;
-      margin-bottom: 2.5rem;
-      padding: 0 1rem;
-    }
-    .sidebar .menu {
-      list-style: none;
-    }
-    .sidebar .menu > li {
-      margin-bottom: 0.3rem;
-    }
-    .sidebar .menu > li > a {
-      display: block;
-      color: #fff;
-      text-decoration: none;
-      padding: 1rem 1.8rem;
-      font-size: 1rem;
-      transition: background 0.2s;
-    }
-    .sidebar .menu > li > a:hover, 
-    .sidebar .menu > li > a.active {
-      background: #1E7D1E;
-    }
-    .sidebar .menu i {
-      color: #fff;
-      margin-right: 0.8rem;
-      width: 18px;
-      text-align: center;
-    }
-    .submenu {
-      list-style: none;
-      background: #006400;
-    }
-    .submenu li a {
-      display: block;
-      color: #fff;
-      text-decoration: none;
-      padding: 0.8rem 2.5rem;
-      font-size: 0.95rem;
-    }
-    .submenu li a:hover {
-      background: #004d00;
-    }
+  </script>
 
-    /* 主內容 */
-    .main-content {
-      flex: 1;
-      padding: 2.5rem;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-    .card {
-      background: #fff;
-      border: 1px solid #e0e0e0;
-      border-radius: 0.5rem;
-      padding: 2rem;
-      margin-bottom: 2rem;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-    }
-    .card h3 {
-      font-size: 1.25rem;
-      margin-bottom: 1.5rem;
-      padding-bottom: 0.8rem;
-      border-bottom: 1px solid #e0e0e0;
-    }
-
-    /* 表單與搜尋樣式 */
-    .search-group {
-      margin-bottom: 1.5rem;
-      display: flex;
-      gap: 1rem;
-    }
-    .search-input {
-      padding: 0.8rem;
-      border: 1px solid #ccc;
-      border-radius: 0.3rem;
-      font-size: 1rem;
-      flex: 1;
-    }
-    .search-btn {
-      padding: 0.8rem 1.5rem;
-      background: #008000;
-      color: #fff;
-      border: none;
-      border-radius: 0.3rem;
-      cursor: pointer;
-      font-size: 1rem;
-    }
-    .reject-btn {
-      padding: 0.8rem 1.5rem;
-      background: #dc3545;
-      color: #fff;
-      border: none;
-      border-radius: 0.3rem;
-      cursor: pointer;
-      font-size: 1rem;
-      margin-left: 0.5rem;
-    }
-    .delete-btn {
-      padding: 0.8rem 1.5rem;
-      background: #ff6347;
-      color: #fff;
-      border: none;
-      border-radius: 0.3rem;
-      cursor: pointer;
-      font-size: 1rem;
-      margin-left: 0.5rem;
-    }
-
-    /* 列表樣式 */
-    .table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 1.5rem;
-    }
-    .table th, .table td {
-      padding: 1rem;
-      border: 1px solid #e0e0e0;
-      text-align: left;
-      font-size: 0.95rem;
-    }
-    .table th {
-      background: #f8f8f8;
-      font-weight: 600;
-    }
-    .empty-tip {
-      text-align: center;
-      color: #666;
-      padding: 2rem;
-      font-size: 1rem;
-    }
-
-    /* 隱藏面板 */
-    .panel {
-      display: none;
-    }
-    .panel.active {
-      display: block;
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .btn-primary { @apply bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary/90 transition-colors; }
+      .btn-secondary { @apply bg-secondary text-white py-2 px-4 rounded-lg hover:bg-secondary/90 transition-colors; }
+      .card { @apply bg-white rounded-xl shadow-md p-4 mb-4; }
+      .modal { @apply fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4; }
+      .modal-content { @apply bg-white rounded-xl p-6 w-full max-w-md; }
+      .input-field { @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50; }
     }
   </style>
 </head>
-<body>
-  <!-- 左側菜單 -->
-  <aside class="sidebar">
-    <h2>超級管理員</h2>
-    <ul class="menu">
-      <li>
-        <a href="#price-setting" data-panel="price-setting">租金價格設定</a>
-      </li>
-      <li>
-        <a href="#bank-setting" data-panel="bank-setting">銀行帳戶設定</a>
-      </li>
-      <li>
-        <a href="#payment-records" data-panel="payment-records">繳費紀錄查看</a>
-      </li>
-      <li>
-        <a href="#fleet-register-apply" data-panel="fleet-register-apply">車隊管理員註冊申請</a>
-      </li>
-      <li>
-        <a href="#fleet-manager" data-panel="fleet-manager">車隊管理員列表管理</a>
-      </li>
-      <li>
-        <a href="#data-library" data-panel="data-library">資料圖庫</a>
-      </li>
-    </ul>
-  </aside>
+<body class="bg-gray-50 font-sans min-h-screen">
+  <header class="bg-white shadow-md py-4 px-6">
+    <div class="container mx-auto flex justify-between items-center">
+      <h1 class="text-xl font-bold text-primary flex items-center">
+        <<i class="fa fa-cogs mr-2"></</i> 搭車自由 - 超級管理員後台
+      </h1>
+      <button id="logout-btn" class="text-gray-600 hover:text-red-500 transition-colors">
+        <<i class="fa fa-sign-out mr-1"></</i> 退出登錄
+      </button>
+    </div>
+  </header>
 
-  <!-- 主內容區 -->
-  <main class="main-content">
-    <!-- 1. 租金價格設定面板 -->
-    <section id="price-setting" class="panel card">
-      <h3>租金價格設定</h3>
-      <div class="form-group" style="margin-bottom:1.5rem;">
-        <label style="display:block; margin-bottom:0.5rem; font-size:1rem;">月繳單價（NT$）</label>
-        <input type="number" id="monthly-price" class="search-input" placeholder="請輸入月繳單價" min="1" required>
-      </div>
-      <div class="form-group" style="margin-bottom:1.5rem;">
-        <label style="display:block; margin-bottom:0.5rem; font-size:1rem;">季繳單價（NT$）</label>
-        <input type="number" id="quarterly-price" class="search-input" placeholder="請輸入季繳單價" min="1" required>
-      </div>
-      <div class="form-group" style="margin-bottom:1.5rem;">
-        <label style="display:block; margin-bottom:0.5rem; font-size:1rem;">半年繳單價（NT$）</label>
-        <input type="number" id="halfyear-price" class="search-input" placeholder="請輸入半年繳單價" min="1" required>
-      </div>
-      <div class="form-group" style="margin-bottom:1.5rem;">
-        <label style="display:block; margin-bottom:0.5rem; font-size:1rem;">年繳單價（NT$）</label>
-        <input type="number" id="yearly-price" class="search-input" placeholder="請輸入年繳單價" min="1" required>
-      </div>
-      <button class="search-btn" id="save-price">儲存價格設定</button>
-    </section>
+  <main class="container mx-auto px-4 py-8">
+    <!-- 導航標籤 -->
+    <div class="flex border-b border-gray-200 mb-6">
+      <button id="tab-orders" class="px-4 py-2 font-medium text-primary border-b-2 border-primary">所有訂單</button>
+      <button id="tab-teams" class="px-4 py-2 font-medium text-gray-500 hover:text-primary transition-colors">車隊管理</button>
+      <button id="tab-drivers" class="px-4 py-2 font-medium text-gray-500 hover:text-primary transition-colors">司機管理</button>
+    </div>
 
-    <!-- 2. 銀行帳戶設定面板（新增銀行分行欄位） -->
-    <section id="bank-setting" class="panel card">
-      <h3>銀行帳戶設定</h3>
-      <div class="form-group" style="margin-bottom:1.5rem;">
-        <label style="display:block; margin-bottom:0.5rem; font-size:1rem;">銀行名稱 <span style="color:red">*</span></label>
-        <input type="text" id="bank-name" class="search-input" placeholder="請輸入銀行名稱" required>
+    <!-- 1. 所有訂單頁面 -->
+    <div id="page-orders" class="block">
+      <div class="card mb-6">
+        <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+          <h2 class="text-lg font-bold">訂單篩選</h2>
+          <div class="flex flex-wrap gap-3">
+            <!-- 新增：車隊篩選下拉框 -->
+            <select id="filter-team" class="input-field w-full md:w-auto">
+              <option value="">所有車隊</option>
+              <!-- 後端動態填充車隊選項 -->
+            </select>
+            <!-- 狀態篩選 -->
+            <select id="filter-status" class="input-field w-full md:w-auto">
+              <option value="">所有狀態</option>
+              <option value="待接單">待接單</option>
+              <option value="已接單">已接單</option>
+              <option value="已完成">已完成</option>
+              <option value="已取消">已取消</option>
+            </select>
+            <button id="refresh-orders" class="btn-primary w-full md:w-auto">
+              <<i class="fa fa-refresh mr-1"></</i> 刷新
+            </button>
+          </div>
+        </div>
       </div>
-      <div class="form-group" style="margin-bottom:1.5rem;">
-        <label style="display:block; margin-bottom:0.5rem; font-size:1rem;">銀行分行 <span style="color:red">*</span></label>
-        <input type="text" id="bank-branch" class="search-input" placeholder="請輸入銀行分行（例如：台北信義分行）" required>
-      </div>
-      <div class="form-group" style="margin-bottom:1.5rem;">
-        <label style="display:block; margin-bottom:0.5rem; font-size:1rem;">戶名 <span style="color:red">*</span></label>
-        <input type="text" id="bank-account-name" class="search-input" placeholder="請輸入戶名" required>
-      </div>
-      <div class="form-group" style="margin-bottom:1.5rem;">
-        <label style="display:block; margin-bottom:0.5rem; font-size:1rem;">銀行帳號 <span style="color:red">*</span></label>
-        <input type="text" id="bank-account-number" class="search-input" placeholder="請輸入銀行帳號" required>
-      </div>
-      <button class="search-btn" id="save-bank">儲存銀行帳戶</button>
-    </section>
 
-    <!-- 3. 繳費紀錄查看面板 -->
-    <section id="payment-records" class="panel card">
-      <h3>繳費紀錄查看</h3>
-      <div class="search-group">
-        <input type="text" id="search-payment" class="search-input" placeholder="搜尋車隊/金額">
-        <button class="search-btn" id="search-payment-btn">搜尋</button>
+      <!-- 訂單列表 -->
+      <div id="orders-list" class="card">
+        <p class="text-gray-500 text-center py-8">加載中...請稍候</p>
       </div>
-      <table class="table">
-        <thead>
-          <tr>
-            <th>車隊名稱</th>
-            <th>繳費週期</th>
-            <th>總金額（NT$）</th>
-          </tr>
-        </thead>
-        <tbody id="payment-records-list">
-          <tr><td colspan="3" class="empty-tip">無繳費紀錄</td></tr>
-        </tbody>
-      </table>
-    </section>
+    </div>
 
-    <!-- 4. 車隊管理員註冊申請面板 -->
-    <section id="fleet-register-apply" class="panel card">
-      <h3>車隊管理員註冊申請</h3>
-      <div class="search-group">
-        <input type="text" id="search-register-apply" class="search-input" placeholder="搜尋車隊名稱／管理員／帳號">
+    <!-- 2. 車隊管理頁面 -->
+    <div id="page-teams" class="hidden">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-lg font-bold">車隊管理</h2>
+        <button id="add-team-btn" class="btn-secondary">
+          <<i class="fa fa-plus mr-1"></</i> 新增車隊
+        </button>
       </div>
-      <table class="table">
-        <thead>
-          <tr>
-            <th>車隊名稱</th>
-            <th>管理員姓名</th>
-            <th>聯繫電話</th>
-            <th>信箱</th>
-            <th>帳號</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody id="register-apply-list">
-          <tr><td colspan="6" class="empty-tip">目前沒有待審核的註冊申請</td></tr>
-        </tbody>
-      </table>
-    </section>
 
-    <!-- 5. 車隊管理員列表管理面板 -->
-    <section id="fleet-manager" class="panel card">
-      <h3>車隊管理員列表管理</h3>
-      <div class="search-group">
-        <input type="text" id="search-fleet-manager" class="search-input" placeholder="搜尋車隊名稱／管理員／電話">
-        <select id="filter-fleet-status" class="search-input" style="max-width:200px;">
-          <option value="all">全部狀態</option>
-          <option value="active">正常</option>
-          <option value="suspended">停權</option>
-        </select>
+      <!-- 車隊列表 -->
+      <div id="teams-list" class="card">
+        <p class="text-gray-500 text-center py-8">加載中...請稍候</p>
       </div>
-      <table class="table">
-        <thead>
-          <tr>
-            <th>車隊名稱</th>
-            <th>管理員姓名</th>
-            <th>聯繫電話</th>
-            <th>信箱</th>
-            <th>帳號</th>
-            <th>密碼</th>
-            <th>狀態</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody id="fleet-manager-list">
-          <tr><td colspan="8" class="empty-tip">目前沒有任何車隊管理員資料</td></tr>
-        </tbody>
-      </table>
-    </section>
 
-    <!-- 6. 資料圖庫面板 -->
-    <section id="data-library" class="panel card">
-      <h3>資料圖庫</h3>
-      <div class="search-group">
-        <input type="text" class="search-input" placeholder="搜尋繳費紀錄">
-        <button class="search-btn">搜尋</button>
+      <!-- 車隊連結生成器（新增） -->
+      <div class="card mt-4">
+        <h3 class="font-medium mb-3">車隊LIFF連結生成</h3>
+        <div class="flex flex-col gap-3">
+          <div>
+            <label class="block text-sm text-gray-700 mb-1">選擇車隊</label>
+            <select id="generate-team" class="input-field">
+              <option value="">請選擇車隊</option>
+              <!-- 後端動態填充車隊選項 -->
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm text-gray-700 mb-1">基礎域名（不可修改）</label>
+            <input type="text" id="base-domain" value="https://你的域名/" class="input-field" readonly>
+          </div>
+          <div>
+            <label class="block text-sm text-gray-700 mb-1">生成的連結</label>
+            <div class="flex">
+              <input type="text" id="generated-link" class="input-field rounded-r-none" readonly>
+              <button id="copy-link" class="bg-gray-200 px-3 rounded-l-none hover:bg-gray-300 transition-colors">
+                <<i class="fa fa-copy"></</i>
+              </button>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">
+              乘客連結：直接分發給乘客<br>
+              司機連結：在後面加 <code>?team=車隊ID</code>（如：https://你的域名/driver-order.html?team=A）
+            </p>
+          </div>
+        </div>
       </div>
-      <table class="table">
-        <thead>
-          <tr>
-            <th>車隊名稱</th>
-            <th>繳費紀錄檔案</th>
-            <th>上傳時間</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td colspan="4" class="empty-tip">無上傳的繳費紀錄</td></tr>
-        </tbody>
-      </table>
-    </section>
+    </div>
+
+    <!-- 3. 司機管理頁面（保留原功能，可選） -->
+    <div id="page-drivers" class="hidden">
+      <div class="card">
+        <p class="text-gray-500 text-center py-8">司機管理功能（可根據需求擴充）</p>
+      </div>
+    </div>
   </main>
 
-  <script>
-    // 儲存鍵名定義（新增 approvedFleetAdmins 鍵，與 index.html 登錄驗證對應）
-    const PRICE_KEY = 'carRentalPrice';
-    const BANK_KEY = 'carRentalBank';
-    const PAYMENT_KEY = 'carRentalPayment';
-    const FLEET_REGISTER_KEY = 'fleetManagers'; 
-    const FLEET_ADMIN_KEY = 'fleetAdminList';    
-    const APPROVED_FLEET_ADMINS_KEY = 'approvedFleetAdmins'; // 登錄驗證用的已審核列表
+  <!-- 新增車隊彈窗 -->
+  <div id="add-team-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-bold">新增車隊</h3>
+        <button id="close-add-modal" class="text-gray-500 hover:text-gray-700">
+          <<i class="fa fa-times"></</i>
+        </button>
+      </div>
+      <form id="add-team-form" class="space-y-4">
+        <div>
+          <label class="block text-sm text-gray-700 mb-1">車隊ID（必填，如A、B、C）</label>
+          <input type="text" id="team-id" class="input-field" placeholder="輸入車隊ID（只能包含字母/數字）" required pattern="[A-Za-z0-9]+">
+          <p class="text-xs text-gray-500 mt-1">車隊ID用於URL參數（如?team=A），不可重複</p>
+        </div>
+        <div>
+          <label class="block text-sm text-gray-700 mb-1">車隊名稱（必填）</label>
+          <input type="text" id="team-name" class="input-field" placeholder="輸入車隊名稱（如A車隊）" required>
+        </div>
+        <div>
+          <label class="block text-sm text-gray-700 mb-1">車隊描述（可選）</label>
+          <textarea id="team-desc" class="input-field" rows="2" placeholder="輸入車隊描述"></textarea>
+        </div>
+        <button type="submit" class="btn-secondary w-full">確認新增</button>
+      </form>
+    </div>
+  </div>
 
-    // 1. 左側菜單切換主面板
-    document.querySelectorAll('.menu > li > a').forEach(link => {
-      link.addEventListener('click', (e) => {
+  <!-- 編輯車隊彈窗 -->
+  <div id="edit-team-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-bold">編輯車隊</h3>
+        <button id="close-edit-modal" class="text-gray-500 hover:text-gray-700">
+          <<i class="fa fa-times"></</i>
+        </button>
+      </div>
+      <form id="edit-team-form" class="space-y-4">
+        <div>
+          <label class="block text-sm text-gray-700 mb-1">車隊ID（不可修改）</label>
+          <input type="text" id="edit-team-id" class="input-field" readonly>
+        </div>
+        <div>
+          <label class="block text-sm text-gray-700 mb-1">車隊名稱（必填）</label>
+          <input type="text" id="edit-team-name" class="input-field" placeholder="輸入車隊名稱" required>
+        </div>
+        <div>
+          <label class="block text-sm text-gray-700 mb-1">車隊描述（可選）</label>
+          <textarea id="edit-team-desc" class="input-field" rows="2" placeholder="輸入車隊描述"></textarea>
+        </div>
+        <div class="flex gap-3">
+          <button type="submit" class="btn-secondary flex-1">確認修改</button>
+          <button type="button" id="delete-team-btn" class="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition-colors">
+            <<i class="fa fa-trash mr-1"></</i> 刪除車隊
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Firebase配置（替換為你的真實配置）
+    const firebaseConfig = {
+      apiKey: "你的API Key",
+      authDomain: "你的Auth Domain",
+      databaseURL: "你的Database URL",
+      projectId: "你的Project ID",
+      storageBucket: "你的Storage Bucket",
+      messagingSenderId: "你的Sender ID",
+      appId: "你的App ID"
+    };
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.database();
+
+    // 全局變量
+    let currentEditingTeam = ''; // 當前編輯的車隊ID
+
+    // ========== 1. 頁面切換邏輯 ==========
+    function initTabSwitch() {
+      const tabs = ['tab-orders', 'tab-teams', 'tab-drivers'];
+      const pages = ['page-orders', 'page-teams', 'page-drivers'];
+      
+      tabs.forEach((tabId, index) => {
+        document.getElementById(tabId).addEventListener('click', () => {
+          // 切換標籤樣式
+          tabs.forEach(id => {
+            document.getElementById(id).classList.remove('text-primary', 'border-b-2', 'border-primary');
+            document.getElementById(id).classList.add('text-gray-500');
+          });
+          document.getElementById(tabId).classList.remove('text-gray-500');
+          document.getElementById(tabId).classList.add('text-primary', 'border-b-2', 'border-primary');
+          
+          // 切換頁面
+          pages.forEach(pageId => {
+            document.getElementById(pageId).classList.add('hidden');
+          });
+          document.getElementById(pages[index]).classList.remove('hidden');
+          
+          // 加載對應頁面數據
+          if (tabId === 'tab-teams') loadAllTeams();
+          if (tabId === 'tab-orders') loadAllOrders();
+        });
+      });
+    }
+
+    // ========== 2. 車隊管理核心功能 ==========
+    // 加載所有車隊
+    function loadAllTeams() {
+      const teamsListEl = document.getElementById('teams-list');
+      teamsListEl.innerHTML = '<p class="text-gray-500 text-center py-8">加載中...請稍候</p>';
+      
+      // 從Firebase讀取車隊數據（儲存在 teams 節點）
+      db.ref('teams').on('value', (snapshot) => {
+        const teams = snapshot.val() || {};
+        const teamIds = Object.keys(teams);
+        
+        if (teamIds.length === 0) {
+          teamsListEl.innerHTML = '<p class="text-gray-500 text-center py-8">暫無車隊，點擊「新增車隊」創建</p>';
+        } else {
+          let html = `
+            <div class="grid grid-cols-1 md:grid-cols-4 font-medium py-2 border-b">
+              <div>車隊ID</div>
+              <div>車隊名稱</div>
+              <div>描述</div>
+              <div>操作</div>
+            </div>
+          `;
+          
+          teamIds.forEach(teamId => {
+            const team = teams[teamId];
+            html += `
+              <div class="grid grid-cols-1 md:grid-cols-4 py-3 border-b items-center">
+                <div class="font-medium">${teamId}</div>
+                <div>${team.name || '未設置'}</div>
+                <div class="text-sm text-gray-600">${team.desc || '無'}</div>
+                <div>
+                  <button onclick="editTeam('${teamId}')" class="text-blue-500 hover:text-blue-700 mr-3">
+                    <<i class="fa fa-edit"></</i> 編輯
+                  </button>
+                </div>
+              </div>
+            `;
+          });
+          
+          teamsListEl.innerHTML = html;
+        }
+        
+        // 更新「車隊篩選」和「連結生成器」的下拉框
+        updateTeamSelects(teams);
+      });
+    }
+
+    // 更新所有車隊下拉框（訂單篩選、連結生成器）
+    function updateTeamSelects(teams) {
+      const filterTeamEl = document.getElementById('filter-team');
+      const generateTeamEl = document.getElementById('generate-team');
+      const teamIds = Object.keys(teams);
+      
+      // 清空選項（保留默認選項）
+      filterTeamEl.innerHTML = '<option value="">所有車隊</option>';
+      generateTeamEl.innerHTML = '<option value="">請選擇車隊</option>';
+      
+      // 動態添加車隊選項
+      teamIds.forEach(teamId => {
+        const team = teams[teamId];
+        const option = `<option value="${teamId}">${team.name || teamId}</option>`;
+        filterTeamEl.innerHTML += option;
+        generateTeamEl.innerHTML += option;
+      });
+    }
+
+    // 新增車隊
+    function initAddTeam() {
+      const addModal = document.getElementById('add-team-modal');
+      document.getElementById('add-team-btn').addEventListener('click', () => {
+        document.getElementById('add-team-form').reset();
+        addModal.classList.remove('hidden');
+      });
+      
+      // 關閉彈窗
+      document.getElementById('close-add-modal').addEventListener('click', () => {
+        addModal.classList.add('hidden');
+      });
+      
+      // 提交新增表單
+      document.getElementById('add-team-form').addEventListener('submit', (e) => {
         e.preventDefault();
-        document.querySelectorAll('.menu > li > a').forEach(a => a.classList.remove('active'));
-        document.querySelectorAll('.panel').forEach(panel => panel.classList.remove('active'));
-        link.classList.add('active');
-        const panelId = link.getAttribute('data-panel');
-        document.getElementById(panelId).classList.add('active');
-        if (panelId === 'fleet-register-apply') loadRegisterApply();
-        if (panelId === 'fleet-manager') {
-          loadFleetAdmins();
-          syncApprovedFleetAdmins(); // 切換到列表時同步登錄驗證列表
+        const teamId = document.getElementById('team-id').value.trim().toUpperCase(); // 統一轉大寫
+        const teamName = document.getElementById('team-name').value.trim();
+        const teamDesc = document.getElementById('team-desc').value.trim();
+        
+        // 檢查車隊ID是否已存在
+        db.ref(`teams/${teamId}`).once('value', (snapshot) => {
+          if (snapshot.exists()) {
+            alert(`車隊ID「${teamId}」已存在，請更換其他ID`);
+            return;
+          }
+          
+          // 存入Firebase
+          db.ref(`teams/${teamId}`).set({
+            name: teamName,
+            desc: teamDesc,
+            createTime: new Date().toLocaleString('zh-TW')
+          }).then(() => {
+            alert('車隊新增成功！');
+            addModal.classList.add('hidden');
+          }).catch(err => {
+            console.error('新增車隊失敗:', err);
+            alert('新增車隊失敗，請稍後重試');
+          });
+        });
+      });
+    }
+
+    // 編輯車隊
+    function editTeam(teamId) {
+      const editModal = document.getElementById('edit-team-modal');
+      currentEditingTeam = teamId;
+      
+      // 讀取車隊數據並填充表單
+      db.ref(`teams/${teamId}`).once('value', (snapshot) => {
+        const team = snapshot.val() || {};
+        document.getElementById('edit-team-id').value = teamId;
+        document.getElementById('edit-team-name').value = team.name || '';
+        document.getElementById('edit-team-desc').value = team.desc || '';
+        editModal.classList.remove('hidden');
+      });
+    }
+
+    // 關閉編輯彈窗
+    document.getElementById('close-edit-modal').addEventListener('click', () => {
+      document.getElementById('edit-team-modal').classList.add('hidden');
+    });
+
+    // 提交編輯表單
+    document.getElementById('edit-team-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const teamId = currentEditingTeam;
+      const teamName = document.getElementById('edit-team-name').value.trim();
+      const teamDesc = document.getElementById('edit-team-desc').value.trim();
+      
+      // 更新車隊數據
+      db.ref(`teams/${teamId}`).update({
+        name: teamName,
+        desc: teamDesc,
+        updateTime: new Date().toLocaleString('zh-TW')
+      }).then(() => {
+        alert('車隊修改成功！');
+        document.getElementById('edit-team-modal').classList.add('hidden');
+      }).catch(err => {
+        console.error('修改車隊失敗:', err);
+        alert('修改車隊失敗，請稍後重試');
+      });
+    });
+
+    // 刪除車隊
+    document.getElementById('delete-team-btn').addEventListener('click', () => {
+      const teamId = currentEditingTeam;
+      if (!confirm(`確定要刪除車隊「${teamId}」嗎？刪除後無法恢復！`)) return;
+      
+      // 先檢查該車隊是否有訂單（避免數據殘留）
+      db.ref('activeOrders').orderByChild('teamId').equalTo(teamId).once('value', (snapshot) => {
+        if (snapshot.exists()) {
+          alert(`車隊「${teamId}」仍有訂單，請先處理完訂單再刪除`);
+          return;
+        }
+        
+        // 刪除車隊
+        db.ref(`teams/${teamId}`).remove().then(() => {
+          alert('車隊刪除成功！');
+          document.getElementById('edit-team-modal').classList.add('hidden');
+        }).catch(err => {
+          console.error('刪除車隊失敗:', err);
+          alert('刪除車隊失敗，請稍後重試');
+        });
+      });
+    });
+
+    // 生成車隊LIFF連結
+    function initLinkGenerator() {
+      const generateTeamEl = document.getElementById('generate-team');
+      const baseDomainEl = document.getElementById('base-domain');
+      const generatedLinkEl = document.getElementById('generated-link');
+      
+      generateTeamEl.addEventListener('change', () => {
+        const teamId = generateTeamEl.value;
+        if (!teamId) {
+          generatedLinkEl.value = '';
+          return;
+        }
+        // 生成乘客端連結（司機端需手動加 ?team=車隊ID）
+        generatedLinkEl.value = `${baseDomainEl.value}index.html?team=${teamId}`;
+      });
+      
+      // 複製連結
+      document.getElementById('copy-link').addEventListener('click', () => {
+        const link = generatedLinkEl.value;
+        if (!link) {
+          alert('請先選擇車隊生成連結');
+          return;
+        }
+        generatedLinkEl.select();
+        document.execCommand('copy');
+        alert('連結複製成功！');
+      });
+    }
+
+    // ========== 3. 訂單管理（新增車隊篩選） ==========
+    function loadAllOrders() {
+      const ordersListEl = document.getElementById('orders-list');
+      ordersListEl.innerHTML = '<p class="text-gray-500 text-center py-8">加載中...請稍候</p>';
+      
+      // 獲取篩選條件
+      const filterTeam = document.getElementById('filter-team').value;
+      const filterStatus = document.getElementById('filter-status').value;
+      
+      // 從Firebase讀取訂單（根據篩選條件過濾）
+      let ordersRef = db.ref('activeOrders');
+      
+      // 車隊篩選
+      if (filterTeam) {
+        ordersRef = ordersRef.orderByChild('teamId').equalTo(filterTeam);
+      }
+      
+      ordersRef.on('value', (snapshot) => {
+        const orders = snapshot.val() || {};
+        const orderIds = Object.keys(orders);
+        
+        if (orderIds.length === 0) {
+          ordersListEl.innerHTML = '<p class="text-gray-500 text-center py-8">暫無訂單</p>';
+          return;
+        }
+        
+        // 狀態篩選（前端二次過濾）
+        const filteredOrderIds = filterStatus 
+          ? orderIds.filter(id => orders[id].status === filterStatus)
+          : orderIds;
+        
+        if (filteredOrderIds.length === 0) {
+          ordersListEl.innerHTML = `<p class="text-gray-500 text-center py-8">暫無「${filterStatus || '所有'}」狀態的訂單</p>`;
+          return;
+        }
+        
+        // 渲染訂單列表
+        let html = `
+          <div class="grid grid-cols-1 md:grid-cols-6 font-medium py-2 border-b">
+            <div>訂單ID</div>
+            <div>車隊</div>
+            <div>乘客信息</div>
+            <div>上下車地點</div>
+            <div>狀態</div>
+            <div>時間</div>
+          </div>
+        `;
+        
+        filteredOrderIds.forEach(orderId => {
+          const order = orders[orderId];
+          const statusClass = {
+            '待接單': 'text-yellow-500',
+            '已接單': 'text-blue-500',
+            '已完成': 'text-green-500',
+            '已取消': 'text-red-500'
+          }[order.status || '待接單'];
+          
+          html += `
+            <div class="grid grid-cols-1 md:grid-cols-6 py-3 border-b items-center">
+              <div class="font-medium">${order.orderId || orderId}</div>
+              <div>${order.teamId || '未綁定'}</div>
+              <div class="text-sm">
+                ${order.name || '未知'}<br>
+                ${order.phone || '未知'}
+              </div>
+              <div class="text-sm">
+                上：${order.pickup || '未知'}<br>
+                下：${order.dropoff || '未知'}
+              </div>
+              <div class="${statusClass}">${order.status || '待接單'}</div>
+              <div class="text-sm text-gray-600">${order.createTime || '未知'}</div>
+            </div>
+          `;
+        });
+        
+        ordersListEl.innerHTML = html;
+      });
+    }
+
+    // 刷新訂單
+    document.getElementById('refresh-orders').addEventListener('click', loadAllOrders);
+
+    // 訂單狀態篩選
+    document.getElementById('filter-status').addEventListener('change', loadAllOrders);
+
+    // 車隊篩選（新增）
+    document.getElementById('filter-team').addEventListener('change', loadAllOrders);
+
+    // ========== 4. 初始化所有功能 ==========
+    document.addEventListener('DOMContentLoaded', () => {
+      initTabSwitch();
+      initAddTeam();
+      initLinkGenerator();
+      loadAllOrders(); // 默認加載訂單
+      loadAllTeams();  // 預加載車隊數據（用於篩選）
+      
+      // 退出登錄（可根據需求實現）
+      document.getElementById('logout-btn').addEventListener('click', () => {
+        if (confirm('確定要退出登錄嗎？')) {
+          window.location.href = '../index.html';
         }
       });
     });
 
-    // 2. 租金價格設定
-    document.getElementById('save-price').addEventListener('click', () => {
-      const priceData = {
-        monthly: Number(document.getElementById('monthly-price').value),
-        quarterly: Number(document.getElementById('quarterly-price').value),
-        halfyear: Number(document.getElementById('halfyear-price').value),
-        yearly: Number(document.getElementById('yearly-price').value)
-      };
-      localStorage.setItem(PRICE_KEY, JSON.stringify(priceData));
-      alert('租金價格已儲存！');
-    });
-
-    // 3. 銀行帳戶設定（新增分行欄位處理）
-    document.getElementById('save-bank').addEventListener('click', () => {
-      const bankName = document.getElementById('bank-name').value.trim();
-      const bankBranch = document.getElementById('bank-branch').value.trim(); // 新增分行欄位
-      const accountName = document.getElementById('bank-account-name').value.trim();
-      const accountNumber = document.getElementById('bank-account-number').value.trim();
-      
-      // 驗證所有必填欄位
-      if (!bankName || !bankBranch || !accountName || !accountNumber) {
-        alert('請完整填寫銀行名稱、銀行分行、戶名與銀行帳號！');
-        return;
-      }
-      
-      const bankData = { 
-        bankName, 
-        bankBranch, // 新增分行資訊
-        accountName, 
-        accountNumber 
-      };
-      localStorage.setItem(BANK_KEY, JSON.stringify(bankData));
-      alert('銀行帳戶已儲存！');
-    });
-
-    // 4. 載入車隊管理員註冊申請（待審核）
-    function loadRegisterApply() {
-      const applyList = JSON.parse(localStorage.getItem(FLEET_REGISTER_KEY) || '[]');
-      const keyword = document.getElementById('search-register-apply').value.trim();
-      const tbody = document.getElementById('register-apply-list');
-      
-      let filteredList = applyList;
-      if (keyword) {
-        filteredList = applyList.filter(item =>
-          item.fleetName.includes(keyword) ||
-          item.managerName.includes(keyword) ||
-          item.managerAccount.includes(keyword)
-        );
-      }
-
-      tbody.innerHTML = '';
-      if (filteredList.length === 0) {
-        tbody.innerHTML = '<tr><td colspan=\"6\" class=\"empty-tip\">目前沒有待審核的註冊申請</td></tr>';
-        return;
-      }
-
-      filteredList.forEach(item => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${item.fleetName}</td>
-          <td>${item.managerName}</td>
-          <td>${item.managerPhone}</td>
-          <td>${item.managerEmail}</td>
-          <td>${item.managerAccount}</td>
-          <td>
-            <button class="search-btn approve-apply" data-id="${item.managerAccount}">通過</button>
-            <button class="reject-btn reject-apply" data-id="${item.managerAccount}">駁回</button>
-          </td>
-        `;
-        tbody.appendChild(row);
-      });
-
-      document.querySelectorAll('.approve-apply').forEach(btn => {
-        btn.addEventListener('click', function() {
-          const account = this.getAttribute('data-id');
-          approveRegister(account);
-        });
-      });
-
-      document.querySelectorAll('.reject-apply').forEach(btn => {
-        btn.addEventListener('click', function() {
-          const account = this.getAttribute('data-id');
-          rejectRegister(account);
-        });
-      });
-    }
-
-    // 5. 通過註冊申請（同步到登錄驗證列表）
-    function approveRegister(account) {
-      const applyList = JSON.parse(localStorage.getItem(FLEET_REGISTER_KEY) || '[]');
-      const approvedItem = applyList.find(item => item.managerAccount === account);
-      if (!approvedItem) return;
-
-      // 1. 新增到原車隊管理員列表
-      const adminList = JSON.parse(localStorage.getItem(FLEET_ADMIN_KEY) || '[]');
-      const newAdmin = {
-        id: `fleet-${Date.now()}`,
-        fleetName: approvedItem.fleetName,
-        managerName: approvedItem.managerName,
-        phone: approvedItem.managerPhone,
-        email: approvedItem.managerEmail,
-        account: approvedItem.managerAccount,
-        username: approvedItem.managerAccount, // 新增 username 字段（匹配 index.html 登錄驗證）
-        password: approvedItem.managerPassword,
-        status: 'active'
-      };
-      adminList.push(newAdmin);
-      localStorage.setItem(FLEET_ADMIN_KEY, JSON.stringify(adminList));
-
-      // 2. 同步到登錄驗證用的 approvedFleetAdmins 列表
-      const approvedAdmins = JSON.parse(localStorage.getItem(APPROVED_FLEET_ADMINS_KEY) || '[]');
-      approvedAdmins.push({
-        teamName: approvedItem.fleetName,
-        name: approvedItem.managerName,
-        phone: approvedItem.managerPhone,
-        email: approvedItem.managerEmail,
-        username: approvedItem.managerAccount, // 登錄帳號
-        password: approvedItem.managerPassword, // 登錄密碼
-        status: 'active'
-      });
-      localStorage.setItem(APPROVED_FLEET_ADMINS_KEY, JSON.stringify(approvedAdmins));
-
-      // 3. 移除待審核列表中的該項
-      const updatedApplyList = applyList.filter(item => item.managerAccount !== account);
-      localStorage.setItem(FLEET_REGISTER_KEY, JSON.stringify(updatedApplyList));
-
-      loadRegisterApply();
-      loadFleetAdmins();
-      alert('已通過該車隊管理員的註冊申請！可登錄車隊管理員後台');
-    }
-
-    // 6. 駁回註冊申請
-    function rejectRegister(account) {
-      const applyList = JSON.parse(localStorage.getItem(FLEET_REGISTER_KEY) || '[]');
-      const updatedApplyList = applyList.filter(item => item.managerAccount !== account);
-      localStorage.setItem(FLEET_REGISTER_KEY, JSON.stringify(updatedApplyList));
-      loadRegisterApply();
-      alert('已駁回該車隊管理員的註冊申請！');
-    }
-
-    // 7. 刪除車隊管理員（同時從登錄驗證列表移除）
-    function deleteFleetAdmin(id) {
-      // 1. 從原列表刪除
-      const adminList = JSON.parse(localStorage.getItem(FLEET_ADMIN_KEY) || '[]');
-      const deletedAdmin = adminList.find(item => item.id === id);
-      const updatedList = adminList.filter(item => item.id !== id);
-      localStorage.setItem(FLEET_ADMIN_KEY, JSON.stringify(updatedList));
-
-      // 2. 從登錄驗證列表移除對應帳號
-      if (deletedAdmin) {
-        const approvedAdmins = JSON.parse(localStorage.getItem(APPROVED_FLEET_ADMINS_KEY) || '[]');
-        const updatedApproved = approvedAdmins.filter(item => item.username !== deletedAdmin.account);
-        localStorage.setItem(APPROVED_FLEET_ADMINS_KEY, JSON.stringify(updatedApproved));
-      }
-
-      loadFleetAdmins();
-      alert('已刪除此車隊管理員！該帳號將無法登錄');
-    }
-
-    // 8. 載入已審核的車隊管理員列表
-    function loadFleetAdmins() {
-      const adminList = JSON.parse(localStorage.getItem(FLEET_ADMIN_KEY) || '[]');
-      const keyword = document.getElementById('search-fleet-manager').value.trim();
-      const statusFilter = document.getElementById('filter-fleet-status').value;
-      const tbody = document.getElementById('fleet-manager-list');
-
-      let filteredList = adminList;
-      if (keyword) {
-        filteredList = adminList.filter(item =>
-          item.fleetName.includes(keyword) ||
-          item.managerName.includes(keyword) ||
-          item.phone.includes(keyword) ||
-          item.account.includes(keyword)
-        );
-      }
-      if (statusFilter !== 'all') {
-        filteredList = filteredList.filter(item => item.status === statusFilter);
-      }
-
-      tbody.innerHTML = '';
-      if (filteredList.length === 0) {
-        tbody.innerHTML = '<tr><td colspan=\"8\" class=\"empty-tip\">目前沒有任何車隊管理員資料</td></tr>';
-        return;
-      }
-
-      filteredList.forEach(item => {
-        const statusText = item.status === 'suspended' ? '停權' : '正常';
-        const actionText = item.status === 'suspended' ? '復權' : '停權';
-        const nextStatus = item.status === 'suspended' ? 'active' : 'suspended';
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${item.fleetName}</td>
-          <td>${item.managerName}</td>
-          <td>${item.phone}</td>
-          <td>${item.email || '未設定'}</td>
-          <td>${item.account || '未設定'}</td>
-          <td>${item.password || '未設定'}</td>
-          <td>${statusText}</td>
-          <td>
-            <button class=\"search-btn status-btn\" data-id=\"${item.id}\" data-next-status=\"${nextStatus}\">${actionText}</button>
-            <button class=\"delete-btn\" data-id=\"${item.id}\">刪除</button>
-          </td>
-        `;
-        tbody.appendChild(row);
-      });
-
-      // 綁定狀態切換按鈕事件（同步更新登錄驗證列表的狀態）
-      document.querySelectorAll('.status-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-          const id = this.getAttribute('data-id');
-          const nextStatus = this.getAttribute('data-next-status');
-          // 1. 更新原列表狀態
-          const list = JSON.parse(localStorage.getItem(FLEET_ADMIN_KEY) || '[]');
-          const updated = list.map(item => item.id === id ? { ...item, status: nextStatus } : item);
-          localStorage.setItem(FLEET_ADMIN_KEY, JSON.stringify(updated));
-          
-          // 2. 同步更新登錄驗證列表的狀態
-          const targetAdmin = list.find(item => item.id === id);
-          if (targetAdmin) {
-            const approvedAdmins = JSON.parse(localStorage.getItem(APPROVED_FLEET_ADMINS_KEY) || '[]');
-            const updatedApproved = approvedAdmins.map(item => 
-              item.username === targetAdmin.account ? { ...item, status: nextStatus } : item
-            );
-            localStorage.setItem(APPROVED_FLEET_ADMINS_KEY, JSON.stringify(updatedApproved));
-          }
-
-          loadFleetAdmins();
-        });
-      });
-
-      // 綁定刪除按鈕事件
-      document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-          const id = this.getAttribute('data-id');
-          if (confirm('確定要刪除此車隊管理員嗎？刪除後該帳號將無法登錄！')) {
-            deleteFleetAdmin(id);
-          }
-        });
-      });
-    }
-
-    // 9. 同步已審核列表到登錄驗證用的 approvedFleetAdmins（解決歷史數據同步問題）
-    function syncApprovedFleetAdmins() {
-      const adminList = JSON.parse(localStorage.getItem(FLEET_ADMIN_KEY) || '[]');
-      const approvedAdmins = adminList.map(item => ({
-        teamName: item.fleetName,
-        name: item.managerName,
-        phone: item.phone,
-        email: item.email,
-        username: item.account,
-        password: item.password,
-        status: item.status
-      }));
-      localStorage.setItem(APPROVED_FLEET_ADMINS_KEY, JSON.stringify(approvedAdmins));
-    }
-
-    // 10. 搜尋註冊申請
-    document.getElementById('search-register-apply').addEventListener('input', loadRegisterApply);
-
-    // 11. 載入既有設定（新增分行欄位還原）
-    window.addEventListener('load', () => {
-      const storedPrice = JSON.parse(localStorage.getItem(PRICE_KEY) || '{}');
-      document.getElementById('monthly-price').value = storedPrice.monthly || 9500;
-      document.getElementById('quarterly-price').value = storedPrice.quarterly || 9000;
-      document.getElementById('halfyear-price').value = storedPrice.halfyear || 9500;
-      document.getElementById('yearly-price').value = storedPrice.yearly || 8500;
-
-      const storedBank = JSON.parse(localStorage.getItem(BANK_KEY) || '{}');
-      document.getElementById('bank-name').value = storedBank.bankName || '';
-      document.getElementById('bank-branch').value = storedBank.bankBranch || ''; // 還原分行資訊
-      document.getElementById('bank-account-name').value = storedBank.accountName || '';
-      document.getElementById('bank-account-number').value = storedBank.accountNumber || '';
-
-      // 初始化時同步一次已審核列表
-      syncApprovedFleetAdmins();
-      document.querySelector('[data-panel="fleet-register-apply"]').click();
-    });
+    // 暴露editTeam函數到全局（用於HTML內聯調用）
+    window.editTeam = editTeam;
   </script>
 </body>
 </html>

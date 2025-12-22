@@ -32,6 +32,7 @@
       .card { @apply bg-white rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg; }
       .order-item { @apply border border-gray-200 rounded-lg p-4 mb-3 bg-white shadow-sm hover:border-primary cursor-pointer; }
       #driver-map { @apply w-full h-[250px] rounded-lg mb-4; }
+      .team-select { @apply w-full px-4 py-2 border border-gray-200 rounded-lg mb-4; }
     }
   </style>
 </head>
@@ -48,11 +49,21 @@
       <div class="card">
         <h2 class="text-xl font-bold mb-6 text-center">待接訂單</h2>
         
-        <!-- 移除「你的姓名/電話」輸入框 -->
+        <!-- 新增：司機選擇所屬車隊（可固定為某個車隊，或從URL讀取） -->
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-700 mb-1">所屬車隊</label>
+          <select id="driver-team-id" class="team-select" required>
+            <option value="">請選擇您的車隊</option>
+            <option value="A">A車隊</option>
+            <option value="B">B車隊</option>
+            <option value="C">C車隊</option>
+            <!-- 可新增更多車隊 -->
+          </select>
+        </div>
         
         <!-- 訂單列表（直接顯示乘客訂單） -->
         <div id="orders-list">
-          <p class="text-gray-500 text-center">監聽中，等待乘客訂單...</p>
+          <p class="text-gray-500 text-center">請先選擇所屬車隊，等待乘客訂單...</p>
         </div>
         
         <div id="driver-map"></div>
@@ -78,6 +89,7 @@
 
     let driverMap = null;
     let allOrders = {};
+    let currentDriverTeamId = ''; // 司機當前所屬車隊ID
 
     // 初始化地圖
     function initDriverMap() {
@@ -91,29 +103,51 @@
       document.getElementById('driver-map').style.display = 'none';
     }
 
-    // 實時監聽乘客訂單（核心修復：確保能收到訂單）
+    // ========== 新增：按車隊ID過濾訂單 ==========
+    function filterOrdersByTeam(orders, teamId) {
+      // 若未選擇車隊，返回空
+      if (!teamId) return [];
+      // 過濾出與司機車隊ID匹配的訂單
+      return Object.keys(orders).filter(key => {
+        const order = orders[key];
+        // 訂單車隊ID匹配 + 狀態為待接單
+        return order.teamId === teamId && order.status === '待接單';
+      });
+    }
+
+    // 實時監聽乘客訂單（修改：只顯示對應車隊訂單）
     function listenActiveOrders() {
       // 監聽Firebase中activeOrders節點的變化
       db.ref('activeOrders').on('value', function(snapshot) {
         allOrders = snapshot.val() || {};
         const ordersListEl = document.getElementById('orders-list');
-        const pendingOrders = Object.keys(allOrders).filter(key => allOrders[key].status === '待接單');
+        
+        // 過濾出司機所屬車隊的訂單
+        const filteredOrderIds = filterOrdersByTeam(allOrders, currentDriverTeamId);
 
-        if (pendingOrders.length === 0) {
-          ordersListEl.innerHTML = '<p class="text-gray-500 text-center">暫無待接訂單</p>';
+        // 未選擇車隊
+        if (!currentDriverTeamId) {
+          ordersListEl.innerHTML = '<p class="text-gray-500 text-center">請先選擇所屬車隊</p>';
           document.getElementById('driver-map').style.display = 'none';
           return;
         }
 
-        // 渲染乘客訂單
+        // 無對應車隊訂單
+        if (filteredOrderIds.length === 0) {
+          ordersListEl.innerHTML = `<p class="text-gray-500 text-center">${currentDriverTeamId}車隊暫無待接訂單</p>`;
+          document.getElementById('driver-map').style.display = 'none';
+          return;
+        }
+
+        // 渲染對應車隊的訂單
         let html = '';
-        pendingOrders.forEach(orderId => {
+        filteredOrderIds.forEach(orderId => {
           const order = allOrders[orderId];
           html += `
             <div class="order-item" onclick="selectOrder('${orderId}')">
               <div class="flex justify-between mb-1">
                 <span class="font-medium">訂單ID：${order.orderId || orderId}</span>
-                <span class="text-primary text-xs">待接單</span>
+                <span class="text-primary text-xs">待接單（${order.teamId}車隊）</span>
               </div>
               <div class="text-sm mb-1"><i class="fa fa-user mr-1"></i> 乘客姓名：${order.name}</div>
               <div class="text-sm mb-1"><i class="fa fa-phone mr-1"></i> 乘客電話：${order.phone}</div>
@@ -132,8 +166,8 @@
       const order = allOrders[orderId];
       if (!order) return;
       document.getElementById('driver-map').style.display = 'block';
-      const pickupPoint = [121.5654, 25.0330];
-      const dropoffPoint = [121.5700, 25.0400];
+      const pickupPoint = [121.5654, 25.0330]; // 可替換為實際經緯度
+      const dropoffPoint = [121.5700, 25.0400]; // 可替換為實際經緯度
       driverMap.setCenter(pickupPoint);
       driverMap.setZoom(14);
       document.querySelectorAll('.mapboxgl-marker').forEach(marker => marker.remove());
@@ -169,9 +203,27 @@
       }
     }
 
+    // ========== 新增：監聽車隊選擇變更 ==========
+    function initTeamSelect() {
+      const teamSelect = document.getElementById('driver-team-id');
+      teamSelect.addEventListener('change', function() {
+        currentDriverTeamId = this.value;
+        // 重新加載訂單
+        listenActiveOrders();
+      });
+      // 從URL讀取車隊ID（可選，用於直接綁定司機車隊）
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlTeamId = urlParams.get('team');
+      if (urlTeamId) {
+        teamSelect.value = urlTeamId;
+        currentDriverTeamId = urlTeamId;
+      }
+    }
+
     // 頁面加載初始化
     document.addEventListener('DOMContentLoaded', function() {
       initDriverMap();
+      initTeamSelect(); // 初始化車隊選擇
       listenActiveOrders(); // 啟動訂單監聽
     });
   </script>
