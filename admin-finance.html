@@ -52,10 +52,10 @@
     </style>
 </head>
 <body class="bg-neutral-100 font-sans text-neutral-700 min-h-screen flex">
-    <!-- 未登錄提示遮罩 -->
-    <div id="unauthOverlay" class="unauth-overlay hidden">
+    <!-- 未登錄提示遮罩（默認顯示，登錄有效才隱藏） -->
+    <div id="unauthOverlay" class="unauth-overlay">
         <div class="text-center max-w-md">
-            <<i class="fa fa-exclamation-circle text-4xl text-red-500 mb-4"></</i>
+            <i class="fa fa-exclamation-circle text-4xl text-red-500 mb-4"></i>
             <h2 class="text-2xl font-bold text-neutral-700 mb-2">未登錄或登錄已過期</h2>
             <p class="text-neutral-500 mb-6">請先完成車隊管理員登錄</p>
             <a href="manager-login.html" class="inline-block py-3 px-6 bg-primary text-white rounded-lg font-medium hover:bg-secondary transition-all">
@@ -64,49 +64,49 @@
         </div>
     </div>
 
-    <!-- 左側菜單 -->
+    <!-- 左側菜單（修正所有<i>標籤） -->
     <aside class="sidebar-menu w-56 h-screen sticky top-0">
         <div class="py-4 px-4 border-b border-neutral-200">
             <h2 class="font-bold text-lg text-neutral-700">LINE多元化搭車管理員</h2>
         </div>
         <nav>
             <a href="admin-dashboard.html" class="flex items-center gap-2">
-                <<i class="fa fa-home"></</i>
+                <i class="fa fa-home"></i>
                 <span>首頁</span>
             </a>
             <a href="admin-area.html" class="flex items-center gap-2">
-                <<i class="fa fa-map-marker"></</i>
+                <i class="fa fa-map-marker"></i>
                 <span>區域管理</span>
             </a>
             <a href="admin-driver.html" class="flex items-center gap-2">
-                <<i class="fa fa-car"></</i>
+                <i class="fa fa-car"></i>
                 <span>司機管理</span>
             </a>
             <a href="admin-order.html" class="flex items-center gap-2">
-                <<i class="fa fa-list"></</i>
+                <i class="fa fa-list"></i>
                 <span>訂單管理</span>
             </a>
             <a href="admin-finance.html" class="flex items-center gap-2 active">
-                <<i class="fa fa-money"></</i>
+                <i class="fa fa-money"></i>
                 <span>財務管理</span>
             </a>
             <a href="admin-report.html" class="flex items-center gap-2">
-                <<i class="fa fa-bar-chart"></</i>
+                <i class="fa fa-bar-chart"></i>
                 <span>報表統計</span>
             </a>
             <a href="javascript:void(0)" id="logoutLink" class="flex items-center gap-2 mt-4">
-                <<i class="fa fa-sign-out"></</i>
+                <i class="fa fa-sign-out"></i>
                 <span>退出登入</span>
             </a>
         </nav>
     </aside>
 
-    <!-- 主內容區 -->
+    <!-- 主內容區（修正<i>標籤） -->
     <div class="flex-1 flex flex-col">
         <header class="bg-white shadow-sm sticky top-0 z-50">
             <div class="container mx-auto px-4 py-3 flex items-center">
                 <div class="flex items-center gap-2">
-                    <<i class="fa fa-line-chart text-primary text-2xl"></</i>
+                    <i class="fa fa-line-chart text-primary text-2xl"></i>
                     <h1 class="text-xl font-bold text-neutral-700">財務管理系統</h1>
                 </div>
             </div>
@@ -129,19 +129,21 @@
         const LOGGED_IN_FLEET_KEY = 'loggedInFleetAdmin';
         const BACKUP_LOGGED_KEY = 'currentFleetAdmin';
 
-        window.addEventListener('load', function() {
-            checkLoginStatus();
-            initLogout();
-        });
+        // 1. 立即執行登錄檢測（不依賴資源加載）
+        checkLoginStatus();
+        // 2. 初始化退出登錄（DOM加載完成即可執行）
+        document.addEventListener('DOMContentLoaded', initLogout);
 
-        // 寬鬆版登錄檢測：只要本地存儲有非空對象，就視為有效
+        // 加強版登錄檢測（覆蓋所有邊界情況）
         function checkLoginStatus() {
             let loggedInAdmin = localStorage.getItem(LOGGED_IN_FLEET_KEY) || localStorage.getItem(BACKUP_LOGGED_KEY);
 
             try {
-                if (loggedInAdmin && loggedInAdmin !== "{}") { // 排除空對象
+                // 排除：空值、空白字符串、空對象
+                if (loggedInAdmin && loggedInAdmin.trim() !== '' && loggedInAdmin !== '{}') {
                     const adminData = JSON.parse(loggedInAdmin);
-                    if (Object.keys(adminData).length > 0) {
+                    // 確保解析後是有效對象
+                    if (typeof adminData === 'object' && Object.keys(adminData).length > 0) {
                         document.getElementById('unauthOverlay').classList.add('hidden');
                         return;
                     }
@@ -150,6 +152,7 @@
                 console.log('登錄信息解析失敗：', e);
             }
 
+            // 未登錄/無效 → 顯示遮罩
             document.getElementById('unauthOverlay').classList.remove('hidden');
         }
 

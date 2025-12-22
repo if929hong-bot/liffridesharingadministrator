@@ -58,7 +58,7 @@
             type="text" 
             id="manager-username" 
             class="form-input pl-10" 
-            placeholder="testadmin" 
+            placeholder="請輸入審核通過的帳號" 
             required
           >
         </div>
@@ -74,7 +74,7 @@
             type="password" 
             id="manager-password" 
             class="form-input pl-10" 
-            placeholder="123456" 
+            placeholder="請輸入密碼" 
             required
           >
         </div>
@@ -97,38 +97,31 @@
   </div>
 
   <script>
-    // 全局常量
+    // 全局常量（與administrator.html保持一致）
     const APPROVED_KEY = 'approvedFleetAdmins';
     const LOGGED_KEY = 'loggedInFleetAdmin';
     const BACKUP_LOGGED_KEY = 'currentFleetAdmin';
     const BACKEND_PAGE = 'admin-dashboard.html';
 
-    // 【優先執行】手動注入測試數據（保證登錄能匹配）
-    (function initTestData() {
-      const testApproved = [{ 帳號: "testadmin", 密碼: "123456", fleetName: "測試車隊" }];
-      // 強制寫入審核列表（覆蓋舊數據，避免干擾）
-      localStorage.setItem(APPROVED_KEY, JSON.stringify(testApproved));
-      console.log('測試數據已注入：', testApproved);
-    })();
-
-    // 頁面加載檢查登錄狀態
+    // 頁面加載檢查登錄狀態（已有有效登錄則直接跳轉）
     document.addEventListener('DOMContentLoaded', () => {
       const loggedData = localStorage.getItem(LOGGED_KEY) || localStorage.getItem(BACKUP_LOGGED_KEY);
       if (loggedData) {
         try {
           const adminInfo = JSON.parse(loggedData);
-          if (adminInfo.帳號) {
+          if (adminInfo.帳號 || adminInfo.username || adminInfo.account) {
             window.location.href = BACKEND_PAGE;
             return;
           }
         } catch (e) {
+          // 解析失敗則清空無效登錄狀態
           localStorage.removeItem(LOGGED_KEY);
           localStorage.removeItem(BACKUP_LOGGED_KEY);
         }
       }
     });
 
-    // 登錄表單提交
+    // 登錄表單提交邏輯（僅讀取administrator.html審核通過的列表）
     document.getElementById('manager-login-form').addEventListener('submit', (e) => {
       e.preventDefault();
       const username = document.getElementById('manager-username').value.trim();
@@ -143,27 +136,35 @@
         return;
       }
 
-      // 2. 讀取審核列表（此時一定有數據，因為一開頁就注入了）
+      // 2. 讀取administrator.html存入的審核通過列表
       const approvedList = JSON.parse(localStorage.getItem(APPROVED_KEY) || '[]');
-      console.log('當前審核列表：', approvedList);
+      
+      // 無審核列表則提示
+      if (approvedList.length === 0) {
+        errorEl.innerHTML = '<i class="fa fa-exclamation-circle mr-1"></i> 暫無已審核的車隊管理員，請先聯繫超管審核！';
+        errorEl.classList.remove('hidden');
+        setTimeout(() => errorEl.classList.add('hidden'), 3000);
+        return;
+      }
 
-      // 3. 匹配帳號密碼
+      // 3. 匹配帳號密碼（兼容administrator.html的字段格式）
       const matchAdmin = approvedList.find(admin => {
-        const accMatch = admin.帳號 === username;
-        const pwdMatch = admin.密碼 === password;
-        console.log('匹配結果：', { accMatch, pwdMatch });
+        // 帳號匹配：兼容 帳號/username/account 字段
+        const accMatch = admin.帳號 === username || admin.username === username || admin.account === username;
+        // 密碼匹配：兼容 密碼/password/pwd 字段
+        const pwdMatch = admin.密碼 === password || admin.password === password || admin.pwd === password;
         return accMatch && pwdMatch;
       });
 
-      // 4. 處理結果
+      // 4. 登錄結果處理
       if (matchAdmin) {
-        // 同時存兩個鍵
+        // 登錄成功：存入登錄狀態（供後台頁驗證）
         localStorage.setItem(LOGGED_KEY, JSON.stringify(matchAdmin));
         localStorage.setItem(BACKUP_LOGGED_KEY, JSON.stringify(matchAdmin));
-        console.log('登錄成功，存儲的數據：', matchAdmin);
-        // 跳轉後台
+        // 跳轉後台首頁
         window.location.href = BACKEND_PAGE;
       } else {
+        // 登錄失敗：提示+清空密碼框+聚焦
         errorEl.classList.remove('hidden');
         document.getElementById('manager-password').value = '';
         document.getElementById('manager-password').focus();
