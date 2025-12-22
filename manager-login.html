@@ -108,25 +108,38 @@
   </div>
 
   <script>
-    // 本地存储键名（与超管后台保持一致）
+    // 本地存储键名（与超管后台/后台页面保持一致）
     const APPROVED_KEY = 'approvedFleetAdmins';
     const LOGGED_KEY = 'loggedInFleetAdmin';
+    const BACKEND_PAGE = 'admin-dashboard.html'; // 后台首页
 
-    // 页面加载检查登录状态
+    // 页面加载时：1. 若已登录直接跳后台 2. 清空无效登录状态
     document.addEventListener('DOMContentLoaded', () => {
-      if (localStorage.getItem(LOGGED_KEY)) {
-        window.location.href = 'admin-dashboard.html';
+      // 校验登录状态的有效性（避免伪造/篡改localStorage）
+      const loggedData = localStorage.getItem(LOGGED_KEY);
+      if (loggedData) {
+        try {
+          const adminInfo = JSON.parse(loggedData);
+          // 验证登录信息是否包含核心字段（防止空值/伪造数据）
+          if (adminInfo.帳號 || adminInfo.username || adminInfo.account) {
+            window.location.href = BACKEND_PAGE;
+            return;
+          }
+        } catch (e) {
+          // 解析失败 = 无效登录状态，清空
+          localStorage.removeItem(LOGGED_KEY);
+        }
       }
     });
 
-    // 登录逻辑（兼容所有字段格式）
-    document.getElementById('manager-login-form').addEventListener('submit', async (e) => {
+    // 登录表单提交：严格验证账号密码，通过后才允许进入后台
+    document.getElementById('manager-login-form').addEventListener('submit', (e) => {
       e.preventDefault();
       const username = document.getElementById('manager-username').value.trim();
       const password = document.getElementById('manager-password').value.trim();
       const errorEl = document.getElementById('login-error');
 
-      // 空值验证
+      // 1. 空值验证（强制输入账号密码）
       if (!username || !password) {
         errorEl.innerHTML = '<i class="fa fa-exclamation-circle mr-1"></i> 請輸入帳號和密碼！';
         errorEl.classList.remove('hidden');
@@ -134,24 +147,32 @@
         return;
       }
 
-      // 读取超管后台已通过的管理员列表
+      // 2. 读取超管后台审核通过的管理员列表（无列表直接判定失败）
       const approvedList = JSON.parse(localStorage.getItem(APPROVED_KEY) || '[]');
-      
-      // 强制匹配所有可能的字段名（解决串联问题）
+      if (approvedList.length === 0) {
+        errorEl.innerHTML = '<i class="fa fa-exclamation-circle mr-1"></i> 暫無已審核的車隊管理員！';
+        errorEl.classList.remove('hidden');
+        setTimeout(() => errorEl.classList.add('hidden'), 3000);
+        return;
+      }
+
+      // 3. 严格匹配账号密码（兼容超管后台所有字段格式）
       const matchAdmin = approvedList.find(admin => {
-        // 账号字段：帳號/account/username
+        // 账号匹配：帳號/account/username（与超管后台一致）
         const accMatch = admin.帳號 === username || admin.account === username || admin.username === username;
-        // 密码字段：密碼/password/pwd
+        // 密码匹配：密碼/password/pwd（与超管后台一致）
         const pwdMatch = admin.密碼 === password || admin.password === password || admin.pwd === password;
         return accMatch && pwdMatch;
       });
 
+      // 4. 登录结果处理
       if (matchAdmin) {
-        // 登录成功：存储状态并跳转
+        // 登录成功：存储「完整且有效」的登录状态
         localStorage.setItem(LOGGED_KEY, JSON.stringify(matchAdmin));
-        window.location.href = 'admin-dashboard.html';
+        // 强制跳转后台（禁止停留登录页）
+        window.location.href = BACKEND_PAGE;
       } else {
-        // 登录失败：显示提示
+        // 登录失败：清空密码框+提示+聚焦
         errorEl.classList.remove('hidden');
         document.getElementById('manager-password').value = '';
         document.getElementById('manager-password').focus();
