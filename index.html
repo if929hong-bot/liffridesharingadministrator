@@ -136,7 +136,6 @@
           </div>
           <div class="text-left">
             <label class="block text-sm font-medium text-gray-700 mb-1">密碼</label>
-            <!-- 新增默認密碼 123456，方便測試 -->
             <input type="password" class="input-field input-field-primary" id="driver-password" value="123456" required>
           </div>
           <div class="text-right">
@@ -392,18 +391,16 @@
           });
         }
 
-        // 司機登錄表單（核心修復：增加穩定性判斷+密碼驗證+正確跳轉路徑）
+        // 司機登錄表單（跳轉到driver-order.html）
         const driverLoginForm = document.getElementById('driver-login-form');
         if (driverLoginForm) {
           driverLoginForm.addEventListener('submit', (e) => {
-            e.preventDefault(); // 阻止默認表單提交
-            // 獲取輸入值並去除前後空格
+            e.preventDefault();
             const phone = document.getElementById('driver-phone').value.trim();
             const password = document.getElementById('driver-password').value.trim();
             
-            // 簡單驗證：密碼不為空
             if (!password) {
-              alert('請輸入登錄密碼！');
+              alert('請輸入密碼！');
               document.getElementById('driver-password').focus();
               return;
             }
@@ -412,13 +409,13 @@
             localStorage.setItem('loggedInRole', 'driver');
             localStorage.setItem('driverPhone', phone);
             
-            // 提示並跳轉
-            alert(`司機 ${phone} 登錄成功！即將跳轉到訂單頁面`);
-            window.location.href = 'driver/driver-order.html'; // 跳轉到driver資料夾下的driver-order.html
+            // 跳轉到driver-order.html
+            alert(`司機 ${phone} 登錄成功！`);
+            window.location.href = 'driver/driver-order.html';
           });
         }
 
-        // 車隊管理員登錄表單（從「已審核列表」中比對）
+        // 車隊管理員登錄表單
         const fleetForm = document.getElementById('fleet-admin-login-form');
         if (fleetForm) {
           fleetForm.addEventListener('submit', (e) => {
@@ -426,7 +423,6 @@
             const username = document.getElementById('fleet-username').value.trim();
             const password = document.getElementById('fleet-password').value.trim();
             
-            // 從已審核列表中查找匹配的管理員
             const approvedAdmins = this.getApprovedFleetAdmins();
             const matchedAdmin = approvedAdmins.find(admin => 
               admin.username === username && admin.password === password
@@ -435,11 +431,10 @@
             if (matchedAdmin) {
               localStorage.setItem('loggedInRole', 'fleetAdmin');
               localStorage.setItem('currentFleetAdmin', JSON.stringify(matchedAdmin));
-              window.location.href = 'admin/admin-dashboard.html'; // 跳轉到車隊管理員後台
+              window.location.href = 'admin/admin-dashboard.html';
             } else {
-              alert('帳號未審核通過，或帳號/密碼錯誤！');
+              alert('帳號未審核或密碼錯誤！');
               document.getElementById('fleet-password').value = '';
-              document.getElementById('fleet-password').focus();
             }
           });
         }
@@ -458,19 +453,16 @@
             
             if (matchedSuperAdmin) {
               localStorage.setItem('loggedInRole', 'superAdmin');
-              localStorage.setItem('currentSuperAdmin', JSON.stringify(matchedSuperAdmin));
               window.location.href = matchedSuperAdmin.redirect;
             } else {
-              alert('超級管理員帳號或密碼錯誤！');
+              alert('超管帳號或密碼錯誤！');
               document.getElementById('super-password').value = '';
-              document.getElementById('super-password').focus();
             }
           });
         }
       }
     };
 
-    // 頁面加載完成後初始化
     document.addEventListener('DOMContentLoaded', () => {
       APP.init();
     });
