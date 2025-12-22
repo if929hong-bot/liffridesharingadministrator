@@ -9,15 +9,15 @@
     <!-- Font Awesome -->
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     
-    <!-- 自定義配置（保留基礎色系，移除多餘配置） -->
+    <!-- 自定義配置 -->
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        primary: '#00C300', // 主色
-                        secondary: '#00A600', // 次要綠色
-                        accent: '#008700', // 深綠色
+                        primary: '#00C300',
+                        secondary: '#00A600',
+                        accent: '#008700',
                         neutral: {
                             100: '#F2F3F5',
                             200: '#E5E6EB',
@@ -35,7 +35,6 @@
     
     <style type="text/tailwindcss">
         @layer utilities {
-            /* 僅保留基礎側邊欄樣式 */
             .sidebar-menu {
                 background: #fff;
                 border-right: 1px solid #e6e6e6;
@@ -46,7 +45,6 @@
             .sidebar-menu a.active {
                 @apply bg-primary text-white;
             }
-            /* 未登錄提示遮罩樣式 */
             .unauth-overlay {
                 @apply fixed inset-0 bg-white z-50 flex flex-col items-center justify-center p-8;
             }
@@ -54,10 +52,10 @@
     </style>
 </head>
 <body class="bg-neutral-100 font-sans text-neutral-700 min-h-screen flex">
-    <!-- 未登錄提示遮罩（未登錄時顯示） -->
+    <!-- 未登錄提示遮罩 -->
     <div id="unauthOverlay" class="unauth-overlay hidden">
         <div class="text-center max-w-md">
-            <i class="fa fa-exclamation-circle text-4xl text-red-500 mb-4"></i>
+            <<i class="fa fa-exclamation-circle text-4xl text-red-500 mb-4"></</i>
             <h2 class="text-2xl font-bold text-neutral-700 mb-2">未登錄或登錄已過期</h2>
             <p class="text-neutral-500 mb-6">請先完成車隊管理員登錄</p>
             <a href="manager-login.html" class="inline-block py-3 px-6 bg-primary text-white rounded-lg font-medium hover:bg-secondary transition-all">
@@ -66,63 +64,60 @@
         </div>
     </div>
 
-    <!-- 左側菜單（修正所有連結，與要求完全一致） -->
+    <!-- 左側菜單 -->
     <aside class="sidebar-menu w-56 h-screen sticky top-0">
         <div class="py-4 px-4 border-b border-neutral-200">
             <h2 class="font-bold text-lg text-neutral-700">LINE多元化搭車管理員</h2>
         </div>
         <nav>
             <a href="admin-dashboard.html" class="flex items-center gap-2">
-                <i class="fa fa-home"></i>
+                <<i class="fa fa-home"></</i>
                 <span>首頁</span>
             </a>
             <a href="admin-area.html" class="flex items-center gap-2">
-                <i class="fa fa-map-marker"></i>
+                <<i class="fa fa-map-marker"></</i>
                 <span>區域管理</span>
             </a>
             <a href="admin-driver.html" class="flex items-center gap-2">
-                <i class="fa fa-car"></i>
+                <<i class="fa fa-car"></</i>
                 <span>司機管理</span>
             </a>
             <a href="admin-order.html" class="flex items-center gap-2">
-                <i class="fa fa-list"></i>
+                <<i class="fa fa-list"></</i>
                 <span>訂單管理</span>
             </a>
             <a href="admin-finance.html" class="flex items-center gap-2 active">
-                <i class="fa fa-money"></i>
+                <<i class="fa fa-money"></</i>
                 <span>財務管理</span>
             </a>
             <a href="admin-report.html" class="flex items-center gap-2">
-                <i class="fa fa-bar-chart"></i>
+                <<i class="fa fa-bar-chart"></</i>
                 <span>報表統計</span>
             </a>
             <a href="javascript:void(0)" id="logoutLink" class="flex items-center gap-2 mt-4">
-                <i class="fa fa-sign-out"></i>
+                <<i class="fa fa-sign-out"></</i>
                 <span>退出登入</span>
             </a>
         </nav>
     </aside>
 
-    <!-- 主內容區（清空所有虛擬資訊，只保留標題） -->
+    <!-- 主內容區 -->
     <div class="flex-1 flex flex-col">
-        <!-- 頂部導航欄（簡化，只保留標題） -->
         <header class="bg-white shadow-sm sticky top-0 z-50">
             <div class="container mx-auto px-4 py-3 flex items-center">
                 <div class="flex items-center gap-2">
-                    <i class="fa fa-line-chart text-primary text-2xl"></i>
+                    <<i class="fa fa-line-chart text-primary text-2xl"></</i>
                     <h1 class="text-xl font-bold text-neutral-700">財務管理系統</h1>
                 </div>
             </div>
         </header>
 
-        <!-- 主內容（僅保留基礎卡片和標題） -->
         <main class="container mx-auto px-4 py-6 flex-1">
             <section class="bg-white rounded-xl p-6">
                 <h2 class="text-lg font-bold text-neutral-700">財務管理</h2>
             </section>
         </main>
 
-        <!-- 頁腳（保留基礎結構） -->
         <footer class="bg-white border-t border-neutral-200 mt-8 py-6">
             <div class="container mx-auto px-4 text-center text-neutral-500 text-sm">
                 <p>© 2025 LINE多元化搭車管理員 - 所有權利保留</p>
@@ -131,26 +126,22 @@
     </div>
 
     <script>
-        // 全局常量 - 與manager-login.html完全同步
         const LOGGED_IN_FLEET_KEY = 'loggedInFleetAdmin';
         const BACKUP_LOGGED_KEY = 'currentFleetAdmin';
 
-        // 頁面加載初始化
         window.addEventListener('load', function() {
             checkLoginStatus();
             initLogout();
         });
 
-        // 優化版登錄狀態檢測（兼容更多有效字段）
+        // 寬鬆版登錄檢測：只要本地存儲有非空對象，就視為有效
         function checkLoginStatus() {
             let loggedInAdmin = localStorage.getItem(LOGGED_IN_FLEET_KEY) || localStorage.getItem(BACKUP_LOGGED_KEY);
 
             try {
-                if (loggedInAdmin) {
+                if (loggedInAdmin && loggedInAdmin !== "{}") { // 排除空對象
                     const adminData = JSON.parse(loggedInAdmin);
-                    // 擴展有效字段：包含帳號/用戶名/車隊名，都視為有效登錄
-                    const isValid = adminData.帳號 || adminData.username || adminData.account || adminData.fleetName || adminData.teamName;
-                    if (isValid) {
+                    if (Object.keys(adminData).length > 0) {
                         document.getElementById('unauthOverlay').classList.add('hidden');
                         return;
                     }
@@ -159,11 +150,9 @@
                 console.log('登錄信息解析失敗：', e);
             }
 
-            // 未登錄 → 顯示提示
             document.getElementById('unauthOverlay').classList.remove('hidden');
         }
 
-        // 退出登入（徹底清空狀態）
         function initLogout() {
             document.getElementById('logoutLink').addEventListener('click', function() {
                 if (confirm('確定要退出登入嗎？')) {
