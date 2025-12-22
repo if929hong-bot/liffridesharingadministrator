@@ -105,7 +105,7 @@
       }
     });
 
-    // 登入表單提交邏輯
+    // 登入表單提交邏輯（與超管後台「帳號」「密碼」字段完全匹配）
     document.getElementById('manager-login-form').addEventListener('submit', (e) => {
       e.preventDefault();
       const inputUsername = document.getElementById('manager-username').value.trim();
@@ -119,20 +119,17 @@
         return;
       }
 
-      // 讀取超管後台審核通過的車隊管理員列表
+      // 讀取超管後台審核通過的列表
       const approvedAdmins = JSON.parse(localStorage.getItem(APPROVED_FLEET_ADMINS_KEY) || '[]');
-      // 匹配超管後台的「帳號」和「密碼」字段（與administrator.html保持一致）
-      const matchedAdmin = approvedAdmins.find(admin => 
-        admin.帳號 === inputUsername && admin.密碼 === inputPassword
-      );
+      // 匹配超管後台表格中的「帳號」「密碼」字段
+      const matchedAdmin = approvedAdmins.find(admin => admin.帳號 === inputUsername && admin.密碼 === inputPassword);
 
       if (matchedAdmin) {
-        // 登入成功：儲存狀態並跳轉後台
+        // 登入成功：跳轉後台
         localStorage.setItem(LOGGED_IN_FLEET_KEY, JSON.stringify(matchedAdmin));
-        document.body.classList.add('opacity-50');
-        setTimeout(() => window.location.href = 'admin-dashboard.html', 300);
+        window.location.href = 'admin-dashboard.html';
       } else {
-        // 登入失敗：顯示錯誤提示
+        // 登入失敗提示
         document.getElementById('login-error').classList.remove('hidden');
         document.getElementById('manager-password').value = '';
         document.getElementById('manager-password').focus();
