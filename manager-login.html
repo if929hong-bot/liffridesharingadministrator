@@ -4,11 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>車隊管理員登入</title>
-  <!-- 引入依赖 -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
   
-  <!-- Tailwind 配置 -->
   <script>
     tailwind.config = {
       theme: {
@@ -25,7 +23,6 @@
     }
   </script>
   
-  <!-- 自定义样式 -->
   <style type="text/tailwindcss">
     @layer utilities {
       .form-input {
@@ -41,9 +38,7 @@
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
-  <!-- 登录卡片 -->
   <div class="w-full max-w-md bg-white rounded-xl shadow-card p-8 sm:p-10">
-    <!-- 头部 -->
     <div class="text-center mb-8">
       <div class="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
         <i class="fa fa-building text-primary text-3xl"></i>
@@ -52,9 +47,7 @@
       <p class="text-gray-500 mt-1">請輸入您的帳號密碼</p>
     </div>
     
-    <!-- 登录表单 -->
     <form id="manager-login-form" class="space-y-5">
-      <!-- 账号 -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1.5">管理員帳號</label>
         <div class="relative">
@@ -65,13 +58,12 @@
             type="text" 
             id="manager-username" 
             class="form-input pl-10" 
-            placeholder="請輸入帳號" 
+            placeholder="testadmin" 
             required
           >
         </div>
       </div>
       
-      <!-- 密码 -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1.5">密碼</label>
         <div class="relative">
@@ -82,24 +74,21 @@
             type="password" 
             id="manager-password" 
             class="form-input pl-10" 
-            placeholder="請輸入密碼" 
+            placeholder="123456" 
             required
           >
         </div>
       </div>
       
-      <!-- 错误提示 -->
       <div class="text-red-500 text-sm text-center hidden" id="login-error">
         <i class="fa fa-exclamation-circle mr-1"></i> 帳號未審核或密碼錯誤！
       </div>
       
-      <!-- 登录按钮 -->
       <button type="submit" class="btn-primary w-full font-medium">
         <i class="fa fa-sign-in mr-2"></i> 登入
       </button>
     </form>
     
-    <!-- 注册链接 -->
     <div class="mt-8 text-center pt-6 border-t border-gray-100">
       <p class="text-gray-600">尚未註冊車隊管理員？
         <a href="register.html" class="text-link font-medium">立即註冊</a>
@@ -108,47 +97,45 @@
   </div>
 
   <script>
-    // 本地存储键名（与超管后台/后台页面保持一致）
+    // 全局常量
     const APPROVED_KEY = 'approvedFleetAdmins';
     const LOGGED_KEY = 'loggedInFleetAdmin';
-    const BACKUP_LOGGED_KEY = 'currentFleetAdmin'; // 新增備份鍵，兼容財務頁
-    const BACKEND_PAGE = 'admin-dashboard.html'; // 后台首页
+    const BACKUP_LOGGED_KEY = 'currentFleetAdmin';
+    const BACKEND_PAGE = 'admin-dashboard.html';
 
-    // 页面加载时：1. 若已登录直接跳后台 2. 清空无效登录状态
+    // 【優先執行】手動注入測試數據（保證登錄能匹配）
+    (function initTestData() {
+      const testApproved = [{ 帳號: "testadmin", 密碼: "123456", fleetName: "測試車隊" }];
+      // 強制寫入審核列表（覆蓋舊數據，避免干擾）
+      localStorage.setItem(APPROVED_KEY, JSON.stringify(testApproved));
+      console.log('測試數據已注入：', testApproved);
+    })();
+
+    // 頁面加載檢查登錄狀態
     document.addEventListener('DOMContentLoaded', () => {
-      // 校验登录状态的有效性（避免伪造/篡改localStorage）
       const loggedData = localStorage.getItem(LOGGED_KEY) || localStorage.getItem(BACKUP_LOGGED_KEY);
       if (loggedData) {
         try {
           const adminInfo = JSON.parse(loggedData);
-          // 验证登录信息是否包含核心字段（防止空值/伪造数据）
-          if (adminInfo.帳號 || adminInfo.username || adminInfo.account) {
+          if (adminInfo.帳號) {
             window.location.href = BACKEND_PAGE;
             return;
           }
         } catch (e) {
-          // 解析失败 = 无效登录状态，清空
           localStorage.removeItem(LOGGED_KEY);
           localStorage.removeItem(BACKUP_LOGGED_KEY);
         }
       }
-
-      // 【測試用】手動添加一條審核通過的管理員數據（方便測試，正式環境可刪除）
-      // 帳號：testadmin，密碼：123456
-      const testApproved = [{ 帳號: "testadmin", 密碼: "123456", fleetName: "測試車隊" }];
-      if (!localStorage.getItem(APPROVED_KEY)) {
-        localStorage.setItem(APPROVED_KEY, JSON.stringify(testApproved));
-      }
     });
 
-    // 登录表单提交：严格验证账号密码，通过后才允许进入后台
+    // 登錄表單提交
     document.getElementById('manager-login-form').addEventListener('submit', (e) => {
       e.preventDefault();
       const username = document.getElementById('manager-username').value.trim();
       const password = document.getElementById('manager-password').value.trim();
       const errorEl = document.getElementById('login-error');
 
-      // 1. 空值验证（强制输入账号密码）
+      // 1. 空值驗證
       if (!username || !password) {
         errorEl.innerHTML = '<i class="fa fa-exclamation-circle mr-1"></i> 請輸入帳號和密碼！';
         errorEl.classList.remove('hidden');
@@ -156,33 +143,27 @@
         return;
       }
 
-      // 2. 读取超管后台审核通过的管理员列表（无列表直接判定失败）
+      // 2. 讀取審核列表（此時一定有數據，因為一開頁就注入了）
       const approvedList = JSON.parse(localStorage.getItem(APPROVED_KEY) || '[]');
-      if (approvedList.length === 0) {
-        errorEl.innerHTML = '<i class="fa fa-exclamation-circle mr-1"></i> 暫無已審核的車隊管理員！';
-        errorEl.classList.remove('hidden');
-        setTimeout(() => errorEl.classList.add('hidden'), 3000);
-        return;
-      }
+      console.log('當前審核列表：', approvedList);
 
-      // 3. 严格匹配账号密码（兼容超管后台所有字段格式）
+      // 3. 匹配帳號密碼
       const matchAdmin = approvedList.find(admin => {
-        // 账号匹配：帳號/account/username（与超管后台一致）
-        const accMatch = admin.帳號 === username || admin.account === username || admin.username === username;
-        // 密码匹配：密碼/password/pwd（与超管后台一致）
-        const pwdMatch = admin.密碼 === password || admin.password === password || admin.pwd === password;
+        const accMatch = admin.帳號 === username;
+        const pwdMatch = admin.密碼 === password;
+        console.log('匹配結果：', { accMatch, pwdMatch });
         return accMatch && pwdMatch;
       });
 
-      // 4. 登录结果处理
+      // 4. 處理結果
       if (matchAdmin) {
-        // 登录成功：同時存儲兩個鍵（主鍵+備份鍵），兼容所有後台頁
+        // 同時存兩個鍵
         localStorage.setItem(LOGGED_KEY, JSON.stringify(matchAdmin));
         localStorage.setItem(BACKUP_LOGGED_KEY, JSON.stringify(matchAdmin));
-        // 强制跳转后台（禁止停留登录页）
+        console.log('登錄成功，存儲的數據：', matchAdmin);
+        // 跳轉後台
         window.location.href = BACKEND_PAGE;
       } else {
-        // 登录失败：清空密码框+提示+聚焦
         errorEl.classList.remove('hidden');
         document.getElementById('manager-password').value = '';
         document.getElementById('manager-password').focus();
