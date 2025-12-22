@@ -97,6 +97,7 @@
     const APPROVED_FLEET_ADMINS_KEY = 'approvedFleetAdmins';
     const LOGGED_IN_FLEET_KEY = 'loggedInFleetAdmin';
 
+    // 頁面載入時檢查登入狀態
     document.addEventListener('DOMContentLoaded', () => {
       const loggedInAdmin = localStorage.getItem(LOGGED_IN_FLEET_KEY);
       if (loggedInAdmin) {
@@ -104,11 +105,13 @@
       }
     });
 
+    // 登入表單提交邏輯
     document.getElementById('manager-login-form').addEventListener('submit', (e) => {
       e.preventDefault();
       const inputUsername = document.getElementById('manager-username').value.trim();
       const inputPassword = document.getElementById('manager-password').value.trim();
 
+      // 空值驗證
       if (!inputUsername || !inputPassword) {
         document.getElementById('login-error').innerHTML = '<<i class="fa fa-exclamation-circle mr-1"></</i> 請輸入帳號和密碼！';
         document.getElementById('login-error').classList.remove('hidden');
@@ -116,19 +119,20 @@
         return;
       }
 
-      // 读取超管后台的已通过列表（强制匹配所有可能的字段名）
+      // 讀取超管後台審核通過的車隊管理員列表
       const approvedAdmins = JSON.parse(localStorage.getItem(APPROVED_FLEET_ADMINS_KEY) || '[]');
-      // 同时匹配“帳號”“account”“username”等字段，确保能读取到数据
+      // 匹配超管後台的「帳號」和「密碼」字段（與administrator.html保持一致）
       const matchedAdmin = approvedAdmins.find(admin => 
-        (admin.帳號 === inputUsername || admin.account === inputUsername || admin.username === inputUsername) &&
-        (admin.密碼 === inputPassword || admin.pwd === inputPassword || admin.password === inputPassword)
+        admin.帳號 === inputUsername && admin.密碼 === inputPassword
       );
 
       if (matchedAdmin) {
+        // 登入成功：儲存狀態並跳轉後台
         localStorage.setItem(LOGGED_IN_FLEET_KEY, JSON.stringify(matchedAdmin));
         document.body.classList.add('opacity-50');
         setTimeout(() => window.location.href = 'admin-dashboard.html', 300);
       } else {
+        // 登入失敗：顯示錯誤提示
         document.getElementById('login-error').classList.remove('hidden');
         document.getElementById('manager-password').value = '';
         document.getElementById('manager-password').focus();
