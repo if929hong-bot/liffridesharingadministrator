@@ -46,11 +46,27 @@
             .sidebar-menu a.active {
                 @apply bg-primary text-white;
             }
+            /* 未登錄提示遮罩樣式 */
+            .unauth-overlay {
+                @apply fixed inset-0 bg-white z-50 flex flex-col items-center justify-center p-8;
+            }
         }
     </style>
 </head>
 <body class="bg-neutral-100 font-sans text-neutral-700 min-h-screen flex">
-    <!-- 左側菜單（修正報表統計連結為同目錄admin-report.html） -->
+    <!-- 未登錄提示遮罩（未登錄時顯示） -->
+    <div id="unauthOverlay" class="unauth-overlay hidden">
+        <div class="text-center max-w-md">
+            <i class="fa fa-exclamation-circle text-4xl text-red-500 mb-4"></i>
+            <h2 class="text-2xl font-bold text-neutral-700 mb-2">未登錄或登錄已過期</h2>
+            <p class="text-neutral-500 mb-6">請先完成車隊管理員登錄</p>
+            <a href="manager-login.html" class="inline-block py-3 px-6 bg-primary text-white rounded-lg font-medium hover:bg-secondary transition-all">
+                返回登入頁面
+            </a>
+        </div>
+    </div>
+
+    <!-- 左側菜單（修正所有連結，與要求完全一致） -->
     <aside class="sidebar-menu w-56 h-screen sticky top-0">
         <div class="py-4 px-4 border-b border-neutral-200">
             <h2 class="font-bold text-lg text-neutral-700">LINE多元化搭車管理員</h2>
@@ -76,12 +92,11 @@
                 <i class="fa fa-money"></i>
                 <span>財務管理</span>
             </a>
-            <!-- 核心修正：確認報表統計連結為同目錄的admin-report.html -->
             <a href="admin-report.html" class="flex items-center gap-2">
                 <i class="fa fa-bar-chart"></i>
                 <span>報表統計</span>
             </a>
-            <a href="../managerindex.html" class="flex items-center gap-2 mt-4">
+            <a href="javascript:void(0)" id="logoutLink" class="flex items-center gap-2 mt-4">
                 <i class="fa fa-sign-out"></i>
                 <span>退出登入</span>
             </a>
@@ -115,9 +130,44 @@
         </footer>
     </div>
 
-    <!-- 清空所有JS交互邏輯 -->
     <script>
-        // 僅保留空腳本標籤，無任何交互邏輯
+        // 全局常量 - 與manager-login.html同步
+        const LOGGED_IN_FLEET_KEY = 'loggedInFleetAdmin';
+
+        // 頁面加載初始化
+        window.addEventListener('load', function() {
+            // 首先檢查登錄狀態
+            checkLoginStatus();
+            
+            // 初始化退出登入功能
+            initLogout();
+        });
+
+        // 檢查登錄狀態
+        function checkLoginStatus() {
+            const loggedInAdmin = localStorage.getItem(LOGGED_IN_FLEET_KEY);
+            
+            // 未登錄/信息缺失 → 顯示未登錄提示
+            if (!loggedInAdmin) {
+                document.getElementById('unauthOverlay').classList.remove('hidden');
+                return;
+            }
+        }
+
+        // 初始化退出登入（與manager-login.html同步）
+        function initLogout() {
+            document.getElementById('logoutLink').addEventListener('click', function() {
+                if (confirm('確定要退出登入嗎？')) {
+                    // 清除所有登錄狀態
+                    localStorage.removeItem(LOGGED_IN_FLEET_KEY);
+                    localStorage.removeItem('loggedInRole');
+                    localStorage.removeItem('currentFleetAdmin');
+                    
+                    // 跳轉到登入頁面
+                    window.location.href = 'manager-login.html';
+                }
+            });
+        }
     </script>
 </body>
 </html>

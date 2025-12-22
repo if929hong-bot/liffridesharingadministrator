@@ -1,4 +1,3 @@
-<!-- driver/login.html（司機登入頁 - 改造後） -->
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -24,7 +23,8 @@
   <div class="login-card">
     <div class="header-area">
       <h1>司機入口</h1>
-      <a href="register.html">註冊</a>
+      <!-- 註冊鏈接改為 driver-register.html -->
+      <a href="driver-register.html">註冊</a>
     </div>
     <form id="driver-login-form">
       <div class="input-group">
@@ -47,7 +47,7 @@
   </div>
 
   <script>
-    // 司機帳號儲存鍵名（與管理員後台同步）
+    // 司機帳號儲存鍵名（與 admin-driver.html 同步）
     const DRIVER_PASS_KEY = 'driverPassedList';
     const DRIVER_LOGIN_KEY = 'driverLoggedIn';
 
@@ -60,18 +60,18 @@
       const inputUsername = usernameInput.value.trim();
       const inputPassword = passwordInput.value.trim();
 
-      // 從 LocalStorage 獲取已審核通過的司機列表
+      // 從 LocalStorage 獲取已審核通過的司機列表（與 admin-driver.html 共用）
       const passedDrivers = JSON.parse(localStorage.getItem(DRIVER_PASS_KEY) || '[]');
-      // 校驗帳號密碼
+      // 校驗帳號密碼（匹配 admin-driver.html 審核通過的數據）
       const validDriver = passedDrivers.find(
         driver => driver.phone === inputUsername && driver.password === inputPassword
       );
 
       if (validDriver) {
-        // 儲存司機登錄狀態
+        // 儲存司機登錄狀態（供後續頁面使用）
         localStorage.setItem(DRIVER_LOGIN_KEY, JSON.stringify(validDriver));
-        // 跳轉到訂單頁
-        window.location.href = 'order.html';
+        // 登錄成功跳轉到 driver-order.html
+        window.location.href = 'driver-order.html';
       } else {
         alert('帳號或密碼錯誤，或您的申請尚未通過審核！');
         passwordInput.value = '';

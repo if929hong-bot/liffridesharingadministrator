@@ -72,9 +72,9 @@
         <div class="text-center max-w-md">
             <i class="fa fa-exclamation-circle text-4xl text-red-500 mb-4"></i>
             <h2 class="text-2xl font-bold text-text-dark mb-2">未登錄或登錄已過期</h2>
-            <p class="text-text-light mb-6">請先在首頁完成車隊管理員登錄</p>
-            <a href="../index.html" class="inline-block py-3 px-6 bg-primary text-white rounded-lg font-medium hover:bg-secondary transition-all">
-                返回首頁登錄
+            <p class="text-text-light mb-6">請先完成車隊管理員登錄</p>
+            <a href="manager-login.html" class="inline-block py-3 px-6 bg-primary text-white rounded-lg font-medium hover:bg-secondary transition-all">
+                返回登入頁面
             </a>
         </div>
     </div>
@@ -97,7 +97,7 @@
 
     <!-- 主容器 -->
     <div class="pt-16 flex">
-        <!-- 側邊菜單（更新財務/報表連結） -->
+        <!-- 側邊菜單（修正所有連結） -->
         <aside class="sidebar w-56 bg-white shadow-sm p-4">
             <nav class="space-y-1">
                 <a href="admin-dashboard.html" class="block py-2 px-3 rounded-md menu-active font-medium text-white">
@@ -112,15 +112,13 @@
                 <a href="admin-order.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
                     <i class="fa fa-list-alt mr-2"></i>訂單管理
                 </a>
-                <!-- 修正：財務管理連結為同目錄admin-finance.html -->
                 <a href="admin-finance.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
                     <i class="fa fa-money mr-2"></i>財務管理
                 </a>
-                <!-- 修正：報表統計連結為同目錄admin-report.html -->
                 <a href="admin-report.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all">
                     <i class="fa fa-bar-chart mr-2"></i>報表統計
                 </a>
-                <a href="../index.html" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all mt-4" id="logoutLink">
+                <a href="javascript:void(0)" class="block py-2 px-3 rounded-md text-text-dark hover:bg-gray-100 transition-all mt-4" id="logoutLink">
                     <i class="fa fa-sign-out mr-2"></i>退出登入
                 </a>
             </nav>
@@ -369,17 +367,22 @@
     </div>
 
     <script>
+        // 全局常量 - 與manager-login.html同步
+        const LOGGED_IN_FLEET_KEY = 'loggedInFleetAdmin';
+        
         // 頁面加載時檢查登錄狀態
         window.addEventListener('load', function() {
-            // 讀取 index.html 登錄時存儲的車隊管理員信息
-            const currentFleetAdmin = JSON.parse(localStorage.getItem('currentFleetAdmin'));
-            const isLoggedIn = localStorage.getItem('loggedInRole') === 'fleetAdmin';
-
+            // 讀取manager-login.html登錄時存儲的車隊管理員信息
+            const loggedInAdmin = localStorage.getItem(LOGGED_IN_FLEET_KEY);
+            
             // 未登錄/信息缺失 → 顯示未登錄提示
-            if (!isLoggedIn || !currentFleetAdmin) {
+            if (!loggedInAdmin) {
                 document.getElementById('unauthOverlay').classList.remove('hidden');
                 return;
             }
+            
+            // 解析登錄信息
+            const currentFleetAdmin = JSON.parse(loggedInAdmin);
 
             // 已登錄 → 加載管理員信息 + 真實數據
             loadFleetAdminInfo(currentFleetAdmin);
@@ -494,8 +497,8 @@
 
         // 加載車隊管理員信息到頁面
         function loadFleetAdminInfo(adminInfo) {
-            document.getElementById('currentManagerName').textContent = adminInfo.name || '車隊管理員';
-            document.getElementById('systemTitle').textContent = `${adminInfo.teamName || 'LINE多元化搭車'}管理員後台`;
+            document.getElementById('currentManagerName').textContent = adminInfo.username || adminInfo.name || '車隊管理員';
+            document.getElementById('systemTitle').textContent = `${adminInfo.fleetName || adminInfo.teamName || 'LINE多元化搭車'}管理員後台`;
         }
 
         // 加載真實數據（從localStorage讀取對應數據）
@@ -569,18 +572,23 @@
 
         // 基於真實數據初始化圖表
         function initChartsWithRealData() {
-            // 讀取圖表數據
+            // 默認圖表數據（無數據時使用）
+            const defaultTrendData = {
+                today: { labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'], data: [0, 2, 8, 15, 10, 5] },
+                week: { labels: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'], data: [12, 19, 8, 15, 25, 30, 18] },
+                month: { labels: ['1日', '5日', '10日', '15日', '20日', '25日', '30日'], data: [50, 75, 60, 85, 90, 70, 80] }
+            };
+            
+            const defaultIncomeData = {
+                week: { labels: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'], data: [1200, 1900, 800, 1500, 2500, 3000, 1800] },
+                month: { labels: ['1日', '5日', '10日', '15日', '20日', '25日', '30日'], data: [5000, 7500, 6000, 8500, 9000, 7000, 8000] },
+                quarter: { labels: ['1月', '2月', '3月'], data: [20000, 25000, 22000] }
+            };
+
+            // 讀取圖表數據（優先使用localStorage，無則使用默認）
             const chartData = JSON.parse(localStorage.getItem('fleetChartData')) || {
-                trend: {
-                    today: { labels: [], data: [] },
-                    week: { labels: [], data: [] },
-                    month: { labels: [], data: [] }
-                },
-                income: {
-                    week: { labels: [], data: [] },
-                    month: { labels: [], data: [] },
-                    quarter: { labels: [], data: [] }
-                }
+                trend: defaultTrendData,
+                income: defaultIncomeData
             };
 
             // 訂單趨勢圖
@@ -652,12 +660,17 @@
             });
         }
 
-        // 退出登入 → 清除登錄狀態
-        document.getElementById('logoutLink').addEventListener('click', function(e) {
-            e.preventDefault();
-            localStorage.removeItem('loggedInRole');
-            localStorage.removeItem('currentFleetAdmin');
-            window.location.href = this.href;
+        // 退出登入 → 清除登錄狀態並跳轉到manager-login.html
+        document.getElementById('logoutLink').addEventListener('click', function() {
+            if (confirm('確定要退出登入嗎？')) {
+                // 清除登錄狀態（與manager-login.html同步）
+                localStorage.removeItem(LOGGED_IN_FLEET_KEY);
+                localStorage.removeItem('loggedInRole');
+                localStorage.removeItem('currentFleetAdmin');
+                
+                // 跳轉到登入頁面
+                window.location.href = 'manager-login.html';
+            }
         });
     </script>
 </body>
