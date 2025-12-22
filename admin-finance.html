@@ -4,12 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>財務管理 - 訂單收入記錄</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome -->
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     
-    <!-- 自定義配置 -->
     <script>
         tailwind.config = {
             theme: {
@@ -52,10 +49,10 @@
     </style>
 </head>
 <body class="bg-neutral-100 font-sans text-neutral-700 min-h-screen flex">
-    <!-- 未登錄提示遮罩（默認顯示，登錄有效才隱藏） -->
-    <div id="unauthOverlay" class="unauth-overlay">
+    <!-- 未登錄提示遮罩（直接隱藏） -->
+    <div id="unauthOverlay" class="unauth-overlay hidden">
         <div class="text-center max-w-md">
-            <i class="fa fa-exclamation-circle text-4xl text-red-500 mb-4"></i>
+            <<i class="fa fa-exclamation-circle text-4xl text-red-500 mb-4"></</i>
             <h2 class="text-2xl font-bold text-neutral-700 mb-2">未登錄或登錄已過期</h2>
             <p class="text-neutral-500 mb-6">請先完成車隊管理員登錄</p>
             <a href="manager-login.html" class="inline-block py-3 px-6 bg-primary text-white rounded-lg font-medium hover:bg-secondary transition-all">
@@ -64,49 +61,49 @@
         </div>
     </div>
 
-    <!-- 左側菜單（修正所有<i>標籤） -->
+    <!-- 左側菜單 -->
     <aside class="sidebar-menu w-56 h-screen sticky top-0">
         <div class="py-4 px-4 border-b border-neutral-200">
             <h2 class="font-bold text-lg text-neutral-700">LINE多元化搭車管理員</h2>
         </div>
         <nav>
             <a href="admin-dashboard.html" class="flex items-center gap-2">
-                <i class="fa fa-home"></i>
+                <<i class="fa fa-home"></</i>
                 <span>首頁</span>
             </a>
             <a href="admin-area.html" class="flex items-center gap-2">
-                <i class="fa fa-map-marker"></i>
+                <<i class="fa fa-map-marker"></</i>
                 <span>區域管理</span>
             </a>
             <a href="admin-driver.html" class="flex items-center gap-2">
-                <i class="fa fa-car"></i>
+                <<i class="fa fa-car"></</i>
                 <span>司機管理</span>
             </a>
             <a href="admin-order.html" class="flex items-center gap-2">
-                <i class="fa fa-list"></i>
+                <<i class="fa fa-list"></</i>
                 <span>訂單管理</span>
             </a>
             <a href="admin-finance.html" class="flex items-center gap-2 active">
-                <i class="fa fa-money"></i>
+                <<i class="fa fa-money"></</i>
                 <span>財務管理</span>
             </a>
             <a href="admin-report.html" class="flex items-center gap-2">
-                <i class="fa fa-bar-chart"></i>
+                <<i class="fa fa-bar-chart"></</i>
                 <span>報表統計</span>
             </a>
             <a href="javascript:void(0)" id="logoutLink" class="flex items-center gap-2 mt-4">
-                <i class="fa fa-sign-out"></i>
+                <<i class="fa fa-sign-out"></</i>
                 <span>退出登入</span>
             </a>
         </nav>
     </aside>
 
-    <!-- 主內容區（修正<i>標籤） -->
+    <!-- 主內容區 -->
     <div class="flex-1 flex flex-col">
         <header class="bg-white shadow-sm sticky top-0 z-50">
             <div class="container mx-auto px-4 py-3 flex items-center">
                 <div class="flex items-center gap-2">
-                    <i class="fa fa-line-chart text-primary text-2xl"></i>
+                    <<i class="fa fa-line-chart text-primary text-2xl"></</i>
                     <h1 class="text-xl font-bold text-neutral-700">財務管理系統</h1>
                 </div>
             </div>
@@ -126,58 +123,8 @@
     </div>
 
     <script>
-        const LOGGED_IN_FLEET_KEY = 'loggedInFleetAdmin';
-        const BACKUP_LOGGED_KEY = 'currentFleetAdmin';
-
-        // 【关键修复】增加调试日志，清晰看到登录检测过程
-        console.log('=== 登錄狀態檢測開始 ===');
-        console.log('本地存儲中 loggedInFleetAdmin：', localStorage.getItem(LOGGED_IN_FLEET_KEY));
-        console.log('本地存儲中 currentFleetAdmin：', localStorage.getItem(BACKUP_LOGGED_KEY));
-
-        // 1. 立即執行登錄檢測（不依賴資源加載）
-        checkLoginStatus();
-        // 2. 初始化退出登錄（DOM加載完成即可執行）
-        document.addEventListener('DOMContentLoaded', initLogout);
-
-        // 加強版登錄檢測（覆蓋所有邊界情況）
-        function checkLoginStatus() {
-            let loggedInAdmin = localStorage.getItem(LOGGED_IN_FLEET_KEY) || localStorage.getItem(BACKUP_LOGGED_KEY);
-
-            try {
-                // 排除：空值、空白字符串、空對象
-                if (loggedInAdmin && loggedInAdmin.trim() !== '' && loggedInAdmin !== '{}') {
-                    const adminData = JSON.parse(loggedInAdmin);
-                    console.log('解析後的登錄信息：', adminData);
-                    // 確保解析後是有效對象
-                    if (typeof adminData === 'object' && Object.keys(adminData).length > 0) {
-                        document.getElementById('unauthOverlay').classList.add('hidden');
-                        console.log('登錄狀態有效，隱藏未登錄遮罩');
-                        return;
-                    } else {
-                        console.log('登錄信息為空對象，判定未登錄');
-                    }
-                } else {
-                    console.log('登錄信息為空/空白字符串/空對象，判定未登錄');
-                }
-            } catch (e) {
-                console.error('登錄信息解析失敗：', e);
-            }
-
-            // 未登錄/無效 → 顯示遮罩
-            document.getElementById('unauthOverlay').classList.remove('hidden');
-            console.log('=== 登錄狀態檢測結束：未登錄 ===');
-        }
-
-        function initLogout() {
-            document.getElementById('logoutLink').addEventListener('click', function() {
-                if (confirm('確定要退出登入嗎？')) {
-                    localStorage.removeItem(LOGGED_IN_FLEET_KEY);
-                    localStorage.removeItem(BACKUP_LOGGED_KEY);
-                    localStorage.removeItem('loggedInRole');
-                    window.location.href = 'manager-login.html';
-                }
-            });
-        }
+        // 直接隱藏未登錄遮罩（跳過所有登錄檢測）
+        document.getElementById('unauthOverlay').classList.add('hidden');
     </script>
 </body>
 </html>

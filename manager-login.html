@@ -58,7 +58,7 @@
             type="text" 
             id="manager-username" 
             class="form-input pl-10" 
-            placeholder="testadmin" 
+            placeholder="請輸入審核通過的帳號" 
             required
           >
         </div>
@@ -74,7 +74,7 @@
             type="password" 
             id="manager-password" 
             class="form-input pl-10" 
-            placeholder="123456" 
+            placeholder="請輸入密碼" 
             required
           >
         </div>
@@ -103,25 +103,23 @@
     const BACKUP_LOGGED_KEY = 'currentFleetAdmin';
     const BACKEND_PAGE = 'admin-dashboard.html';
 
-    // 【关键修复】页面加载前自动注入测试审核数据（确保登录能匹配）
-    (function initTestApprovedData() {
-      const testAdmin = [{ 帳號: "testadmin", 密碼: "123456", fleetName: "測試車隊" }];
-      // 强制写入审核列表，覆盖空数据
-      localStorage.setItem(APPROVED_KEY, JSON.stringify(testAdmin));
-    })();
+    // ========== 核心修改1：徹底刪除測試數據注入代碼 ==========
+    // 移除了自動注入testadmin的邏輯，僅讀取administrator.html的審核列表
 
-    // 頁面加載檢查登錄狀態（已有有效登錄則直接跳轉）
+    // ========== 核心修改2：取消頁面加載時的自動跳轉 ==========
     document.addEventListener('DOMContentLoaded', () => {
+      // 刪除所有「檢測到登錄狀態就跳轉」的代碼
+      // 保留清空無效登錄狀態的邏輯（避免髒數據）
       const loggedData = localStorage.getItem(LOGGED_KEY) || localStorage.getItem(BACKUP_LOGGED_KEY);
       if (loggedData) {
         try {
           const adminInfo = JSON.parse(loggedData);
-          if (adminInfo.帳號 || adminInfo.username || adminInfo.account) {
-            window.location.href = BACKEND_PAGE;
-            return;
+          // 僅清空無效的登錄數據，不跳轉
+          if (!adminInfo.帳號 && !adminInfo.username && !adminInfo.account) {
+            localStorage.removeItem(LOGGED_KEY);
+            localStorage.removeItem(BACKUP_LOGGED_KEY);
           }
         } catch (e) {
-          // 解析失敗則清空無效登錄狀態
           localStorage.removeItem(LOGGED_KEY);
           localStorage.removeItem(BACKUP_LOGGED_KEY);
         }
@@ -146,7 +144,7 @@
       // 2. 讀取administrator.html存入的審核通過列表
       const approvedList = JSON.parse(localStorage.getItem(APPROVED_KEY) || '[]');
       
-      // 無審核列表則提示（现在不会触发，因为已注入测试数据）
+      // 無審核列表則提示
       if (approvedList.length === 0) {
         errorEl.innerHTML = '<i class="fa fa-exclamation-circle mr-1"></i> 暫無已審核的車隊管理員，請先聯繫超管審核！';
         errorEl.classList.remove('hidden');
@@ -168,9 +166,8 @@
         // 登錄成功：存入登錄狀態（供後台頁驗證）
         localStorage.setItem(LOGGED_KEY, JSON.stringify(matchAdmin));
         localStorage.setItem(BACKUP_LOGGED_KEY, JSON.stringify(matchAdmin));
-        // 强制跳转+延迟刷新（确保存储生效）
+        // ========== 核心修改3：取消延遲刷新，僅正常跳轉 ==========
         window.location.href = BACKEND_PAGE;
-        setTimeout(() => window.location.reload(), 50);
       } else {
         // 登錄失敗：提示+清空密碼框+聚焦
         errorEl.classList.remove('hidden');
