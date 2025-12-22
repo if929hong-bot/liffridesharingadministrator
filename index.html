@@ -388,14 +388,15 @@
           window.location.href = 'passenger/passenger-order.html';
         });
 
-        // 司機登錄表單
+        // 司機登錄表單（修改跳轉路徑為 driver/driver-order.html）
         document.getElementById('driver-login-form')?.addEventListener('submit', (e) => {
           e.preventDefault();
           const phone = document.getElementById('driver-phone').value.trim();
           localStorage.setItem('loggedInRole', 'driver');
           localStorage.setItem('driverPhone', phone);
           alert(`司機 ${phone} 登錄成功！`);
-          window.location.href = 'driver-dashboard.html';
+          // 跳轉到根目錄下 driver 文件夾中的 driver-order.html
+          window.location.href = 'driver/driver-order.html';
         });
 
         // 車隊管理員登錄表單（從「已審核列表」中比對）
