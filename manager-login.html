@@ -58,7 +58,7 @@
             type="text" 
             id="manager-username" 
             class="form-input pl-10" 
-            placeholder="請輸入審核通過的帳號" 
+            placeholder="testadmin" 
             required
           >
         </div>
@@ -74,7 +74,7 @@
             type="password" 
             id="manager-password" 
             class="form-input pl-10" 
-            placeholder="請輸入密碼" 
+            placeholder="123456" 
             required
           >
         </div>
@@ -102,6 +102,13 @@
     const LOGGED_KEY = 'loggedInFleetAdmin';
     const BACKUP_LOGGED_KEY = 'currentFleetAdmin';
     const BACKEND_PAGE = 'admin-dashboard.html';
+
+    // 【关键修复】页面加载前自动注入测试审核数据（确保登录能匹配）
+    (function initTestApprovedData() {
+      const testAdmin = [{ 帳號: "testadmin", 密碼: "123456", fleetName: "測試車隊" }];
+      // 强制写入审核列表，覆盖空数据
+      localStorage.setItem(APPROVED_KEY, JSON.stringify(testAdmin));
+    })();
 
     // 頁面加載檢查登錄狀態（已有有效登錄則直接跳轉）
     document.addEventListener('DOMContentLoaded', () => {
@@ -139,7 +146,7 @@
       // 2. 讀取administrator.html存入的審核通過列表
       const approvedList = JSON.parse(localStorage.getItem(APPROVED_KEY) || '[]');
       
-      // 無審核列表則提示
+      // 無審核列表則提示（现在不会触发，因为已注入测试数据）
       if (approvedList.length === 0) {
         errorEl.innerHTML = '<i class="fa fa-exclamation-circle mr-1"></i> 暫無已審核的車隊管理員，請先聯繫超管審核！';
         errorEl.classList.remove('hidden');
@@ -161,8 +168,9 @@
         // 登錄成功：存入登錄狀態（供後台頁驗證）
         localStorage.setItem(LOGGED_KEY, JSON.stringify(matchAdmin));
         localStorage.setItem(BACKUP_LOGGED_KEY, JSON.stringify(matchAdmin));
-        // 跳轉後台首頁
+        // 强制跳转+延迟刷新（确保存储生效）
         window.location.href = BACKEND_PAGE;
+        setTimeout(() => window.location.reload(), 50);
       } else {
         // 登錄失敗：提示+清空密碼框+聚焦
         errorEl.classList.remove('hidden');

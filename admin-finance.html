@@ -129,6 +129,11 @@
         const LOGGED_IN_FLEET_KEY = 'loggedInFleetAdmin';
         const BACKUP_LOGGED_KEY = 'currentFleetAdmin';
 
+        // 【关键修复】增加调试日志，清晰看到登录检测过程
+        console.log('=== 登錄狀態檢測開始 ===');
+        console.log('本地存儲中 loggedInFleetAdmin：', localStorage.getItem(LOGGED_IN_FLEET_KEY));
+        console.log('本地存儲中 currentFleetAdmin：', localStorage.getItem(BACKUP_LOGGED_KEY));
+
         // 1. 立即執行登錄檢測（不依賴資源加載）
         checkLoginStatus();
         // 2. 初始化退出登錄（DOM加載完成即可執行）
@@ -142,18 +147,25 @@
                 // 排除：空值、空白字符串、空對象
                 if (loggedInAdmin && loggedInAdmin.trim() !== '' && loggedInAdmin !== '{}') {
                     const adminData = JSON.parse(loggedInAdmin);
+                    console.log('解析後的登錄信息：', adminData);
                     // 確保解析後是有效對象
                     if (typeof adminData === 'object' && Object.keys(adminData).length > 0) {
                         document.getElementById('unauthOverlay').classList.add('hidden');
+                        console.log('登錄狀態有效，隱藏未登錄遮罩');
                         return;
+                    } else {
+                        console.log('登錄信息為空對象，判定未登錄');
                     }
+                } else {
+                    console.log('登錄信息為空/空白字符串/空對象，判定未登錄');
                 }
             } catch (e) {
-                console.log('登錄信息解析失敗：', e);
+                console.error('登錄信息解析失敗：', e);
             }
 
             // 未登錄/無效 → 顯示遮罩
             document.getElementById('unauthOverlay').classList.remove('hidden');
+            console.log('=== 登錄狀態檢測結束：未登錄 ===');
         }
 
         function initLogout() {
