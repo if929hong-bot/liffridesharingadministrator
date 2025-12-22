@@ -57,7 +57,7 @@
     <!-- 未登錄提示遮罩（未登錄時顯示） -->
     <div id="unauthOverlay" class="unauth-overlay hidden">
         <div class="text-center max-w-md">
-            <i class="fa fa-exclamation-circle text-4xl text-red-500 mb-4"></i>
+            <<i class="fa fa-exclamation-circle text-4xl text-red-500 mb-4"></</i>
             <h2 class="text-2xl font-bold text-neutral-700 mb-2">未登錄或登錄已過期</h2>
             <p class="text-neutral-500 mb-6">請先完成車隊管理員登錄</p>
             <a href="manager-login.html" class="inline-block py-3 px-6 bg-primary text-white rounded-lg font-medium hover:bg-secondary transition-all">
@@ -73,31 +73,31 @@
         </div>
         <nav>
             <a href="admin-dashboard.html" class="flex items-center gap-2">
-                <i class="fa fa-home"></i>
+                <<i class="fa fa-home"></</i>
                 <span>首頁</span>
             </a>
             <a href="admin-area.html" class="flex items-center gap-2">
-                <i class="fa fa-map-marker"></i>
+                <<i class="fa fa-map-marker"></</i>
                 <span>區域管理</span>
             </a>
             <a href="admin-driver.html" class="flex items-center gap-2">
-                <i class="fa fa-car"></i>
+                <<i class="fa fa-car"></</i>
                 <span>司機管理</span>
             </a>
             <a href="admin-order.html" class="flex items-center gap-2">
-                <i class="fa fa-list"></i>
+                <<i class="fa fa-list"></</i>
                 <span>訂單管理</span>
             </a>
             <a href="admin-finance.html" class="flex items-center gap-2 active">
-                <i class="fa fa-money"></i>
+                <<i class="fa fa-money"></</i>
                 <span>財務管理</span>
             </a>
             <a href="admin-report.html" class="flex items-center gap-2">
-                <i class="fa fa-bar-chart"></i>
+                <<i class="fa fa-bar-chart"></</i>
                 <span>報表統計</span>
             </a>
             <a href="javascript:void(0)" id="logoutLink" class="flex items-center gap-2 mt-4">
-                <i class="fa fa-sign-out"></i>
+                <<i class="fa fa-sign-out"></</i>
                 <span>退出登入</span>
             </a>
         </nav>
@@ -109,7 +109,7 @@
         <header class="bg-white shadow-sm sticky top-0 z-50">
             <div class="container mx-auto px-4 py-3 flex items-center">
                 <div class="flex items-center gap-2">
-                    <i class="fa fa-line-chart text-primary text-2xl"></i>
+                    <<i class="fa fa-line-chart text-primary text-2xl"></</i>
                     <h1 class="text-xl font-bold text-neutral-700">財務管理系統</h1>
                 </div>
             </div>
@@ -131,61 +131,47 @@
     </div>
 
     <script>
-        // 全局常量 - 與manager-login.html完全同步（兼容所有可能的存儲鍵名）
+        // 全局常量 - 與manager-login.html完全同步
         const LOGGED_IN_FLEET_KEY = 'loggedInFleetAdmin';
-        const BACKUP_LOGGED_KEY = 'currentFleetAdmin'; // 備用鍵名（兼容超管後台）
+        const BACKUP_LOGGED_KEY = 'currentFleetAdmin';
 
         // 頁面加載初始化
         window.addEventListener('load', function() {
-            // 首先檢查登錄狀態（增強版檢測）
             checkLoginStatus();
-            
-            // 初始化退出登入功能
             initLogout();
         });
 
-        // 增強版登錄狀態檢測（兼容多種存儲格式）
+        // 優化版登錄狀態檢測（兼容更多有效字段）
         function checkLoginStatus() {
-            // 1. 優先檢查主鍵名
-            let loggedInAdmin = localStorage.getItem(LOGGED_IN_FLEET_KEY);
-            
-            // 2. 備用檢查超管後台的鍵名
-            if (!loggedInAdmin) {
-                loggedInAdmin = localStorage.getItem(BACKUP_LOGGED_KEY);
-            }
+            let loggedInAdmin = localStorage.getItem(LOGGED_IN_FLEET_KEY) || localStorage.getItem(BACKUP_LOGGED_KEY);
 
-            // 3. 最終兜底：解析驗證是否為有效JSON（避免存儲空值/錯誤格式）
             try {
                 if (loggedInAdmin) {
                     const adminData = JSON.parse(loggedInAdmin);
-                    // 驗證是否包含核心字段（帳號/密碼/用戶名）
-                    if (adminData.帳號 || adminData.username || adminData.account) {
-                        // 已登錄：隱藏未登錄提示
+                    // 擴展有效字段：包含帳號/用戶名/車隊名，都視為有效登錄
+                    const isValide = adminData.帳號 || adminData.username || adminData.account || adminData.fleetName || adminData.teamName;
+                    if (isValide) {
                         document.getElementById('unauthOverlay').classList.add('hidden');
                         return;
                     }
                 }
             } catch (e) {
-                // 解析失敗視為未登錄
-                console.log('登錄信息格式錯誤：', e);
+                console.log('登錄信息解析失敗：', e);
             }
 
-            // 未登錄/信息無效 → 顯示未登錄提示
+            // 未登錄 → 顯示提示
             document.getElementById('unauthOverlay').classList.remove('hidden');
         }
 
-        // 增強版退出登入（清除所有相關登錄狀態）
+        // 退出登入（徹底清空狀態）
         function initLogout() {
             document.getElementById('logoutLink').addEventListener('click', function() {
                 if (confirm('確定要退出登入嗎？')) {
-                    // 清除所有相關登錄狀態（覆蓋所有可能的鍵名）
                     localStorage.removeItem(LOGGED_IN_FLEET_KEY);
                     localStorage.removeItem(BACKUP_LOGGED_KEY);
                     localStorage.removeItem('loggedInRole');
-                    localStorage.removeItem('approvedFleetAdmins'); // 可選：清除審核列表（根據需求）
-                    
-                    // 強制跳轉到登入頁面
                     window.location.href = 'manager-login.html';
+                    window.location.reload(true); // 強制刷新，避免緩存
                 }
             });
         }
