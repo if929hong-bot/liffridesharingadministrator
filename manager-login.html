@@ -111,12 +111,13 @@
     // 本地存储键名（与超管后台/后台页面保持一致）
     const APPROVED_KEY = 'approvedFleetAdmins';
     const LOGGED_KEY = 'loggedInFleetAdmin';
+    const BACKUP_LOGGED_KEY = 'currentFleetAdmin'; // 新增備份鍵，兼容財務頁
     const BACKEND_PAGE = 'admin-dashboard.html'; // 后台首页
 
     // 页面加载时：1. 若已登录直接跳后台 2. 清空无效登录状态
     document.addEventListener('DOMContentLoaded', () => {
       // 校验登录状态的有效性（避免伪造/篡改localStorage）
-      const loggedData = localStorage.getItem(LOGGED_KEY);
+      const loggedData = localStorage.getItem(LOGGED_KEY) || localStorage.getItem(BACKUP_LOGGED_KEY);
       if (loggedData) {
         try {
           const adminInfo = JSON.parse(loggedData);
@@ -128,7 +129,15 @@
         } catch (e) {
           // 解析失败 = 无效登录状态，清空
           localStorage.removeItem(LOGGED_KEY);
+          localStorage.removeItem(BACKUP_LOGGED_KEY);
         }
+      }
+
+      // 【測試用】手動添加一條審核通過的管理員數據（方便測試，正式環境可刪除）
+      // 帳號：testadmin，密碼：123456
+      const testApproved = [{ 帳號: "testadmin", 密碼: "123456", fleetName: "測試車隊" }];
+      if (!localStorage.getItem(APPROVED_KEY)) {
+        localStorage.setItem(APPROVED_KEY, JSON.stringify(testApproved));
       }
     });
 
@@ -167,8 +176,9 @@
 
       // 4. 登录结果处理
       if (matchAdmin) {
-        // 登录成功：存储「完整且有效」的登录状态
+        // 登录成功：同時存儲兩個鍵（主鍵+備份鍵），兼容所有後台頁
         localStorage.setItem(LOGGED_KEY, JSON.stringify(matchAdmin));
+        localStorage.setItem(BACKUP_LOGGED_KEY, JSON.stringify(matchAdmin));
         // 强制跳转后台（禁止停留登录页）
         window.location.href = BACKEND_PAGE;
       } else {
