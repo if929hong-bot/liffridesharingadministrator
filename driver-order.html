@@ -3,23 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>搭車自由 - 司機端</title>
+  <title>搭車自由 - 司機接單</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
-  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js"></script>
 
   <script>
-    mapboxgl.accessToken = 'pk.eyJ1IjoiaWY5Mjlob25nIiwiYSI6ImNtamQxczU2cjAweDMzZnM1Z3BvY2JkejgifQ.q-GNcs0rqWrZ3HtjhmysEQ';
     tailwind.config = {
       theme: {
         extend: {
           colors: {
             primary: '#00A86B',
-            dark: '#333333',
-            light: '#F5F5F5'
+            secondary: '#1E40AF',
           },
         },
       }
@@ -28,46 +24,37 @@
 
   <style type="text/tailwindcss">
     @layer utilities {
-      .btn-primary { @apply bg-primary text-white py-3 px-6 rounded-lg font-medium transition-all duration-300 hover:bg-primary/90 active:scale-95 shadow-md; }
-      .card { @apply bg-white rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg; }
-      .order-item { @apply border border-gray-200 rounded-lg p-4 mb-3 bg-white shadow-sm hover:border-primary cursor-pointer; }
-      #driver-map { @apply w-full h-[250px] rounded-lg mb-4; }
-      .team-select { @apply w-full px-4 py-2 border border-gray-200 rounded-lg mb-4; }
+      .btn-primary { @apply bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary/90 transition-colors; }
+      .btn-secondary { @apply bg-secondary text-white py-2 px-4 rounded-lg hover:bg-secondary/90 transition-colors; }
+      .card { @apply bg-white rounded-xl shadow-md p-4 mb-4; }
+      .order-item { @apply border border-gray-200 rounded-lg p-4 mb-3 bg-white shadow-sm; }
     }
   </style>
 </head>
-<body class="bg-light font-sans text-dark min-h-screen">
-  <header class="bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
-    <div class="container mx-auto px-4 py-3 flex items-center">
-      <i class="fa fa-car text-primary text-2xl mr-2"></i>
-      <h1 class="text-xl font-bold">搭車自由 - 司機端</h1>
+<body class="bg-gray-50 font-sans min-h-screen">
+  <header class="bg-white shadow-md py-4 px-6">
+    <div class="container mx-auto flex justify-between items-center">
+      <h1 class="text-xl font-bold text-primary flex items-center">
+        <i class="fa fa-taxi mr-2"></i> 搭車自由 - 司機接單
+      </h1>
+      <div id="team-info" class="text-gray-700 font-medium"></div>
     </div>
   </header>
 
-  <main class="container mx-auto px-4 pt-24 pb-16">
-    <div class="max-w-md mx-auto">
-      <div class="card">
-        <h2 class="text-xl font-bold mb-6 text-center">待接訂單</h2>
-        
-        <!-- 新增：司機選擇所屬車隊（可固定為某個車隊，或從URL讀取） -->
-        <div class="mb-6">
-          <label class="block text-sm font-medium text-gray-700 mb-1">所屬車隊</label>
-          <select id="driver-team-id" class="team-select" required>
-            <option value="">請選擇您的車隊</option>
-            <option value="A">A車隊</option>
-            <option value="B">B車隊</option>
-            <option value="C">C車隊</option>
-            <!-- 可新增更多車隊 -->
-          </select>
-        </div>
-        
-        <!-- 訂單列表（直接顯示乘客訂單） -->
-        <div id="orders-list">
-          <p class="text-gray-500 text-center">請先選擇所屬車隊，等待乘客訂單...</p>
-        </div>
-        
-        <div id="driver-map"></div>
-      </div>
+  <main class="container mx-auto px-4 py-8">
+    <!-- 車隊選擇（若URL無參數則顯示） -->
+    <div id="team-select-container" class="card mb-6 hidden">
+      <label class="block text-sm font-medium text-gray-700 mb-2">選擇所屬車隊</label>
+      <select id="driver-team-id" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+        <option value="">請選擇車隊</option>
+        <!-- 動態填充車隊 -->
+      </select>
+    </div>
+
+    <!-- 訂單列表 -->
+    <h2 class="text-lg font-bold mb-4">待接訂單</h2>
+    <div id="orders-list" class="space-y-3">
+      <p class="text-gray-500 text-center py-8">加載中...請稍候</p>
     </div>
   </main>
 
@@ -87,144 +74,135 @@
     }
     const db = firebase.database();
 
-    let driverMap = null;
-    let allOrders = {};
-    let currentDriverTeamId = ''; // 司機當前所屬車隊ID
+    // 全局變量
+    let currentDriverTeamId = '';
 
-    // 初始化地圖
-    function initDriverMap() {
-      driverMap = new mapboxgl.Map({
-        container: 'driver-map',
-        style: 'mapbox://styles/mapbox/streets-v12',
-        center: [121.5654, 25.0330],
-        zoom: 14
-      });
-      driverMap.addControl(new mapboxgl.NavigationControl(), 'top-right');
-      document.getElementById('driver-map').style.display = 'none';
-    }
-
-    // ========== 新增：按車隊ID過濾訂單 ==========
-    function filterOrdersByTeam(orders, teamId) {
-      // 若未選擇車隊，返回空
-      if (!teamId) return [];
-      // 過濾出與司機車隊ID匹配的訂單
-      return Object.keys(orders).filter(key => {
-        const order = orders[key];
-        // 訂單車隊ID匹配 + 狀態為待接單
-        return order.teamId === teamId && order.status === '待接單';
-      });
-    }
-
-    // 實時監聽乘客訂單（修改：只顯示對應車隊訂單）
-    function listenActiveOrders() {
-      // 監聽Firebase中activeOrders節點的變化
-      db.ref('activeOrders').on('value', function(snapshot) {
-        allOrders = snapshot.val() || {};
-        const ordersListEl = document.getElementById('orders-list');
-        
-        // 過濾出司機所屬車隊的訂單
-        const filteredOrderIds = filterOrdersByTeam(allOrders, currentDriverTeamId);
-
-        // 未選擇車隊
-        if (!currentDriverTeamId) {
-          ordersListEl.innerHTML = '<p class="text-gray-500 text-center">請先選擇所屬車隊</p>';
-          document.getElementById('driver-map').style.display = 'none';
-          return;
-        }
-
-        // 無對應車隊訂單
-        if (filteredOrderIds.length === 0) {
-          ordersListEl.innerHTML = `<p class="text-gray-500 text-center">${currentDriverTeamId}車隊暫無待接訂單</p>`;
-          document.getElementById('driver-map').style.display = 'none';
-          return;
-        }
-
-        // 渲染對應車隊的訂單
-        let html = '';
-        filteredOrderIds.forEach(orderId => {
-          const order = allOrders[orderId];
-          html += `
-            <div class="order-item" onclick="selectOrder('${orderId}')">
-              <div class="flex justify-between mb-1">
-                <span class="font-medium">訂單ID：${order.orderId || orderId}</span>
-                <span class="text-primary text-xs">待接單（${order.teamId}車隊）</span>
-              </div>
-              <div class="text-sm mb-1"><i class="fa fa-user mr-1"></i> 乘客姓名：${order.name}</div>
-              <div class="text-sm mb-1"><i class="fa fa-phone mr-1"></i> 乘客電話：${order.phone}</div>
-              <div class="text-sm mb-1"><i class="fa fa-map-marker mr-1"></i> 上車：${order.pickup}</div>
-              <div class="text-sm mb-1"><i class="fa fa-flag mr-1"></i> 下車：${order.dropoff}</div>
-              <button onclick="acceptOrder('${orderId}')" class="btn-primary w-full mt-2 py-2 text-sm">接此訂單</button>
-            </div>
-          `;
-        });
-        ordersListEl.innerHTML = html;
-      });
-    }
-
-    // 選擇訂單顯示地圖
-    function selectOrder(orderId) {
-      const order = allOrders[orderId];
-      if (!order) return;
-      document.getElementById('driver-map').style.display = 'block';
-      const pickupPoint = [121.5654, 25.0330]; // 可替換為實際經緯度
-      const dropoffPoint = [121.5700, 25.0400]; // 可替換為實際經緯度
-      driverMap.setCenter(pickupPoint);
-      driverMap.setZoom(14);
-      document.querySelectorAll('.mapboxgl-marker').forEach(marker => marker.remove());
-      new mapboxgl.Marker({className: 'mapbox-marker-pickup'})
-        .setLngLat(pickupPoint)
-        .setPopup(new mapboxgl.Popup().setHTML(`<b>上車地點</b><br>${order.pickup}`))
-        .addTo(driverMap)
-        .togglePopup();
-      new mapboxgl.Marker({className: 'mapbox-marker-dropoff'})
-        .setLngLat(dropoffPoint)
-        .setPopup(new mapboxgl.Popup().setHTML(`<b>下車地點</b><br>${order.dropoff}`))
-        .addTo(driverMap);
-    }
-
-    // 接單功能
-    function acceptOrder(orderId) {
-      event.stopPropagation();
-      // 這裡可以直接用司機登錄的手機號作為標識（無需姓名輸入框）
-      const driverPhone = localStorage.getItem('driverPhone');
-      if (!driverPhone) {
-        alert('請先登錄司機帳號！');
-        window.location.href = '../index.html#driver';
-        return;
-      }
-      if (confirm('確定接此訂單？')) {
-        db.ref(`activeOrders/${orderId}`).update({
-          status: '已接單',
-          driverPhone: driverPhone,
-          acceptTime: new Date().toLocaleString('zh-TW')
-        }).then(() => {
-          alert(`接單成功！乘客電話：${allOrders[orderId].phone}`);
-        });
-      }
-    }
-
-    // ========== 新增：監聽車隊選擇變更 ==========
+    // 初始化車隊選擇
     function initTeamSelect() {
-      const teamSelect = document.getElementById('driver-team-id');
-      teamSelect.addEventListener('change', function() {
-        currentDriverTeamId = this.value;
-        // 重新加載訂單
-        listenActiveOrders();
-      });
-      // 從URL讀取車隊ID（可選，用於直接綁定司機車隊）
+      // 從URL讀取車隊ID
       const urlParams = new URLSearchParams(window.location.search);
       const urlTeamId = urlParams.get('team');
-      if (urlTeamId) {
-        teamSelect.value = urlTeamId;
-        currentDriverTeamId = urlTeamId;
-      }
+      
+      const teamSelect = document.getElementById('driver-team-id');
+      const teamInfoEl = document.getElementById('team-info');
+      const selectContainer = document.getElementById('team-select-container');
+
+      // 加載所有車隊
+      db.ref('teams').once('value', (snapshot) => {
+        const teams = snapshot.val() || {};
+        const teamIds = Object.keys(teams);
+        
+        // 填充車隊選擇框
+        teamIds.forEach(teamId => {
+          const team = teams[teamId];
+          teamSelect.innerHTML += `<option value="${teamId}">${team.name || teamId}</option>`;
+        });
+
+        // URL有車隊ID則自動選擇
+        if (urlTeamId) {
+          currentDriverTeamId = urlTeamId;
+          teamSelect.value = urlTeamId;
+          teamInfoEl.textContent = `當前車隊：${teams[urlTeamId]?.name || urlTeamId}`;
+          selectContainer.classList.add('hidden'); // 隱藏選擇框
+          listenActiveOrders(); // 加載訂單
+        } else {
+          selectContainer.classList.remove('hidden'); // 顯示選擇框
+          teamInfoEl.textContent = '';
+        }
+      });
+
+      // 車隊選擇改變時加載訂單
+      teamSelect.addEventListener('change', () => {
+        currentDriverTeamId = teamSelect.value;
+        const teams = JSON.parse(localStorage.getItem('teams') || '{}');
+        teamInfoEl.textContent = `當前車隊：${teams[currentDriverTeamId]?.name || currentDriverTeamId}`;
+        listenActiveOrders();
+      });
     }
 
-    // 頁面加載初始化
-    document.addEventListener('DOMContentLoaded', function() {
-      initDriverMap();
-      initTeamSelect(); // 初始化車隊選擇
-      listenActiveOrders(); // 啟動訂單監聽
+    // 監聽訂單變化
+    function listenActiveOrders() {
+      if (!currentDriverTeamId) return;
+      
+      const ordersListEl = document.getElementById('orders-list');
+      ordersListEl.innerHTML = '<p class="text-gray-500 text-center py-8">加載中...請稍候</p>';
+
+      // 只加載當前車隊的待接單
+      db.ref('activeOrders')
+        .orderByChild('teamId')
+        .equalTo(currentDriverTeamId)
+        .on('value', (snapshot) => {
+          const orders = snapshot.val() || {};
+          const orderIds = Object.keys(orders);
+          
+          // 過濾出待接單
+          const pendingOrders = orderIds.filter(id => orders[id].status === '待接單');
+          
+          if (pendingOrders.length === 0) {
+            ordersListEl.innerHTML = '<p class="text-gray-500 text-center py-8">當前車隊暫無待接訂單</p>';
+            return;
+          }
+          
+          // 渲染訂單
+          let html = '';
+          pendingOrders.forEach(orderId => {
+            const order = orders[orderId];
+            html += `
+              <div class="order-item">
+                <div class="flex justify-between items-start mb-2">
+                  <h3 class="font-bold text-lg">訂單ID：${order.orderId || orderId}</h3>
+                  <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">待接單</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2 mb-3 text-sm">
+                  <div>
+                    <i class="fa fa-user text-primary mr-1"></i> 乘客：${order.name}
+                  </div>
+                  <div>
+                    <i class="fa fa-phone text-primary mr-1"></i> 電話：${order.phone}
+                  </div>
+                  <div class="col-span-2">
+                    <i class="fa fa-map-marker text-red-500 mr-1"></i> 上車：${order.pickup}
+                  </div>
+                  <div class="col-span-2">
+                    <i class="fa fa-map-marker text-green-500 mr-1"></i> 下車：${order.dropoff}
+                  </div>
+                  ${order.remark ? `<div class="col-span-2"><i class="fa fa-comment text-gray-500 mr-1"></i> 備註：${order.remark}</div>` : ''}
+                  <div class="col-span-2">
+                    <i class="fa fa-clock-o text-gray-500 mr-1"></i> 提交時間：${order.createTime}
+                  </div>
+                </div>
+                <div class="flex gap-2">
+                  <button onclick="acceptOrder('${orderId}')" class="btn-primary flex-1">
+                    <i class="fa fa-check mr-1"></i> 接單
+                  </button>
+                </div>
+              </div>
+            `;
+          });
+          
+          ordersListEl.innerHTML = html;
+        });
+    }
+
+    // 接單操作
+    function acceptOrder(orderId) {
+      if (!confirm('確認接此訂單？')) return;
+      
+      // 更新訂單狀態
+      db.ref(`activeOrders/${orderId}`).update({
+        status: '已接單',
+        acceptTime: new Date().toLocaleString('zh-TW')
+      }).then(() => {
+        alert('接單成功！請儘快聯繫乘客');
+      }).catch(err => {
+        console.error('接單失敗:', err);
+        alert('接單失敗，請稍後重試');
+      });
+    }
+
+    // 初始化
+    document.addEventListener('DOMContentLoaded', () => {
+      initTeamSelect();
     });
   </script>
 </body>
