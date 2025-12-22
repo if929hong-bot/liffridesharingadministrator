@@ -119,8 +119,10 @@
     let currentOrderId = localStorage.getItem('currentOrderId');
     let currentOrder = JSON.parse(localStorage.getItem('currentOrder'));
 
-    // ==================== 3. 頁面加載完成初始化 ====================
+    // ==================== 3. 頁面加載完成初始化（新增：提交訂單到Firebase） ====================
     document.addEventListener('DOMContentLoaded', function() {
+      // 先嘗試從叫車頁獲取數據，提交到Firebase
+      submitOrderToFirebase();
       // 加載訂單信息
       loadOrderDetail();
       // 初始化訂單地圖
@@ -130,6 +132,43 @@
       // 綁定取消訂單事件
       bindCancelOrder();
     });
+
+    // ==================== 新增：提交訂單到Firebase ====================
+    function submitOrderToFirebase() {
+      // 從localStorage獲取叫車頁填寫的數據（需確保index.html叫車表單提交時存儲了這些數據）
+      const orderFromLocal = JSON.parse(localStorage.getItem('passengerOrder'));
+      if (orderFromLocal && !currentOrderId) {
+        // 生成唯一訂單ID
+        const orderId = 'order_' + Date.now();
+        // 組裝訂單數據
+        const orderData = {
+          orderId: orderId,
+          name: orderFromLocal.name,
+          phone: orderFromLocal.phone,
+          pickup: orderFromLocal.pickup,
+          dropoff: orderFromLocal.dropoff,
+          count: orderFromLocal.count,
+          status: "待接單",
+          createTime: new Date().toLocaleString('zh-TW')
+        };
+        // 寫入Firebase
+        db.ref(`activeOrders/${orderId}`).set(orderData)
+          .then(() => {
+            // 存儲訂單ID到本地，便於後續監聽
+            localStorage.setItem('currentOrderId', orderId);
+            localStorage.setItem('currentOrder', JSON.stringify(orderData));
+            currentOrderId = orderId;
+            currentOrder = orderData;
+            // 重新加載訂單信息
+            loadOrderDetail();
+          })
+          .catch(err => {
+            alert('訂單提交失敗：' + err.message);
+          });
+        // 清除叫車頁的臨時數據
+        localStorage.removeItem('passengerOrder');
+      }
+    }
 
     // ==================== 4. 加載訂單詳情 ====================
     function loadOrderDetail() {
@@ -246,7 +285,7 @@
           document.getElementById('status-text').textContent = updatedOrder.status || '待接單';
           document.getElementById('order-status').textContent = 
             updatedOrder.status === '已接單' 
-              ? `已接單！司機：${updatedOrder.driverName || '未知'} | 電話：${updatedOrder.driverPhone || '未知'}`
+              ? `已接單！司機電話：${updatedOrder.driverPhone || '未知'}`
               : updatedOrder.status === '已完成'
                 ? '訂單已完成'
                 : updatedOrder.status === '已取消'
