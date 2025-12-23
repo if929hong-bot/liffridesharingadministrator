@@ -3,557 +3,840 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>搭車自由 - 超級管理員後台</title>
+  <title>車隊管理後台</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js"></script>
-
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+  
   <script>
     tailwind.config = {
       theme: {
         extend: {
           colors: {
-            primary: '#00A86B',
-            secondary: '#1E40AF',
+            primary: '#228B22',
+            secondary: '#6c757d',
+            danger: '#dc3545',
+            success: '#198754',
+            info: '#0dcaf0'
           },
-        },
+          boxShadow: {
+            card: '0 4px 20px rgba(0, 0, 0, 0.08)',
+            modal: '0 10px 25px rgba(0, 0, 0, 0.1)'
+          }
+        }
       }
     }
   </script>
-
+  
   <style type="text/tailwindcss">
     @layer utilities {
-      .btn-primary { @apply bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary/90 transition-colors; }
-      .btn-secondary { @apply bg-secondary text-white py-2 px-4 rounded-lg hover:bg-secondary/90 transition-colors; }
-      .card { @apply bg-white rounded-xl shadow-md p-4 mb-4; }
-      .modal { @apply fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4; }
-      .modal-content { @apply bg-white rounded-xl p-6 w-full max-w-md; }
-      .input-field { @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50; }
+      .form-input {
+        @apply w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all;
+      }
+      .btn {
+        @apply py-2 px-4 rounded-lg transition-all duration-200 font-medium;
+      }
+      .btn-primary {
+        @apply bg-primary text-white hover:bg-primary/90 active:bg-primary/80;
+      }
+      .btn-danger {
+        @apply bg-danger text-white hover:bg-danger/90 active:bg-danger/80;
+      }
+      .btn-success {
+        @apply bg-success text-white hover:bg-success/90 active:bg-success/80;
+      }
+      .btn-info {
+        @apply bg-info text-white hover:bg-info/90 active:bg-info/80;
+      }
+      .btn-outline {
+        @apply border border-gray-300 hover:bg-gray-50;
+      }
+      .table-cell {
+        @apply px-4 py-3 border-b border-gray-200;
+      }
+      .modal {
+        @apply fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4;
+      }
+      .modal-content {
+        @apply bg-white rounded-xl shadow-modal w-full max-w-md;
+      }
+      .tab-btn {
+        @apply py-2 px-4 text-sm font-medium border-b-2 border-transparent hover:text-primary transition-colors;
+      }
+      .tab-btn-active {
+        @apply border-primary text-primary;
+      }
     }
   </style>
 </head>
-<body class="bg-gray-50 font-sans min-h-screen">
-  <header class="bg-white shadow-md py-4 px-6">
-    <div class="container mx-auto flex justify-between items-center">
-      <h1 class="text-xl font-bold text-primary flex items-center">
-        <<i class="fa fa-cogs mr-2"></</i> 搭車自由 - 超級管理員後台
+<body class="bg-gray-50 min-h-screen">
+  <!-- 頁頭 -->
+  <header class="bg-white shadow-sm sticky top-0 z-10">
+    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+      <h1 class="text-xl font-bold text-primary">
+        <<i class="fa fa-building-o mr-2"></</i>車隊管理後台
       </h1>
-      <button id="logout-btn" class="text-gray-600 hover:text-red-500 transition-colors">
-        <<i class="fa fa-sign-out mr-1"></</i> 退出登錄
+      <button id="logout-btn" class="btn btn-outline text-gray-700">
+        <<i class="fa fa-sign-out mr-1"></</i>登出
       </button>
     </div>
   </header>
 
+  <!-- 主要內容 -->
   <main class="container mx-auto px-4 py-8">
-    <!-- 導航標籤 -->
-    <div class="flex border-b border-gray-200 mb-6">
-      <button id="tab-orders" class="px-4 py-2 font-medium text-primary border-b-2 border-primary">所有訂單</button>
-      <button id="tab-teams" class="px-4 py-2 font-medium text-gray-500 hover:text-primary transition-colors">車隊管理</button>
-      <button id="tab-drivers" class="px-4 py-2 font-medium text-gray-500 hover:text-primary transition-colors">司機管理</button>
-    </div>
-
-    <!-- 1. 所有訂單頁面 -->
-    <div id="page-orders" class="block">
-      <div class="card mb-6">
-        <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-          <h2 class="text-lg font-bold">訂單篩選</h2>
-          <div class="flex flex-wrap gap-3">
-            <!-- 新增：車隊篩選下拉框 -->
-            <select id="filter-team" class="input-field w-full md:w-auto">
-              <option value="">所有車隊</option>
-              <!-- 後端動態填充車隊選項 -->
-            </select>
-            <!-- 狀態篩選 -->
-            <select id="filter-status" class="input-field w-full md:w-auto">
-              <option value="">所有狀態</option>
-              <option value="待接單">待接單</option>
-              <option value="已接單">已接單</option>
-              <option value="已完成">已完成</option>
-              <option value="已取消">已取消</option>
-            </select>
-            <button id="refresh-orders" class="btn-primary w-full md:w-auto">
-              <<i class="fa fa-refresh mr-1"></</i> 刷新
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- 訂單列表 -->
-      <div id="orders-list" class="card">
-        <p class="text-gray-500 text-center py-8">加載中...請稍候</p>
+    <!-- 功能標籤頁 -->
+    <div class="border-b border-gray-200 mb-6">
+      <div class="flex flex-wrap gap-2">
+        <button class="tab-btn tab-btn-active" data-tab="fleet">
+          <<i class="fa fa-car mr-1"></</i>車隊管理
+        </button>
+        <button class="tab-btn" data-tab="admin-audit">
+          <<i class="fa fa-user-plus mr-1"></</i>管理員審核
+        </button>
+        <button class="tab-btn" data-tab="admin-manage">
+          <<i class="fa fa-users mr-1"></</i>管理員管理
+        </button>
+        <button class="tab-btn" data-tab="driver-manage">
+          <<i class="fa fa-id-card mr-1"></</i>司機管理
+        </button>
+        <button class="tab-btn" data-tab="rent-setting">
+          <<i class="fa fa-money mr-1"></</i>租金及銀行設定
+        </button>
       </div>
     </div>
 
-    <!-- 2. 車隊管理頁面 -->
-    <div id="page-teams" class="hidden">
-      <div class="flex justify-between items-center mb-6">
-        <h2 class="text-lg font-bold">車隊管理</h2>
-        <button id="add-team-btn" class="btn-secondary">
-          <<i class="fa fa-plus mr-1"></</i> 新增車隊
+    <!-- 車隊管理頁面 -->
+    <div class="tab-content" data-tab="fleet">
+      <!-- 功能按鈕區 -->
+      <div class="mb-6 flex flex-wrap gap-3">
+        <button id="add-fleet-btn" class="btn btn-primary">
+          <<i class="fa fa-plus mr-1"></</i>新增車隊
+        </button>
+        <button id="refresh-fleet-btn" class="btn btn-outline">
+          <<i class="fa fa-refresh mr-1"></</i>刷新列表
         </button>
       </div>
 
-      <!-- 車隊列表 -->
-      <div id="teams-list" class="card">
-        <p class="text-gray-500 text-center py-8">加載中...請稍候</p>
-      </div>
-
-      <!-- 車隊連結生成器（新增） -->
-      <div class="card mt-4">
-        <h3 class="font-medium mb-3">車隊LIFF連結生成</h3>
-        <div class="flex flex-col gap-3">
-          <div>
-            <label class="block text-sm text-gray-700 mb-1">選擇車隊</label>
-            <select id="generate-team" class="input-field">
-              <option value="">請選擇車隊</option>
-              <!-- 後端動態填充車隊選項 -->
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm text-gray-700 mb-1">基礎域名（不可修改）</label>
-            <input type="text" id="base-domain" value="https://你的域名/" class="input-field" readonly>
-          </div>
-          <div>
-            <label class="block text-sm text-gray-700 mb-1">生成的連結</label>
-            <div class="flex">
-              <input type="text" id="generated-link" class="input-field rounded-r-none" readonly>
-              <button id="copy-link" class="bg-gray-200 px-3 rounded-l-none hover:bg-gray-300 transition-colors">
-                <<i class="fa fa-copy"></</i>
-              </button>
-            </div>
-            <p class="text-xs text-gray-500 mt-1">
-              乘客連結：直接分發給乘客<br>
-              司機連結：在後面加 <code>?team=車隊ID</code>（如：https://你的域名/driver-order.html?team=A）
-            </p>
-          </div>
+      <!-- 車隊列表區 -->
+      <div class="bg-white rounded-xl shadow-card overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-100">
+              <tr>
+                <<th class="table-cell text-left">車隊ID</</th>
+                <<th class="table-cell text-left">車隊名稱</</th>
+                <<th class="table-cell text-left">車隊描述</</th>
+                <<th class="table-cell text-center">操作</</th>
+              </tr>
+            </thead>
+            <tbody id="fleet-list-body">
+              <tr class="text-center text-gray-500">
+                <td colspan="4" class="table-cell">載入中...</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
 
-    <!-- 3. 司機管理頁面（保留原功能，可選） -->
-    <div id="page-drivers" class="hidden">
-      <div class="card">
-        <p class="text-gray-500 text-center py-8">司機管理功能（可根據需求擴充）</p>
+    <!-- 管理員審核頁面 -->
+    <div class="tab-content hidden" data-tab="admin-audit">
+      <div class="bg-white rounded-xl shadow-card overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-100">
+              <tr>
+                <<th class="table-cell text-left">申請人姓名</</th>
+                <<th class="table-cell text-left">電話</</th>
+                <<th class="table-cell text-left">申請車隊</</th>
+                <<th class="table-cell text-center">操作</</th>
+              </tr>
+            </thead>
+            <tbody id="admin-audit-body">
+              <tr class="text-center text-gray-500">
+                <td colspan="4" class="table-cell">暫無審核申請</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 管理員管理頁面 -->
+    <div class="tab-content hidden" data-tab="admin-manage">
+      <div class="mb-6 flex flex-wrap gap-3">
+        <button id="refresh-admin-btn" class="btn btn-outline">
+          <<i class="fa fa-refresh mr-1"></</i>刷新列表
+        </button>
+      </div>
+      <div class="bg-white rounded-xl shadow-card overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-100">
+              <tr>
+                <<th class="table-cell text-left">車隊名稱</</th>
+                <<th class="table-cell text-left">車隊ID</</th>
+                <<th class="table-cell text-left">管理員姓名</</th>
+                <<th class="table-cell text-left">電話</</th>
+                <<th class="table-cell text-left">帳號</</th>
+                <<th class="table-cell text-left">繳費日期</</th>
+                <<th class="table-cell text-center">狀態</</th>
+                <<th class="table-cell text-center">操作</</th>
+              </tr>
+            </thead>
+            <tbody id="admin-manage-body">
+              <tr class="text-center text-gray-500">
+                <td colspan="8" class="table-cell">暫無管理員數據</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 司機管理頁面 -->
+    <div class="tab-content hidden" data-tab="driver-manage">
+      <div class="bg-white rounded-xl shadow-card overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-100">
+              <tr>
+                <<th class="table-cell text-left">司機姓名</</th>
+                <<th class="table-cell text-left">電話</</th>
+                <<th class="table-cell text-left">所屬車隊</</th>
+                <<th class="table-cell text-center">狀態</</th>
+                <<th class="table-cell text-center">操作</</th>
+              </tr>
+            </thead>
+            <tbody id="driver-manage-body">
+              <tr class="text-center text-gray-500">
+                <td colspan="5" class="table-cell">暫無司機數據</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 租金及銀行設定頁面 -->
+    <div class="tab-content hidden" data-tab="rent-setting">
+      <div class="bg-white rounded-xl shadow-card p-6">
+        <form id="rent-setting-form" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">每月租金金額</label>
+            <input type="number" id="monthly-rent" class="form-input" placeholder="輸入租金金額" required>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">銀行名稱</label>
+            <input type="text" id="bank-name" class="form-input" placeholder="輸入銀行名稱" required>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">銀行帳號</label>
+            <input type="text" id="bank-account" class="form-input" placeholder="輸入銀行帳號" required>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">戶名</label>
+            <input type="text" id="bank-holder" class="form-input" placeholder="輸入戶名" required>
+          </div>
+          <button type="submit" class="btn btn-primary w-full">
+            <<i class="fa fa-save mr-1"></</i>儲存設定
+          </button>
+        </form>
       </div>
     </div>
   </main>
 
   <!-- 新增車隊彈窗 -->
-  <div id="add-team-modal" class="modal hidden">
-    <div class="modal-content">
+  <div id="add-fleet-modal" class="modal hidden">
+    <div class="modal-content p-6">
       <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-bold">新增車隊</h3>
-        <button id="close-add-modal" class="text-gray-500 hover:text-gray-700">
+        <h2 class="text-lg font-medium">新增車隊</h2>
+        <button class="close-modal text-gray-500 hover:text-gray-700">
           <<i class="fa fa-times"></</i>
         </button>
       </div>
-      <form id="add-team-form" class="space-y-4">
+      <form id="add-fleet-form" class="space-y-4">
         <div>
-          <label class="block text-sm text-gray-700 mb-1">車隊ID（必填，如A、B、C）</label>
-          <input type="text" id="team-id" class="input-field" placeholder="輸入車隊ID（只能包含字母/數字）" required pattern="[A-Za-z0-9]+">
-          <p class="text-xs text-gray-500 mt-1">車隊ID用於URL參數（如?team=A），不可重複</p>
+          <label class="block text-sm font-medium text-gray-700 mb-1">車隊名稱（必填）</label>
+          <input 
+            type="text" 
+            id="new-fleet-name" 
+            class="form-input" 
+            placeholder="輸入車隊名稱" 
+            required
+          >
         </div>
         <div>
-          <label class="block text-sm text-gray-700 mb-1">車隊名稱（必填）</label>
-          <input type="text" id="team-name" class="input-field" placeholder="輸入車隊名稱（如A車隊）" required>
+          <label class="block text-sm font-medium text-gray-700 mb-1">車隊描述（可選）</label>
+          <textarea 
+            id="new-fleet-desc" 
+            class="form-input" 
+            rows="2" 
+            placeholder="輸入車隊描述"
+          ></textarea>
         </div>
-        <div>
-          <label class="block text-sm text-gray-700 mb-1">車隊描述（可選）</label>
-          <textarea id="team-desc" class="input-field" rows="2" placeholder="輸入車隊描述"></textarea>
+        <div class="flex gap-3 justify-end">
+          <button type="button" class="close-modal btn btn-outline">取消</button>
+          <button type="submit" class="btn btn-primary">確認新增</button>
         </div>
-        <button type="submit" class="btn-secondary w-full">確認新增</button>
       </form>
     </div>
   </div>
 
   <!-- 編輯車隊彈窗 -->
-  <div id="edit-team-modal" class="modal hidden">
-    <div class="modal-content">
+  <div id="edit-fleet-modal" class="modal hidden">
+    <div class="modal-content p-6">
       <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-bold">編輯車隊</h3>
-        <button id="close-edit-modal" class="text-gray-500 hover:text-gray-700">
+        <h2 class="text-lg font-medium">編輯車隊</h2>
+        <button class="close-modal text-gray-500 hover:text-gray-700">
           <<i class="fa fa-times"></</i>
         </button>
       </div>
-      <form id="edit-team-form" class="space-y-4">
+      <form id="edit-fleet-form" class="space-y-4">
         <div>
-          <label class="block text-sm text-gray-700 mb-1">車隊ID（不可修改）</label>
-          <input type="text" id="edit-team-id" class="input-field" readonly>
+          <label class="block text-sm font-medium text-gray-700 mb-1">車隊ID（不可修改）</label>
+          <input 
+            type="text" 
+            id="edit-fleet-id" 
+            class="form-input" 
+            readonly
+          >
         </div>
         <div>
-          <label class="block text-sm text-gray-700 mb-1">車隊名稱（必填）</label>
-          <input type="text" id="edit-team-name" class="input-field" placeholder="輸入車隊名稱" required>
+          <label class="block text-sm font-medium text-gray-700 mb-1">車隊名稱（必填）</label>
+          <input 
+            type="text" 
+            id="edit-fleet-name" 
+            class="form-input" 
+            placeholder="輸入車隊名稱" 
+            required
+          >
         </div>
         <div>
-          <label class="block text-sm text-gray-700 mb-1">車隊描述（可選）</label>
-          <textarea id="edit-team-desc" class="input-field" rows="2" placeholder="輸入車隊描述"></textarea>
+          <label class="block text-sm font-medium text-gray-700 mb-1">車隊描述（可選）</label>
+          <textarea 
+            id="edit-fleet-desc" 
+            class="form-input" 
+            rows="2" 
+            placeholder="輸入車隊描述"
+          ></textarea>
         </div>
         <div class="flex gap-3">
-          <button type="submit" class="btn-secondary flex-1">確認修改</button>
-          <button type="button" id="delete-team-btn" class="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition-colors">
-            <<i class="fa fa-trash mr-1"></</i> 刪除車隊
-          </button>
+          <button type="submit" class="btn btn-info flex-1">確認修改</button>
+          <button type="button" id="delete-fleet-btn" class="btn btn-danger flex-1">刪除車隊</button>
         </div>
       </form>
     </div>
   </div>
 
+  <!-- 管理員狀態操作彈窗 -->
+  <div id="admin-status-modal" class="modal hidden">
+    <div class="modal-content p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-medium" id="status-modal-title">變更狀態</h2>
+        <button class="close-modal text-gray-500 hover:text-gray-700">
+          <<i class="fa fa-times"></</i>
+        </button>
+      </div>
+      <div class="mb-4">
+        <p id="status-modal-desc">確定要變更此管理員的狀態嗎？</p>
+      </div>
+      <div class="flex gap-3">
+        <button type="button" class="close-modal btn btn-outline flex-1">取消</button>
+        <button type="button" id="confirm-status-btn" class="btn btn-danger flex-1">確認停權</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 提示訊息彈窗 -->
+  <div id="alert-modal" class="modal hidden">
+    <div class="modal-content p-6 max-w-sm">
+      <div class="text-center mb-4">
+        <<i id="alert-icon" class="fa fa-info-circle text-3xl text-info mb-2"></</i>
+        <h3 class="text-lg font-medium" id="alert-title">提示</h3>
+      </div>
+      <p id="alert-message" class="text-gray-700 mb-4 text-center"></p>
+      <button id="alert-confirm-btn" class="btn btn-primary w-full">確定</button>
+    </div>
+  </div>
+
   <script>
-    // Firebase配置（替換為你的真實配置）
-    const firebaseConfig = {
-      apiKey: "你的API Key",
-      authDomain: "你的Auth Domain",
-      databaseURL: "你的Database URL",
-      projectId: "你的Project ID",
-      storageBucket: "你的Storage Bucket",
-      messagingSenderId: "你的Sender ID",
-      appId: "你的App ID"
-    };
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
-    const db = firebase.database();
+    // 全局常量
+    const SUPER_ADMINS = [
+      { account: '0975521219', password: 'fffishau' },
+      { account: 'admin123', password: 'ccc456789' }
+    ];
+    const LOGGED_KEY = 'superAdminLoggedIn';
+    const FLEETS_KEY = 'fleetList';
+    const ADMIN_APPLY_KEY = 'fleetAdminApplications';
+    const APPROVED_ADMINS_KEY = 'approvedFleetAdmins';
+    const RENT_SETTING_KEY = 'rentAndBankSettings';
+    const LOGIN_PAGE = 'index.html';
 
-    // 全局變量
-    let currentEditingTeam = ''; // 當前編輯的車隊ID
+    // 當前狀態
+    let currentEditFleetId = '';
+    let currentAdminId = '';
+    let currentAdminStatus = '';
 
-    // ========== 1. 頁面切換邏輯 ==========
-    function initTabSwitch() {
-      const tabs = ['tab-orders', 'tab-teams', 'tab-drivers'];
-      const pages = ['page-orders', 'page-teams', 'page-drivers'];
+    // 初始化頁面
+    document.addEventListener('DOMContentLoaded', () => {
+      // 驗證超管登錄狀態
+      checkSuperAdminLogin();
       
-      tabs.forEach((tabId, index) => {
-        document.getElementById(tabId).addEventListener('click', () => {
-          // 切換標籤樣式
-          tabs.forEach(id => {
-            document.getElementById(id).classList.remove('text-primary', 'border-b-2', 'border-primary');
-            document.getElementById(id).classList.add('text-gray-500');
+      // 加載數據
+      loadFleetList();
+      loadAdminAuditList();
+      loadApprovedAdmins();
+      loadRentSettings();
+      
+      // 綁定事件
+      bindEvents();
+      bindTabEvents();
+    });
+
+    // 驗證超管登錄狀態
+    function checkSuperAdminLogin() {
+      const isLoggedIn = localStorage.getItem(LOGGED_KEY) === 'true';
+      
+      // 檢查是否為超管帳號登入
+      if (!isLoggedIn) {
+        // 跳轉到登入頁
+        window.location.href = LOGIN_PAGE;
+        return;
+      }
+    }
+
+    // 綁定標籤頁事件
+    function bindTabEvents() {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          // 切換標籤按鈕狀態
+          document.querySelectorAll('.tab-btn').forEach(tab => {
+            tab.classList.remove('tab-btn-active');
           });
-          document.getElementById(tabId).classList.remove('text-gray-500');
-          document.getElementById(tabId).classList.add('text-primary', 'border-b-2', 'border-primary');
+          btn.classList.add('tab-btn-active');
           
-          // 切換頁面
-          pages.forEach(pageId => {
-            document.getElementById(pageId).classList.add('hidden');
+          // 切換內容顯示
+          const tabName = btn.getAttribute('data-tab');
+          document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.add('hidden');
           });
-          document.getElementById(pages[index]).classList.remove('hidden');
-          
-          // 加載對應頁面數據
-          if (tabId === 'tab-teams') loadAllTeams();
-          if (tabId === 'tab-orders') loadAllOrders();
+          document.querySelector(`.tab-content[data-tab="${tabName}"]`).classList.remove('hidden');
         });
       });
     }
 
-    // ========== 2. 車隊管理核心功能 ==========
-    // 加載所有車隊
-    function loadAllTeams() {
-      const teamsListEl = document.getElementById('teams-list');
-      teamsListEl.innerHTML = '<p class="text-gray-500 text-center py-8">加載中...請稍候</p>';
+    // 加載車隊列表
+    function loadFleetList() {
+      const fleetList = JSON.parse(localStorage.getItem(FLEETS_KEY) || '[]');
+      const listBody = document.getElementById('fleet-list-body');
       
-      // 從Firebase讀取車隊數據（儲存在 teams 節點）
-      db.ref('teams').on('value', (snapshot) => {
-        const teams = snapshot.val() || {};
-        const teamIds = Object.keys(teams);
-        
-        if (teamIds.length === 0) {
-          teamsListEl.innerHTML = '<p class="text-gray-500 text-center py-8">暫無車隊，點擊「新增車隊」創建</p>';
-        } else {
-          let html = `
-            <div class="grid grid-cols-1 md:grid-cols-4 font-medium py-2 border-b">
-              <div>車隊ID</div>
-              <div>車隊名稱</div>
-              <div>描述</div>
-              <div>操作</div>
-            </div>
-          `;
-          
-          teamIds.forEach(teamId => {
-            const team = teams[teamId];
-            html += `
-              <div class="grid grid-cols-1 md:grid-cols-4 py-3 border-b items-center">
-                <div class="font-medium">${teamId}</div>
-                <div>${team.name || '未設置'}</div>
-                <div class="text-sm text-gray-600">${team.desc || '無'}</div>
-                <div>
-                  <button onclick="editTeam('${teamId}')" class="text-blue-500 hover:text-blue-700 mr-3">
-                    <<i class="fa fa-edit"></</i> 編輯
-                  </button>
-                </div>
-              </div>
-            `;
-          });
-          
-          teamsListEl.innerHTML = html;
-        }
-        
-        // 更新「車隊篩選」和「連結生成器」的下拉框
-        updateTeamSelects(teams);
-      });
-    }
-
-    // 更新所有車隊下拉框（訂單篩選、連結生成器）
-    function updateTeamSelects(teams) {
-      const filterTeamEl = document.getElementById('filter-team');
-      const generateTeamEl = document.getElementById('generate-team');
-      const teamIds = Object.keys(teams);
+      listBody.innerHTML = '';
       
-      // 清空選項（保留默認選項）
-      filterTeamEl.innerHTML = '<option value="">所有車隊</option>';
-      generateTeamEl.innerHTML = '<option value="">請選擇車隊</option>';
-      
-      // 動態添加車隊選項
-      teamIds.forEach(teamId => {
-        const team = teams[teamId];
-        const option = `<option value="${teamId}">${team.name || teamId}</option>`;
-        filterTeamEl.innerHTML += option;
-        generateTeamEl.innerHTML += option;
-      });
-    }
-
-    // 新增車隊
-    function initAddTeam() {
-      const addModal = document.getElementById('add-team-modal');
-      document.getElementById('add-team-btn').addEventListener('click', () => {
-        document.getElementById('add-team-form').reset();
-        addModal.classList.remove('hidden');
-      });
-      
-      // 關閉彈窗
-      document.getElementById('close-add-modal').addEventListener('click', () => {
-        addModal.classList.add('hidden');
-      });
-      
-      // 提交新增表單
-      document.getElementById('add-team-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const teamId = document.getElementById('team-id').value.trim().toUpperCase(); // 統一轉大寫
-        const teamName = document.getElementById('team-name').value.trim();
-        const teamDesc = document.getElementById('team-desc').value.trim();
-        
-        // 檢查車隊ID是否已存在
-        db.ref(`teams/${teamId}`).once('value', (snapshot) => {
-          if (snapshot.exists()) {
-            alert(`車隊ID「${teamId}」已存在，請更換其他ID`);
-            return;
-          }
-          
-          // 存入Firebase
-          db.ref(`teams/${teamId}`).set({
-            name: teamName,
-            desc: teamDesc,
-            createTime: new Date().toLocaleString('zh-TW')
-          }).then(() => {
-            alert('車隊新增成功！');
-            addModal.classList.add('hidden');
-          }).catch(err => {
-            console.error('新增車隊失敗:', err);
-            alert('新增車隊失敗，請稍後重試');
-          });
-        });
-      });
-    }
-
-    // 編輯車隊
-    function editTeam(teamId) {
-      const editModal = document.getElementById('edit-team-modal');
-      currentEditingTeam = teamId;
-      
-      // 讀取車隊數據並填充表單
-      db.ref(`teams/${teamId}`).once('value', (snapshot) => {
-        const team = snapshot.val() || {};
-        document.getElementById('edit-team-id').value = teamId;
-        document.getElementById('edit-team-name').value = team.name || '';
-        document.getElementById('edit-team-desc').value = team.desc || '';
-        editModal.classList.remove('hidden');
-      });
-    }
-
-    // 關閉編輯彈窗
-    document.getElementById('close-edit-modal').addEventListener('click', () => {
-      document.getElementById('edit-team-modal').classList.add('hidden');
-    });
-
-    // 提交編輯表單
-    document.getElementById('edit-team-form').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const teamId = currentEditingTeam;
-      const teamName = document.getElementById('edit-team-name').value.trim();
-      const teamDesc = document.getElementById('edit-team-desc').value.trim();
-      
-      // 更新車隊數據
-      db.ref(`teams/${teamId}`).update({
-        name: teamName,
-        desc: teamDesc,
-        updateTime: new Date().toLocaleString('zh-TW')
-      }).then(() => {
-        alert('車隊修改成功！');
-        document.getElementById('edit-team-modal').classList.add('hidden');
-      }).catch(err => {
-        console.error('修改車隊失敗:', err);
-        alert('修改車隊失敗，請稍後重試');
-      });
-    });
-
-    // 刪除車隊
-    document.getElementById('delete-team-btn').addEventListener('click', () => {
-      const teamId = currentEditingTeam;
-      if (!confirm(`確定要刪除車隊「${teamId}」嗎？刪除後無法恢復！`)) return;
-      
-      // 先檢查該車隊是否有訂單（避免數據殘留）
-      db.ref('activeOrders').orderByChild('teamId').equalTo(teamId).once('value', (snapshot) => {
-        if (snapshot.exists()) {
-          alert(`車隊「${teamId}」仍有訂單，請先處理完訂單再刪除`);
-          return;
-        }
-        
-        // 刪除車隊
-        db.ref(`teams/${teamId}`).remove().then(() => {
-          alert('車隊刪除成功！');
-          document.getElementById('edit-team-modal').classList.add('hidden');
-        }).catch(err => {
-          console.error('刪除車隊失敗:', err);
-          alert('刪除車隊失敗，請稍後重試');
-        });
-      });
-    });
-
-    // 生成車隊LIFF連結
-    function initLinkGenerator() {
-      const generateTeamEl = document.getElementById('generate-team');
-      const baseDomainEl = document.getElementById('base-domain');
-      const generatedLinkEl = document.getElementById('generated-link');
-      
-      generateTeamEl.addEventListener('change', () => {
-        const teamId = generateTeamEl.value;
-        if (!teamId) {
-          generatedLinkEl.value = '';
-          return;
-        }
-        // 生成乘客端連結（司機端需手動加 ?team=車隊ID）
-        generatedLinkEl.value = `${baseDomainEl.value}index.html?team=${teamId}`;
-      });
-      
-      // 複製連結
-      document.getElementById('copy-link').addEventListener('click', () => {
-        const link = generatedLinkEl.value;
-        if (!link) {
-          alert('請先選擇車隊生成連結');
-          return;
-        }
-        generatedLinkEl.select();
-        document.execCommand('copy');
-        alert('連結複製成功！');
-      });
-    }
-
-    // ========== 3. 訂單管理（新增車隊篩選） ==========
-    function loadAllOrders() {
-      const ordersListEl = document.getElementById('orders-list');
-      ordersListEl.innerHTML = '<p class="text-gray-500 text-center py-8">加載中...請稍候</p>';
-      
-      // 獲取篩選條件
-      const filterTeam = document.getElementById('filter-team').value;
-      const filterStatus = document.getElementById('filter-status').value;
-      
-      // 從Firebase讀取訂單（根據篩選條件過濾）
-      let ordersRef = db.ref('activeOrders');
-      
-      // 車隊篩選
-      if (filterTeam) {
-        ordersRef = ordersRef.orderByChild('teamId').equalTo(filterTeam);
+      if (fleetList.length === 0) {
+        listBody.innerHTML = `
+          <tr class="text-center text-gray-500">
+            <td colspan="4" class="table-cell">暫無車隊數據，請點擊「新增車隊」創建</td>
+          </tr>
+        `;
+        return;
       }
       
-      ordersRef.on('value', (snapshot) => {
-        const orders = snapshot.val() || {};
-        const orderIds = Object.keys(orders);
-        
-        if (orderIds.length === 0) {
-          ordersListEl.innerHTML = '<p class="text-gray-500 text-center py-8">暫無訂單</p>';
-          return;
-        }
-        
-        // 狀態篩選（前端二次過濾）
-        const filteredOrderIds = filterStatus 
-          ? orderIds.filter(id => orders[id].status === filterStatus)
-          : orderIds;
-        
-        if (filteredOrderIds.length === 0) {
-          ordersListEl.innerHTML = `<p class="text-gray-500 text-center py-8">暫無「${filterStatus || '所有'}」狀態的訂單</p>`;
-          return;
-        }
-        
-        // 渲染訂單列表
-        let html = `
-          <div class="grid grid-cols-1 md:grid-cols-6 font-medium py-2 border-b">
-            <div>訂單ID</div>
-            <div>車隊</div>
-            <div>乘客信息</div>
-            <div>上下車地點</div>
-            <div>狀態</div>
-            <div>時間</div>
-          </div>
+      fleetList.forEach(fleet => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="table-cell font-mono text-sm">${fleet.id}</td>
+          <td class="table-cell">${fleet.name}</td>
+          <td class="table-cell">${fleet.desc || '-'}</td>
+          <td class="table-cell text-center">
+            <button class="edit-fleet-btn btn btn-info px-3 py-1 text-sm mr-2" data-id="${fleet.id}">
+              <<i class="fa fa-edit mr-1"></</i>編輯
+            </button>
+          </td>
         `;
-        
-        filteredOrderIds.forEach(orderId => {
-          const order = orders[orderId];
-          const statusClass = {
-            '待接單': 'text-yellow-500',
-            '已接單': 'text-blue-500',
-            '已完成': 'text-green-500',
-            '已取消': 'text-red-500'
-          }[order.status || '待接單'];
-          
-          html += `
-            <div class="grid grid-cols-1 md:grid-cols-6 py-3 border-b items-center">
-              <div class="font-medium">${order.orderId || orderId}</div>
-              <div>${order.teamId || '未綁定'}</div>
-              <div class="text-sm">
-                ${order.name || '未知'}<br>
-                ${order.phone || '未知'}
-              </div>
-              <div class="text-sm">
-                上：${order.pickup || '未知'}<br>
-                下：${order.dropoff || '未知'}
-              </div>
-              <div class="${statusClass}">${order.status || '待接單'}</div>
-              <div class="text-sm text-gray-600">${order.createTime || '未知'}</div>
-            </div>
-          `;
+        listBody.appendChild(tr);
+      });
+      
+      document.querySelectorAll('.edit-fleet-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const fleetId = btn.getAttribute('data-id');
+          openEditModal(fleetId);
         });
-        
-        ordersListEl.innerHTML = html;
       });
     }
 
-    // 刷新訂單
-    document.getElementById('refresh-orders').addEventListener('click', loadAllOrders);
-
-    // 訂單狀態篩選
-    document.getElementById('filter-status').addEventListener('change', loadAllOrders);
-
-    // 車隊篩選（新增）
-    document.getElementById('filter-team').addEventListener('change', loadAllOrders);
-
-    // ========== 4. 初始化所有功能 ==========
-    document.addEventListener('DOMContentLoaded', () => {
-      initTabSwitch();
-      initAddTeam();
-      initLinkGenerator();
-      loadAllOrders(); // 默認加載訂單
-      loadAllTeams();  // 預加載車隊數據（用於篩選）
+    // 加載管理員審核列表
+    function loadAdminAuditList() {
+      const applyList = JSON.parse(localStorage.getItem(ADMIN_APPLY_KEY) || '[]');
+      const auditBody = document.getElementById('admin-audit-body');
       
-      // 退出登錄（可根據需求實現）
+      auditBody.innerHTML = '';
+      
+      if (applyList.length === 0) {
+        auditBody.innerHTML = `
+          <tr class="text-center text-gray-500">
+            <td colspan="4" class="table-cell">暫無審核申請</td>
+          </tr>
+        `;
+        return;
+      }
+      
+      applyList.forEach((apply, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="table-cell">${apply.name}</td>
+          <td class="table-cell">${apply.phone}</td>
+          <td class="table-cell">${apply.fleetName}</td>
+          <td class="table-cell text-center">
+            <button class="approve-admin-btn btn btn-success px-3 py-1 text-sm mr-2" data-index="${index}">
+              <<i class="fa fa-check mr-1"></</i>通過
+            </button>
+            <button class="reject-admin-btn btn btn-danger px-3 py-1 text-sm" data-index="${index}">
+              <<i class="fa fa-times mr-1"></</i>駁回
+            </button>
+          </td>
+        `;
+        auditBody.appendChild(tr);
+      });
+      
+      // 通過按鈕事件
+      document.querySelectorAll('.approve-admin-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const index = btn.getAttribute('data-index');
+          approveAdminApplication(index);
+        });
+      });
+      
+      // 駁回按鈕事件
+      document.querySelectorAll('.reject-admin-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const index = btn.getAttribute('data-index');
+          rejectAdminApplication(index);
+        });
+      });
+    }
+
+    // 加載已通過管理員列表
+    function loadApprovedAdmins() {
+      const approvedAdmins = JSON.parse(localStorage.getItem(APPROVED_ADMINS_KEY) || '[]');
+      const fleetList = JSON.parse(localStorage.getItem(FLEETS_KEY) || '[]');
+      const manageBody = document.getElementById('admin-manage-body');
+      
+      manageBody.innerHTML = '';
+      
+      if (approvedAdmins.length === 0) {
+        manageBody.innerHTML = `
+          <tr class="text-center text-gray-500">
+            <td colspan="8" class="table-cell">暫無管理員數據</td>
+          </tr>
+        `;
+        return;
+      }
+      
+      approvedAdmins.forEach((admin, index) => {
+        const fleet = fleetList.find(f => f.id === admin.fleetId) || { name: '未知車隊' };
+        const statusText = admin.status === '停權' ? '<span class="text-danger">停權</span>' : '<span class="text-success">正常</span>';
+        const statusBtnText = admin.status === '停權' ? '復權' : '停權';
+        const statusBtnClass = admin.status === '停權' ? 'btn-success' : 'btn-danger';
+        
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="table-cell">${fleet.name}</td>
+          <td class="table-cell font-mono text-sm">${admin.fleetId}</td>
+          <td class="table-cell">${admin.name}</td>
+          <td class="table-cell">${admin.phone}</td>
+          <td class="table-cell">${admin.account}</td>
+          <td class="table-cell">${admin.payDate || '-'}</td>
+          <td class="table-cell text-center">${statusText}</td>
+          <td class="table-cell text-center">
+            <button class="change-status-btn btn ${statusBtnClass} px-3 py-1 text-sm" data-index="${index}" data-status="${admin.status}">
+              <<i class="fa fa-refresh mr-1"></</i>${statusBtnText}
+            </button>
+          </td>
+        `;
+        manageBody.appendChild(tr);
+      });
+      
+      // 狀態變更按鈕事件
+      document.querySelectorAll('.change-status-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          currentAdminId = btn.getAttribute('data-index');
+          currentAdminStatus = btn.getAttribute('data-status');
+          openStatusModal();
+        });
+      });
+    }
+
+    // 加載租金及銀行設定
+    function loadRentSettings() {
+      const settings = JSON.parse(localStorage.getItem(RENT_SETTING_KEY) || '{}');
+      
+      if (settings.monthlyRent) document.getElementById('monthly-rent').value = settings.monthlyRent;
+      if (settings.bankName) document.getElementById('bank-name').value = settings.bankName;
+      if (settings.bankAccount) document.getElementById('bank-account').value = settings.bankAccount;
+      if (settings.bankHolder) document.getElementById('bank-holder').value = settings.bankHolder;
+    }
+
+    // 綁定所有事件
+    function bindEvents() {
+      // 登出按鈕
       document.getElementById('logout-btn').addEventListener('click', () => {
-        if (confirm('確定要退出登錄嗎？')) {
-          window.location.href = '../index.html';
+        if (confirm('確定要登出嗎？')) {
+          localStorage.removeItem(LOGGED_KEY);
+          window.location.href = LOGIN_PAGE;
         }
       });
-    });
 
-    // 暴露editTeam函數到全局（用於HTML內聯調用）
-    window.editTeam = editTeam;
+      // 刷新車隊按鈕
+      document.getElementById('refresh-fleet-btn').addEventListener('click', loadFleetList);
+      
+      // 刷新管理員按鈕
+      document.getElementById('refresh-admin-btn').addEventListener('click', loadApprovedAdmins);
+
+      // 新增車隊按鈕
+      document.getElementById('add-fleet-btn').addEventListener('click', () => {
+        document.getElementById('add-fleet-form').reset();
+        document.getElementById('add-fleet-modal').classList.remove('hidden');
+      });
+
+      // 新增車隊表單提交
+      document.getElementById('add-fleet-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        const fleetName = document.getElementById('new-fleet-name').value.trim();
+        const fleetDesc = document.getElementById('new-fleet-desc').value.trim();
+        
+        if (!fleetName) {
+          showAlert('錯誤', '請輸入車隊名稱！', 'error');
+          return;
+        }
+        
+        // 生成5位數字車隊ID
+        const fleetId = Math.floor(10000 + Math.random() * 90000).toString();
+        
+        const fleetList = JSON.parse(localStorage.getItem(FLEETS_KEY) || '[]');
+        fleetList.push({
+          id: fleetId,
+          name: fleetName,
+          desc: fleetDesc,
+          createTime: new Date().toLocaleString('zh-TW')
+        });
+        
+        localStorage.setItem(FLEETS_KEY, JSON.stringify(fleetList));
+        closeAllModals();
+        showAlert('成功', '車隊新增成功！', 'success');
+        loadFleetList();
+      });
+
+      // 編輯車隊表單提交
+      document.getElementById('edit-fleet-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        if (!currentEditFleetId) return;
+        
+        const fleetName = document.getElementById('edit-fleet-name').value.trim();
+        const fleetDesc = document.getElementById('edit-fleet-desc').value.trim();
+        
+        if (!fleetName) {
+          showAlert('錯誤', '請輸入車隊名稱！', 'error');
+          return;
+        }
+        
+        const fleetList = JSON.parse(localStorage.getItem(FLEETS_KEY) || '[]');
+        const fleetIndex = fleetList.findIndex(f => f.id === currentEditFleetId);
+        
+        if (fleetIndex !== -1) {
+          fleetList[fleetIndex].name = fleetName;
+          fleetList[fleetIndex].desc = fleetDesc;
+          localStorage.setItem(FLEETS_KEY, JSON.stringify(fleetList));
+          closeAllModals();
+          showAlert('成功', '車隊修改成功！', 'success');
+          loadFleetList();
+        }
+      });
+
+      // 刪除車隊按鈕
+      document.getElementById('delete-fleet-btn').addEventListener('click', () => {
+        if (!currentEditFleetId) return;
+        
+        if (confirm('確定要刪除此車隊嗎？此操作不可撤銷！')) {
+          const fleetList = JSON.parse(localStorage.getItem(FLEETS_KEY) || '[]');
+          const newFleetList = fleetList.filter(f => f.id !== currentEditFleetId);
+          
+          localStorage.setItem(FLEETS_KEY, JSON.stringify(newFleetList));
+          closeAllModals();
+          showAlert('成功', '車隊刪除成功！', 'success');
+          loadFleetList();
+        }
+      });
+
+      // 租金設定表單提交
+      document.getElementById('rent-setting-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        const monthlyRent = document.getElementById('monthly-rent').value.trim();
+        const bankName = document.getElementById('bank-name').value.trim();
+        const bankAccount = document.getElementById('bank-account').value.trim();
+        const bankHolder = document.getElementById('bank-holder').value.trim();
+        
+        if (!monthlyRent || !bankName || !bankAccount || !bankHolder) {
+          showAlert('錯誤', '請填寫所有必填欄位！', 'error');
+          return;
+        }
+        
+        const settings = {
+          monthlyRent,
+          bankName,
+          bankAccount,
+          bankHolder,
+          updateTime: new Date().toLocaleString('zh-TW')
+        };
+        
+        localStorage.setItem(RENT_SETTING_KEY, JSON.stringify(settings));
+        showAlert('成功', '設定儲存成功！', 'success');
+      });
+
+      // 確認狀態變更按鈕
+      document.getElementById('confirm-status-btn').addEventListener('click', () => {
+        const approvedAdmins = JSON.parse(localStorage.getItem(APPROVED_ADMINS_KEY) || '[]');
+        const newStatus = currentAdminStatus === '正常' ? '停權' : '正常';
+        
+        if (currentAdminId !== '' && approvedAdmins[currentAdminId]) {
+          approvedAdmins[currentAdminId].status = newStatus;
+          localStorage.setItem(APPROVED_ADMINS_KEY, JSON.stringify(approvedAdmins));
+          closeAllModals();
+          showAlert('成功', `管理員狀態已變更為${newStatus}！`, 'success');
+          loadApprovedAdmins();
+        }
+      });
+
+      // 關閉彈窗按鈕
+      document.querySelectorAll('.close-modal').forEach(btn => {
+        btn.addEventListener('click', closeAllModals);
+      });
+
+      // 提示框確定按鈕
+      document.getElementById('alert-confirm-btn').addEventListener('click', () => {
+        document.getElementById('alert-modal').classList.add('hidden');
+      });
+
+      // 點擊彈窗外層關閉
+      document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) {
+            closeAllModals();
+          }
+        });
+      });
+    }
+
+    // 通過管理員申請
+    function approveAdminApplication(index) {
+      const applyList = JSON.parse(localStorage.getItem(ADMIN_APPLY_KEY) || '[]');
+      const approvedAdmins = JSON.parse(localStorage.getItem(APPROVED_ADMINS_KEY) || '[]');
+      
+      if (index >= 0 && index < applyList.length) {
+        const approvedAdmin = applyList[index];
+        // 生成預設帳號密碼（這裡用電話作為帳號，隨機密碼）
+        const account = approvedAdmin.phone;
+        const password = Math.random().toString(36).slice(-8);
+        
+        approvedAdmins.push({
+          ...approvedAdmin,
+          account,
+          password,
+          status: '正常',
+          payDate: ''
+        });
+        
+        // 移除申請列表中的該項
+        applyList.splice(index, 1);
+        
+        localStorage.setItem(ADMIN_APPLY_KEY, JSON.stringify(applyList));
+        localStorage.setItem(APPROVED_ADMINS_KEY, JSON.stringify(approvedAdmins));
+        
+        showAlert('成功', `審核通過！帳號：${account}，密碼：${password}`, 'success');
+        loadAdminAuditList();
+        loadApprovedAdmins();
+      }
+    }
+
+    // 駁回管理員申請
+    function rejectAdminApplication(index) {
+      const applyList = JSON.parse(localStorage.getItem(ADMIN_APPLY_KEY) || '[]');
+      
+      if (index >= 0 && index < applyList.length) {
+        applyList.splice(index, 1);
+        localStorage.setItem(ADMIN_APPLY_KEY, JSON.stringify(applyList));
+        
+        showAlert('成功', '已駁回該申請', 'success');
+        loadAdminAuditList();
+      }
+    }
+
+    // 打開編輯車隊彈窗
+    function openEditModal(fleetId) {
+      currentEditFleetId = fleetId;
+      const fleetList = JSON.parse(localStorage.getItem(FLEETS_KEY) || '[]');
+      const fleet = fleetList.find(f => f.id === fleetId);
+      
+      if (fleet) {
+        document.getElementById('edit-fleet-id').value = fleet.id;
+        document.getElementById('edit-fleet-name').value = fleet.name;
+        document.getElementById('edit-fleet-desc').value = fleet.desc || '';
+        document.getElementById('edit-fleet-modal').classList.remove('hidden');
+      }
+    }
+
+    // 打開狀態變更彈窗
+    function openStatusModal() {
+      const newStatus = currentAdminStatus === '正常' ? '停權' : '復權';
+      document.getElementById('status-modal-title').textContent = `${newStatus}管理員`;
+      document.getElementById('status-modal-desc').textContent = `確定要將此管理員${newStatus}嗎？`;
+      document.getElementById('confirm-status-btn').textContent = `確認${newStatus}`;
+      document.getElementById('confirm-status-btn').className = `btn ${newStatus === '停權' ? 'btn-danger' : 'btn-success'} flex-1`;
+      
+      document.getElementById('admin-status-modal').classList.remove('hidden');
+    }
+
+    // 關閉所有彈窗
+    function closeAllModals() {
+      document.querySelectorAll('.modal').forEach(modal => {
+        modal.classList.add('hidden');
+      });
+      currentEditFleetId = '';
+      currentAdminId = '';
+      currentAdminStatus = '';
+    }
+
+    // 顯示提示框
+    function showAlert(title, message, type = 'info') {
+      const alertTitle = document.getElementById('alert-title');
+      const alertMessage = document.getElementById('alert-message');
+      const alertIcon = document.getElementById('alert-icon');
+      
+      alertTitle.textContent = title;
+      alertMessage.textContent = message;
+      
+      switch(type) {
+        case 'success':
+          alertIcon.className = 'fa fa-check-circle text-3xl text-success mb-2';
+          alertTitle.className = 'text-lg font-medium text-success';
+          break;
+        case 'error':
+          alertIcon.className = 'fa fa-exclamation-circle text-3xl text-danger mb-2';
+          alertTitle.className = 'text-lg font-medium text-danger';
+          break;
+        case 'warning':
+          alertIcon.className = 'fa fa-exclamation-triangle text-3xl text-yellow-500 mb-2';
+          alertTitle.className = 'text-lg font-medium text-yellow-500';
+          break;
+        default:
+          alertIcon.className = 'fa fa-info-circle text-3xl text-info mb-2';
+          alertTitle.className = 'text-lg font-medium text-info';
+      }
+      
+      document.getElementById('alert-modal').classList.remove('hidden');
+    }
   </script>
 </body>
 </html>

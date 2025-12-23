@@ -41,7 +41,7 @@
   <div class="w-full max-w-md bg-white rounded-xl shadow-card p-8 sm:p-10">
     <div class="text-center mb-8">
       <div class="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
-        <i class="fa fa-building text-primary text-3xl"></i>
+        <<i class="fa fa-building text-primary text-3xl"></</i>
       </div>
       <h2 class="text-[clamp(1.5rem,3vw,1.8rem)] font-bold text-gray-800">車隊管理員登入</h2>
       <p class="text-gray-500 mt-1">請輸入您的帳號密碼</p>
@@ -52,7 +52,7 @@
         <label class="block text-sm font-medium text-gray-700 mb-1.5">管理員帳號</label>
         <div class="relative">
           <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-            <i class="fa fa-user"></i>
+            <<i class="fa fa-user"></</i>
           </span>
           <input 
             type="text" 
@@ -68,7 +68,7 @@
         <label class="block text-sm font-medium text-gray-700 mb-1.5">密碼</label>
         <div class="relative">
           <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-            <i class="fa fa-lock"></i>
+            <<i class="fa fa-lock"></</i>
           </span>
           <input 
             type="password" 
@@ -81,11 +81,11 @@
       </div>
       
       <div class="text-red-500 text-sm text-center hidden" id="login-error">
-        <i class="fa fa-exclamation-circle mr-1"></i> 帳號未審核或密碼錯誤！
+        <<i class="fa fa-exclamation-circle mr-1"></</i> 帳號未審核或密碼錯誤！
       </div>
       
       <button type="submit" class="btn-primary w-full font-medium">
-        <i class="fa fa-sign-in mr-2"></i> 登入
+        <<i class="fa fa-sign-in mr-2"></</i> 登入
       </button>
     </form>
     
@@ -101,75 +101,70 @@
     const APPROVED_KEY = 'approvedFleetAdmins';
     const LOGGED_KEY = 'loggedInFleetAdmin';
     const BACKUP_LOGGED_KEY = 'currentFleetAdmin';
-    const BACKEND_PAGE = 'admin-dashboard.html';
+    const BACKEND_PAGE = 'admin-dashboard.html'; // 注意：若後台頁是administrator.html，需改為'administrator.html'
 
-    // ========== 核心修改1：徹底刪除測試數據注入代碼 ==========
-    // 移除了自動注入testadmin的邏輯，僅讀取administrator.html的審核列表
-
-    // ========== 核心修改2：取消頁面加載時的自動跳轉 ==========
     document.addEventListener('DOMContentLoaded', () => {
-      // 刪除所有「檢測到登錄狀態就跳轉」的代碼
-      // 保留清空無效登錄狀態的邏輯（避免髒數據）
-      const loggedData = localStorage.getItem(LOGGED_KEY) || localStorage.getItem(BACKUP_LOGGED_KEY);
-      if (loggedData) {
-        try {
-          const adminInfo = JSON.parse(loggedData);
-          // 僅清空無效的登錄數據，不跳轉
-          if (!adminInfo.帳號 && !adminInfo.username && !adminInfo.account) {
-            localStorage.removeItem(LOGGED_KEY);
-            localStorage.removeItem(BACKUP_LOGGED_KEY);
+      // 清空無效的登錄數據（避免髒數據）
+      const clearInvalidLoginData = () => {
+        [LOGGED_KEY, BACKUP_LOGGED_KEY].forEach(key => {
+          const data = localStorage.getItem(key);
+          if (data) {
+            try {
+              const admin = JSON.parse(data);
+              // 若數據中無帳號字段，則判定為無效
+              if (!admin.帳號 && !admin.username && !admin.account) {
+                localStorage.removeItem(key);
+              }
+            } catch (e) {
+              localStorage.removeItem(key);
+            }
           }
-        } catch (e) {
-          localStorage.removeItem(LOGGED_KEY);
-          localStorage.removeItem(BACKUP_LOGGED_KEY);
-        }
-      }
+        });
+      };
+      clearInvalidLoginData();
     });
 
-    // 登錄表單提交邏輯（僅讀取administrator.html審核通過的列表）
+    // 登錄表單提交邏輯
     document.getElementById('manager-login-form').addEventListener('submit', (e) => {
       e.preventDefault();
       const username = document.getElementById('manager-username').value.trim();
       const password = document.getElementById('manager-password').value.trim();
       const errorEl = document.getElementById('login-error');
 
-      // 1. 空值驗證
+      // 空值驗證
       if (!username || !password) {
-        errorEl.innerHTML = '<i class="fa fa-exclamation-circle mr-1"></i> 請輸入帳號和密碼！';
+        errorEl.innerHTML = '<<i class="fa fa-exclamation-circle mr-1"></</i> 請輸入帳號和密碼！';
         errorEl.classList.remove('hidden');
         setTimeout(() => errorEl.classList.add('hidden'), 3000);
         return;
       }
 
-      // 2. 讀取administrator.html存入的審核通過列表
+      // 讀取administrator.html存入的審核通過列表
       const approvedList = JSON.parse(localStorage.getItem(APPROVED_KEY) || '[]');
       
-      // 無審核列表則提示
+      // 無審核列表提示
       if (approvedList.length === 0) {
-        errorEl.innerHTML = '<i class="fa fa-exclamation-circle mr-1"></i> 暫無已審核的車隊管理員，請先聯繫超管審核！';
+        errorEl.innerHTML = '<<i class="fa fa-exclamation-circle mr-1"></</i> 暫無已審核的車隊管理員，請先聯繫超管審核！';
         errorEl.classList.remove('hidden');
         setTimeout(() => errorEl.classList.add('hidden'), 3000);
         return;
       }
 
-      // 3. 匹配帳號密碼（兼容administrator.html的字段格式）
+      // 匹配帳號密碼（兼容administrator.html的字段格式）
       const matchAdmin = approvedList.find(admin => {
-        // 帳號匹配：兼容 帳號/username/account 字段
         const accMatch = admin.帳號 === username || admin.username === username || admin.account === username;
-        // 密碼匹配：兼容 密碼/password/pwd 字段
         const pwdMatch = admin.密碼 === password || admin.password === password || admin.pwd === password;
         return accMatch && pwdMatch;
       });
 
-      // 4. 登錄結果處理
+      // 登錄結果處理
       if (matchAdmin) {
-        // 登錄成功：存入登錄狀態（供後台頁驗證）
+        // 存入登錄狀態，跳轉到後台頁
         localStorage.setItem(LOGGED_KEY, JSON.stringify(matchAdmin));
         localStorage.setItem(BACKUP_LOGGED_KEY, JSON.stringify(matchAdmin));
-        // ========== 核心修改3：取消延遲刷新，僅正常跳轉 ==========
         window.location.href = BACKEND_PAGE;
       } else {
-        // 登錄失敗：提示+清空密碼框+聚焦
+        // 登錄失敗提示
         errorEl.classList.remove('hidden');
         document.getElementById('manager-password').value = '';
         document.getElementById('manager-password').focus();
