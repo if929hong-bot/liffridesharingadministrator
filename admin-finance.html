@@ -6,11 +6,8 @@
     <title>財務管理 - 訂單收入記錄</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome -->
-    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    
-    <!-- 自定義配置 -->
     <script>
+        // Tailwind 配置需要放在腳本標籤內
         tailwind.config = {
             theme: {
                 extend: {
@@ -20,7 +17,7 @@
                         accent: '#008700',
                         neutral: {
                             100: '#F2F3F5',
-                            200: '#E5E6EB',
+                            200: '#E6E6EB',
                             500: '#4E5969',
                             700: '#1D2129',
                         }
@@ -32,27 +29,47 @@
             }
         }
     </script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     
-    <style type="text/tailwindcss">
-        @layer utilities {
-            .sidebar-menu {
-                background: #fff;
-                border-right: 1px solid #e6e6e6;
-            }
-            .sidebar-menu a {
-                @apply flex items-center gap-2 py-3 px-4 text-neutral-500 hover:bg-primary/10 hover:text-primary transition-all;
-            }
-            .sidebar-menu a.active {
-                @apply bg-primary text-white;
-            }
-            .unauth-overlay {
-                @apply fixed inset-0 bg-white z-50 flex flex-col items-center justify-center p-8;
-            }
+    <style>
+        /* 使用純 CSS 避免 Tailwind 衝突 */
+        .sidebar-menu {
+            background: #fff;
+            border-right: 1px solid #e6e6e6;
+        }
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            color: #4E5969;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .sidebar-menu a:hover {
+            background-color: rgba(0, 195, 0, 0.1);
+            color: #00C300;
+        }
+        .sidebar-menu a.active {
+            background-color: #00C300;
+            color: white;
+        }
+        .unauth-overlay {
+            position: fixed;
+            inset: 0;
+            background: white;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
         }
     </style>
 </head>
 <body class="bg-neutral-100 font-sans text-neutral-700 min-h-screen flex">
-    <!-- 未登錄提示遮罩（默認顯示，登錄有效才隱藏） -->
+    <!-- 未登錄提示遮罩 -->
     <div id="unauthOverlay" class="unauth-overlay">
         <div class="text-center max-w-md">
             <i class="fa fa-exclamation-circle text-4xl text-red-500 mb-4"></i>
@@ -64,37 +81,37 @@
         </div>
     </div>
 
-    <!-- 左側菜單（修正所有<i>標籤語法） -->
+    <!-- 左側菜單 -->
     <aside class="sidebar-menu w-56 h-screen sticky top-0">
         <div class="py-4 px-4 border-b border-neutral-200">
             <h2 class="font-bold text-lg text-neutral-700">LINE多元化搭車管理員</h2>
         </div>
         <nav>
-            <a href="admin-dashboard.html" class="flex items-center gap-2">
+            <a href="admin-dashboard.html">
                 <i class="fa fa-home"></i>
                 <span>首頁</span>
             </a>
-            <a href="admin-area.html" class="flex items-center gap-2">
+            <a href="admin-area.html">
                 <i class="fa fa-map-marker"></i>
                 <span>區域管理</span>
             </a>
-            <a href="admin-driver.html" class="flex items-center gap-2">
+            <a href="admin-driver.html">
                 <i class="fa fa-car"></i>
                 <span>司機管理</span>
             </a>
-            <a href="admin-order.html" class="flex items-center gap-2">
+            <a href="admin-order.html">
                 <i class="fa fa-list"></i>
                 <span>訂單管理</span>
             </a>
-            <a href="admin-finance.html" class="flex items-center gap-2 active">
+            <a href="admin-finance.html" class="active">
                 <i class="fa fa-money"></i>
                 <span>財務管理</span>
             </a>
-            <a href="admin-report.html" class="flex items-center gap-2">
+            <a href="admin-report.html">
                 <i class="fa fa-bar-chart"></i>
                 <span>報表統計</span>
             </a>
-            <a href="javascript:void(0)" id="logoutLink" class="flex items-center gap-2 mt-4">
+            <a href="javascript:void(0)" id="logoutLink" class="mt-4">
                 <i class="fa fa-sign-out"></i>
                 <span>退出登入</span>
             </a>
@@ -114,7 +131,61 @@
 
         <main class="container mx-auto px-4 py-6 flex-1">
             <section class="bg-white rounded-xl p-6">
-                <h2 class="text-lg font-bold text-neutral-700">財務管理</h2>
+                <h2 class="text-lg font-bold text-neutral-700 mb-4">財務管理</h2>
+                
+                <!-- 財務統計卡片 -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-green-50 p-4 rounded-lg border border-green-100">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-green-700">今日收入</p>
+                                <p class="text-2xl font-bold text-green-800">NT$ 0</p>
+                            </div>
+                            <i class="fa fa-money text-green-600 text-2xl"></i>
+                        </div>
+                    </div>
+                    <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-blue-700">本月收入</p>
+                                <p class="text-2xl font-bold text-blue-800">NT$ 0</p>
+                            </div>
+                            <i class="fa fa-calendar text-blue-600 text-2xl"></i>
+                        </div>
+                    </div>
+                    <div class="bg-purple-50 p-4 rounded-lg border border-purple-100">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-purple-700">待處理金額</p>
+                                <p class="text-2xl font-bold text-purple-800">NT$ 0</p>
+                            </div>
+                            <i class="fa fa-clock-o text-purple-600 text-2xl"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 訂單收入表格 -->
+                <div class="overflow-x-auto">
+                    <table class="w-full border-collapse">
+                        <thead>
+                            <tr class="bg-neutral-50">
+                                <th class="p-3 text-left border-b">訂單編號</th>
+                                <th class="p-3 text-left border-b">乘客</th>
+                                <th class="p-3 text-left border-b">司機</th>
+                                <th class="p-3 text-left border-b">金額</th>
+                                <th class="p-3 text-left border-b">狀態</th>
+                                <th class="p-3 text-left border-b">日期</th>
+                            </tr>
+                        </thead>
+                        <tbody id="financeTable">
+                            <tr>
+                                <td colspan="6" class="p-6 text-center text-neutral-500">
+                                    暫無財務數據
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </section>
         </main>
 
@@ -129,42 +200,156 @@
         // 全局常量（與manager-login.html/administrator.html完全一致）
         const LOGGED_IN_FLEET_KEY = 'loggedInFleetAdmin';
         const BACKUP_LOGGED_KEY = 'currentFleetAdmin';
+        const APPROVED_ADMINS_KEY = 'approvedFleetAdmins';
 
-        // 立即執行登錄狀態檢測（不依賴任何加載事件，確保優先執行）
-        (function checkLoginStatus() {
-            // 讀取manager-login.html存入的登錄狀態
-            let loggedInAdmin = localStorage.getItem(LOGGED_IN_FLEET_KEY) || localStorage.getItem(BACKUP_LOGGED_KEY);
-
-            try {
-                // 嚴格驗證登錄數據有效性
-                if (loggedInAdmin && loggedInAdmin.trim() !== '' && loggedInAdmin !== '{}') {
-                    const adminData = JSON.parse(loggedInAdmin);
-                    // 匹配administrator.html的字段格式（帳號/username/account都兼容）
-                    if (adminData.帳號 || adminData.username || adminData.account) {
-                        // 登錄有效：隱藏未登錄遮罩
-                        document.getElementById('unauthOverlay').classList.add('hidden');
-                        return;
-                    }
-                }
-            } catch (e) {
-                console.log('登錄信息解析失敗（非致命）：', e);
-            }
-
-            // 登錄無效：保持遮罩顯示，並可選擇跳轉登錄頁（可註釋）
-            // window.location.href = 'manager-login.html';
-        })();
-
-        // 退出登錄邏輯（清除登錄狀態，跳轉登錄頁）
-        document.getElementById('logoutLink').addEventListener('click', function() {
-            if (confirm('確定要退出登入嗎？')) {
-                // 清除所有登錄狀態
-                localStorage.removeItem(LOGGED_IN_FLEET_KEY);
-                localStorage.removeItem(BACKUP_LOGGED_KEY);
-                localStorage.removeItem('approvedFleetAdmins'); // 可選：同時清除審核列表
-                // 跳轉登錄頁
-                window.location.href = 'manager-login.html';
-            }
+        // 頁面加載完成後檢查登錄狀態
+        document.addEventListener('DOMContentLoaded', function() {
+            checkLoginStatus();
+            bindEvents();
+            loadFinanceData();
         });
+
+        // 檢查登錄狀態
+        function checkLoginStatus() {
+            console.log('開始檢查登錄狀態...');
+            
+            // 優先檢查主登錄鍵
+            let loggedInAdmin = localStorage.getItem(LOGGED_IN_FLEET_KEY);
+            
+            // 如果主鍵不存在，檢查備份鍵
+            if (!loggedInAdmin || loggedInAdmin === 'null' || loggedInAdmin === 'undefined') {
+                loggedInAdmin = localStorage.getItem(BACKUP_LOGGED_KEY);
+                console.log('使用備份鍵:', loggedInAdmin);
+            }
+            
+            // 檢查是否有有效的登錄數據
+            if (loggedInAdmin && loggedInAdmin !== 'null' && loggedInAdmin !== 'undefined' && loggedInAdmin !== '{}') {
+                try {
+                    const adminData = JSON.parse(loggedInAdmin);
+                    console.log('解析登錄數據:', adminData);
+                    
+                    // 檢查是否有有效的帳號字段
+                    if (adminData.帳號 || adminData.username || adminData.account || adminData.phone) {
+                        console.log('登錄有效，隱藏遮罩');
+                        document.getElementById('unauthOverlay').style.display = 'none';
+                        
+                        // 在頁面標題顯示當前用戶
+                        const currentUser = adminData.name || adminData.姓名 || adminData.username || adminData.account || '管理員';
+                        updateHeader(currentUser);
+                        return;
+                    } else {
+                        console.warn('登錄數據缺少帳號字段:', adminData);
+                    }
+                } catch (e) {
+                    console.error('解析登錄數據失敗:', e);
+                }
+            } else {
+                console.log('未找到有效的登錄數據');
+            }
+            
+            // 如果以上檢查都失敗，顯示遮罩
+            console.log('顯示未登錄遮罩');
+            document.getElementById('unauthOverlay').style.display = 'flex';
+        }
+
+        // 更新頁頭顯示當前用戶
+        function updateHeader(userName) {
+            const header = document.querySelector('header .container');
+            if (header) {
+                // 檢查是否已存在用戶信息
+                let userInfo = header.querySelector('.user-info');
+                if (!userInfo) {
+                    userInfo = document.createElement('div');
+                    userInfo.className = 'ml-auto flex items-center gap-2 text-sm text-neutral-500';
+                    header.appendChild(userInfo);
+                }
+                
+                // 更新用戶信息
+                const fleetName = getCurrentFleetName();
+                userInfo.innerHTML = `
+                    <div class="text-right">
+                        <div class="font-medium">${userName}</div>
+                        <div class="text-xs">${fleetName || ''}</div>
+                    </div>
+                    <div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                        <i class="fa fa-user text-primary"></i>
+                    </div>
+                `;
+            }
+        }
+
+        // 獲取當前車隊名稱
+        function getCurrentFleetName() {
+            const loggedInAdmin = localStorage.getItem(LOGGED_IN_FLEET_KEY) || localStorage.getItem(BACKUP_LOGGED_KEY);
+            if (loggedInAdmin) {
+                try {
+                    const adminData = JSON.parse(loggedInAdmin);
+                    return adminData.fleetName || adminData.車隊名稱 || '';
+                } catch (e) {
+                    return '';
+                }
+            }
+            return '';
+        }
+
+        // 綁定事件
+        function bindEvents() {
+            // 退出登錄
+            document.getElementById('logoutLink').addEventListener('click', function(e) {
+                e.preventDefault();
+                if (confirm('確定要退出登入嗎？')) {
+                    // 清除所有登錄狀態
+                    localStorage.removeItem(LOGGED_IN_FLEET_KEY);
+                    localStorage.removeItem(BACKUP_LOGGED_KEY);
+                    
+                    // 跳轉登錄頁
+                    window.location.href = 'manager-login.html';
+                }
+            });
+            
+            // 點擊遮罩中的登錄按鈕
+            const loginBtn = document.querySelector('#unauthOverlay a[href="manager-login.html"]');
+            if (loginBtn) {
+                loginBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    window.location.href = 'manager-login.html';
+                });
+            }
+        }
+
+        // 加載財務數據
+        function loadFinanceData() {
+            // 這裡可以添加從localStorage或API加載財務數據的邏輯
+            const financeData = JSON.parse(localStorage.getItem('financeData') || '[]');
+            const tableBody = document.getElementById('financeTable');
+            
+            if (financeData.length === 0) {
+                // 使用模擬數據演示
+                const demoData = [
+                    { id: 'ORD-001', passenger: '王小明', driver: '張師傅', amount: 350, status: '已完成', date: '2025-01-15' },
+                    { id: 'ORD-002', passenger: '林小姐', driver: '李師傅', amount: 420, status: '已完成', date: '2025-01-15' },
+                    { id: 'ORD-003', passenger: '陳先生', driver: '王師傅', amount: 280, status: '處理中', date: '2025-01-15' }
+                ];
+                
+                tableBody.innerHTML = '';
+                demoData.forEach(item => {
+                    const statusClass = item.status === '已完成' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-neutral-50';
+                    row.innerHTML = `
+                        <td class="p-3 border-b">${item.id}</td>
+                        <td class="p-3 border-b">${item.passenger}</td>
+                        <td class="p-3 border-b">${item.driver}</td>
+                        <td class="p-3 border-b font-medium text-green-700">NT$ ${item.amount}</td>
+                        <td class="p-3 border-b">
+                            <span class="px-2 py-1 rounded text-xs ${statusClass}">${item.status}</span>
+                        </td>
+                        <td class="p-3 border-b">${item.date}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+        }
     </script>
 </body>
 </html>
