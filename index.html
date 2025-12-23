@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>搭車自由 - 乘客叫車</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-  <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
-  <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet'>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js"></script>
 
@@ -26,102 +23,70 @@
   <style type="text/tailwindcss">
     @layer utilities {
       .input-field {
-        @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none transition-all cursor-pointer;
+        @apply w-full px-3 py-2 border border-gray-300 rounded focus:outline-none;
       }
-      .input-field-primary {
-        @apply focus:ring-2 focus:ring-primary/50 focus:border-primary;
+      .form-label {
+        @apply block text-sm text-gray-700 mb-1;
       }
       .btn-primary {
-        @apply bg-primary text-white py-3 px-6 rounded-lg font-medium transition-all duration-300 hover:bg-primary/90 active:scale-95 shadow-md w-full;
+        @apply bg-primary text-white py-2 px-4 rounded font-medium w-full;
       }
-      .card { @apply bg-white rounded-xl shadow-md p-8 max-w-md mx-auto mt-8; }
-      /* 地圖彈窗樣式 */
-      .map-modal {
-        @apply fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4;
+      .page-container {
+        @apply flex justify-center items-start p-4;
       }
-      .map-modal-content {
-        @apply bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col;
+      .form-card {
+        @apply bg-white p-6 border border-gray-200 rounded max-w-sm;
       }
-      .map-modal-header {
-        @apply px-6 py-4 border-b border-gray-200 flex justify-between items-center;
-      }
-      .map-modal-body {
-        @apply flex-1 overflow-hidden;
-      }
-      .map-modal-footer {
-        @apply px-6 py-4 border-t border-gray-200 flex justify-end gap-3;
-      }
-      .map-inner-container {
-        @apply w-full h-[400px] lg:h-[500px];
-      }
-      .location-btn {
-        @apply bg-primary/90 text-white py-2 px-4 rounded-lg hover:bg-primary transition-colors flex items-center gap-2;
+      .form-header {
+        @apply text-center text-primary font-bold text-lg mb-4;
       }
     }
   </style>
 </head>
 <body class="bg-gray-50 font-sans min-h-screen">
-  <div class="card">
-    <div class="text-center mb-6">
-      <<i class="fa fa-car text-primary text-5xl mb-2"></</i>
-      <h1 class="text-2xl font-bold">搭車自由 - 乘客叫車</h1>
-    </div>
+  <div class="page-container">
+    <div class="form-card">
+      <!-- 表單標題（移除汽車圖標） -->
+      <div class="form-header">
+        搭車自由 - 乘客叫車
+      </div>
 
-    <form id="passenger-form" class="space-y-4">
-      <div class="text-left">
-        <label class="block text-sm font-medium text-gray-700 mb-1">姓名</label>
-        <input type="text" id="passenger-name" class="input-field input-field-primary" placeholder="輸入您的姓名" required>
-      </div>
-      <div class="text-left">
-        <label class="block text-sm font-medium text-gray-700 mb-1">電話</label>
-        <input type="tel" id="passenger-phone" class="input-field input-field-primary" placeholder="輸入您的聯絡電話" required>
-      </div>
-      
-      <!-- 上車地點（點擊輸入框彈出地圖） -->
-      <div class="text-left">
-        <label class="block text-sm font-medium text-gray-700 mb-1">上車地點</label>
-        <input type="text" class="input-field input-field-primary" id="pickup-location" placeholder="點擊選擇上車位置" required readonly>
-      </div>
-      
-      <!-- 下車地點（點擊輸入框彈出地圖） -->
-      <div class="text-left">
-        <label class="block text-sm font-medium text-gray-700 mb-1">下車地點</label>
-        <input type="text" class="input-field input-field-primary" id="dropoff-location" placeholder="點擊選擇下車位置" required readonly>
-      </div>
-      
-      <div class="text-left">
-        <label class="block text-sm font-medium text-gray-700 mb-1">備註（可選）</label>
-        <textarea id="passenger-remark" class="input-field input-field-primary" rows="2" placeholder="輸入額外需求（如行李數量）"></textarea>
-      </div>
-      
-      <button type="submit" class="btn-primary">
-        <<i class="fa fa-paper-plane mr-2"></</i> 提交訂單
-      </button>
-    </form>
-  </div>
-
-  <!-- 地圖選擇彈窗 -->
-  <div id="map-modal" class="map-modal hidden">
-    <div class="map-modal-content">
-      <div class="map-modal-header">
-        <h3 class="font-medium text-lg" id="modal-title">選擇上車位置</h3>
-        <button id="close-modal" class="text-gray-500 hover:text-gray-700">
-          <<i class="fa fa-times text-xl"></</i>
-        </button>
-      </div>
-      <div class="map-modal-body">
-        <div class="px-6 py-3">
-          <button id="locate-me" class="location-btn">
-            <<i class="fa fa-location-arrow"></</i> 定位我的當前位置
-          </button>
+      <form id="passenger-form" class="space-y-3">
+        <!-- 姓名 -->
+        <div>
+          <label class="form-label">姓名</label>
+          <input type="text" id="passenger-name" class="input-field" placeholder="輸入您的姓名" required>
         </div>
-        <div id="modal-map" class="map-inner-container"></div>
-      </div>
-      <div class="map-modal-footer">
-        <button id="confirm-location" class="btn-primary w-auto px-6 py-2">
-          確認選擇
+        
+        <!-- 電話 -->
+        <div>
+          <label class="form-label">電話</label>
+          <input type="tel" id="passenger-phone" class="input-field" placeholder="輸入您的聯絡電話" required>
+        </div>
+        
+        <!-- 上車地點 -->
+        <div>
+          <label class="form-label">上車地點</label>
+          <input type="text" id="pickup-location" class="input-field" placeholder="輸入上車位置" required>
+        </div>
+        
+        <!-- 下車地點 -->
+        <div>
+          <label class="form-label">下車地點</label>
+          <input type="text" id="dropoff-location" class="input-field" placeholder="輸入下車位置" required>
+        </div>
+        
+        <!-- 備註 -->
+        <div>
+          <label class="form-label">備註（可選）</label>
+          <textarea id="passenger-remark" class="input-field" rows="2" placeholder="輸入額外需求（如行李數量）"></textarea>
+        </div>
+        
+        <!-- 提交按鈕（移除飛機圖標） -->
+        <button type="submit" class="btn-primary mt-2">
+          提交訂單
         </button>
-      </div>
+      </form>
     </div>
   </div>
 
@@ -142,19 +107,10 @@
     const db = firebase.database();
 
     const APP = {
-      mapboxToken: 'pk.eyJ1IjoiaWY5Mjlob25nIiwiYSI6ImNtamQxczU2cjAweDMzZnM1Z3BvY2JkejgifQ.q-GNcs0rqWrZ3HtjhmysEQ', // 你的Mapbox Token
-      currentTarget: null, // 當前選擇的是上車/下車地點
-      modalMap: null,      // 彈窗地圖實例
-      taichungCenter: [120.6704, 24.1319], // 台中經緯度（可根據需求修改）
       currentTeamId: '',   // 當前車隊ID（從URL讀取）
       
       init: function() {
-        // 讀取URL中的車隊ID
         this.getCurrentTeamId();
-        // 初始化地圖和交互
-        this.initModalMap();
-        this.initInputHandlers();
-        this.initModalHandlers();
         this.initFormHandlers();
       },
       
@@ -162,168 +118,11 @@
       getCurrentTeamId: function() {
         const urlParams = new URLSearchParams(window.location.search);
         this.currentTeamId = urlParams.get('team') || '';
-        // 若URL無車隊ID，提示
         if (!this.currentTeamId) {
           console.log('未檢測到車隊ID，訂單將無法分流');
         } else {
           console.log(`當前綁定車隊：${this.currentTeamId}`);
         }
-      },
-      
-      // 初始化彈窗地圖
-      initModalMap: function() {
-        if (!mapboxgl) return;
-        
-        mapboxgl.accessToken = this.mapboxToken;
-        
-        // 創建彈窗地圖實例
-        this.modalMap = new mapboxgl.Map({
-          container: 'modal-map',
-          style: 'mapbox://styles/mapbox/streets-v12',
-          center: this.taichungCenter,
-          zoom: 14,
-          attributionControl: false
-        });
-        
-        // 添加地圖控制元件
-        this.modalMap.addControl(new mapboxgl.AttributionControl({ compact: true }));
-        this.modalMap.addControl(new mapboxgl.NavigationControl());
-        
-        // 地圖點擊事件 - 選擇位置
-        this.modalMap.on('click', (e) => {
-          this.selectedLngLat = e.lngLat; // 保存選擇的經緯度
-        });
-      },
-      
-      // 初始化輸入框點擊事件
-      initInputHandlers: function() {
-        // 上車地點輸入框
-        document.getElementById('pickup-location').addEventListener('click', () => {
-          this.currentTarget = 'pickup-location';
-          this.openModal('選擇上車位置');
-        });
-        
-        // 下車地點輸入框
-        document.getElementById('dropoff-location').addEventListener('click', () => {
-          this.currentTarget = 'dropoff-location';
-          this.openModal('選擇下車位置');
-        });
-      },
-      
-      // 初始化彈窗控制事件
-      initModalHandlers: function() {
-        const modal = document.getElementById('map-modal');
-        
-        // 關閉彈窗
-        document.getElementById('close-modal').addEventListener('click', () => {
-          modal.classList.add('hidden');
-        });
-        
-        // 點擊彈窗外層關閉
-        modal.addEventListener('click', (e) => {
-          if (e.target === modal) {
-            modal.classList.add('hidden');
-          }
-        });
-        
-        // 定位當前位置
-        document.getElementById('locate-me').addEventListener('click', () => {
-          this.locateCurrentPosition();
-        });
-        
-        // 確認選擇位置
-        document.getElementById('confirm-location').addEventListener('click', () => {
-          if (this.selectedLngLat && this.currentTarget) {
-            // 解析地址並回填
-            this.getAddressFromLngLat(
-              this.selectedLngLat.lng, 
-              this.selectedLngLat.lat, 
-              this.currentTarget
-            );
-            // 關閉彈窗
-            modal.classList.add('hidden');
-          } else {
-            alert('請先在地圖上點擊選擇位置');
-          }
-        });
-      },
-      
-      // 打開地圖彈窗
-      openModal: function(title) {
-        document.getElementById('modal-title').textContent = title;
-        document.getElementById('map-modal').classList.remove('hidden');
-        
-        // 重置地圖中心點
-        this.modalMap.jumpTo({
-          center: this.taichungCenter,
-          zoom: 14
-        });
-        
-        // 刷新地圖大小（解決彈窗打開時地圖空白問題）
-        setTimeout(() => {
-          this.modalMap.resize();
-        }, 100);
-        
-        // 重置選擇的位置
-        this.selectedLngLat = null;
-      },
-      
-      // 定位當前位置
-      locateCurrentPosition: function() {
-        if (!navigator.geolocation) {
-          alert('您的瀏覽器不支援定位功能');
-          return;
-        }
-        
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const lng = position.coords.longitude;
-            const lat = position.coords.latitude;
-            
-            // 移動地圖到當前位置
-            this.modalMap.jumpTo({
-              center: [lng, lat],
-              zoom: 17
-            });
-            
-            // 保存定位的位置
-            this.selectedLngLat = { lng, lat };
-            
-            // 添加定位標記
-            new mapboxgl.Marker({ color: '#00A86B' })
-              .setLngLat([lng, lat])
-              .addTo(this.modalMap);
-          },
-          (error) => {
-            switch(error.code) {
-              case error.PERMISSION_DENIED:
-                alert('您拒絕了定位權限，請開啟後重新嘗試');
-                break;
-              case error.POSITION_UNAVAILABLE:
-                alert('無法獲取您的位置信息');
-                break;
-              case error.TIMEOUT:
-                alert('定位請求超時，請重新嘗試');
-                break;
-              default:
-                alert('定位失敗，請手動選擇位置');
-            }
-          }
-        );
-      },
-      
-      // 經緯度轉換為地址
-      getAddressFromLngLat: function(lng, lat, inputId) {
-        fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${this.mapboxToken}&language=zh-TW`)
-          .then(res => res.json())
-          .then(data => {
-            const address = data.features[0]?.place_name || `(${lat.toFixed(4)}, ${lng.toFixed(4)})`;
-            document.getElementById(inputId).value = address;
-          })
-          .catch(err => {
-            console.error('地址解析失敗:', err);
-            document.getElementById(inputId).value = `(${lat.toFixed(4)}, ${lng.toFixed(4)})`;
-          });
       },
       
       // 表單提交處理
@@ -333,7 +132,6 @@
           passengerForm.addEventListener('submit', (e) => {
             e.preventDefault();
             
-            // 獲取表單數據
             const orderData = {
               name: document.getElementById('passenger-name').value,
               phone: document.getElementById('passenger-phone').value,
@@ -341,23 +139,20 @@
               dropoff: document.getElementById('dropoff-location').value,
               remark: document.getElementById('passenger-remark').value,
               status: '待接單',
-              teamId: this.currentTeamId, // 綁定車隊ID
+              teamId: this.currentTeamId,
               createTime: new Date().toLocaleString('zh-TW'),
-              orderId: 'ORD-' + Date.now() // 生成唯一訂單ID
+              orderId: 'ORD-' + Date.now()
             };
             
-            // 驗證車隊ID（可選）
             if (!orderData.teamId) {
               if (!confirm('未檢測到車隊ID，訂單可能無法被正確接收，是否繼續？')) {
                 return;
               }
             }
             
-            // 存入Firebase
             const orderRef = db.ref('activeOrders').push();
             orderRef.set(orderData).then(() => {
               alert('叫車成功！司機將很快與您聯繫');
-              // 重置表單
               passengerForm.reset();
             }).catch((err) => {
               console.error('訂單提交失敗:', err);
