@@ -16,11 +16,12 @@
             secondary: '#6c757d',
             danger: '#dc3545',
             success: '#198754',
-            info: '#0dcaf0'
+            info: '#0dcaf0',
+            dark-bg: '#1a1a1a' // 深色背景主色
           },
           boxShadow: {
-            card: '0 4px 20px rgba(0, 0, 0, 0.08)',
-            modal: '0 10px 25px rgba(0, 0, 0, 0.1)'
+            card: '0 4px 20px rgba(0, 0, 0, 0.2)',
+            modal: '0 10px 25px rgba(0, 0, 0, 0.3)'
           }
         }
       }
@@ -30,7 +31,7 @@
   <style type="text/tailwindcss">
     @layer utilities {
       .form-input {
-        @apply w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all;
+        @apply w-full px-4 py-2.5 border border-gray-600 rounded-lg bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all;
       }
       .btn {
         @apply py-2 px-4 rounded-lg transition-all duration-200 font-medium;
@@ -48,19 +49,19 @@
         @apply bg-info text-white hover:bg-info/90 active:bg-info/80;
       }
       .btn-outline {
-        @apply border border-gray-300 hover:bg-gray-50;
+        @apply border border-gray-600 bg-gray-800 text-white hover:bg-gray-700;
       }
       .table-cell {
-        @apply px-4 py-3 border-b border-gray-200;
+        @apply px-4 py-3 border-b border-gray-700;
       }
       .modal {
-        @apply fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4;
+        @apply fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4;
       }
       .modal-content {
-        @apply bg-white rounded-xl shadow-modal w-full max-w-md;
+        @apply bg-gray-800 text-white rounded-xl shadow-modal w-full max-w-md;
       }
       .tab-btn {
-        @apply py-2 px-4 text-sm font-medium border-b-2 border-transparent hover:text-primary transition-colors;
+        @apply py-2 px-4 text-sm font-medium border-b-2 border-transparent hover:text-primary transition-colors text-white;
       }
       .tab-btn-active {
         @apply border-primary text-primary;
@@ -68,14 +69,14 @@
     }
   </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-dark-bg min-h-screen text-white">
   <!-- 頁頭 -->
-  <header class="bg-white shadow-sm sticky top-0 z-10">
+  <header class="bg-gray-900 shadow-sm sticky top-0 z-10">
     <div class="container mx-auto px-4 py-4 flex justify-between items-center">
       <h1 class="text-xl font-bold text-primary">
         <i class="fa fa-building-o mr-2"></i>車隊管理後台
       </h1>
-      <button id="logout-btn" class="btn btn-outline text-gray-700">
+      <button id="logout-btn" class="btn btn-outline text-gray-300">
         <i class="fa fa-sign-out mr-1"></i>登出
       </button>
     </div>
@@ -84,7 +85,7 @@
   <!-- 主要內容 -->
   <main class="container mx-auto px-4 py-8">
     <!-- 功能標籤頁 -->
-    <div class="border-b border-gray-200 mb-6">
+    <div class="border-b border-gray-800 mb-6">
       <div class="flex flex-wrap gap-2">
         <button class="tab-btn tab-btn-active" data-tab="fleet">
           <i class="fa fa-car mr-1"></i>車隊管理
@@ -117,10 +118,10 @@
       </div>
 
       <!-- 車隊列表區 -->
-      <div class="bg-white rounded-xl shadow-card overflow-hidden">
+      <div class="bg-gray-900 rounded-xl shadow-card overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full">
-            <thead class="bg-gray-100">
+            <thead class="bg-gray-800">
               <tr>
                 <th class="table-cell text-left">車隊ID</th>
                 <th class="table-cell text-left">車隊名稱</th>
@@ -129,7 +130,7 @@
               </tr>
             </thead>
             <tbody id="fleet-list-body">
-              <tr class="text-center text-gray-500">
+              <tr class="text-center text-gray-400">
                 <td colspan="4" class="table-cell">載入中...</td>
               </tr>
             </tbody>
@@ -140,10 +141,10 @@
 
     <!-- 管理員審核頁面 -->
     <div class="tab-content hidden" data-tab="admin-audit">
-      <div class="bg-white rounded-xl shadow-card overflow-hidden">
+      <div class="bg-gray-900 rounded-xl shadow-card overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full">
-            <thead class="bg-gray-100">
+            <thead class="bg-gray-800">
               <tr>
                 <th class="table-cell text-left">申請人姓名</th>
                 <th class="table-cell text-left">電話</th>
@@ -152,7 +153,7 @@
               </tr>
             </thead>
             <tbody id="admin-audit-body">
-              <tr class="text-center text-gray-500">
+              <tr class="text-center text-gray-400">
                 <td colspan="4" class="table-cell">暫無審核申請</td>
               </tr>
             </tbody>
@@ -168,10 +169,10 @@
           <i class="fa fa-refresh mr-1"></i>刷新列表
         </button>
       </div>
-      <div class="bg-white rounded-xl shadow-card overflow-hidden">
+      <div class="bg-gray-900 rounded-xl shadow-card overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full">
-            <thead class="bg-gray-100">
+            <thead class="bg-gray-800">
               <tr>
                 <th class="table-cell text-left">車隊名稱</th>
                 <th class="table-cell text-left">車隊ID</th>
@@ -186,7 +187,7 @@
               </tr>
             </thead>
             <tbody id="admin-manage-body">
-              <tr class="text-center text-gray-500">
+              <tr class="text-center text-gray-400">
                 <td colspan="10" class="table-cell">暫無管理員數據</td>
               </tr>
             </tbody>
@@ -197,10 +198,10 @@
 
     <!-- 司機管理頁面 -->
     <div class="tab-content hidden" data-tab="driver-manage">
-      <div class="bg-white rounded-xl shadow-card overflow-hidden">
+      <div class="bg-gray-900 rounded-xl shadow-card overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full">
-            <thead class="bg-gray-100">
+            <thead class="bg-gray-800">
               <tr>
                 <th class="table-cell text-left">司機姓名</th>
                 <th class="table-cell text-left">電話</th>
@@ -210,7 +211,7 @@
               </tr>
             </thead>
             <tbody id="driver-manage-body">
-              <tr class="text-center text-gray-500">
+              <tr class="text-center text-gray-400">
                 <td colspan="5" class="table-cell">暫無司機數據</td>
               </tr>
             </tbody>
@@ -221,22 +222,22 @@
 
     <!-- 租金及銀行設定頁面 -->
     <div class="tab-content hidden" data-tab="rent-setting">
-      <div class="bg-white rounded-xl shadow-card p-6">
+      <div class="bg-gray-900 rounded-xl shadow-card p-6">
         <form id="rent-setting-form" class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">每月租金金額</label>
+            <label class="block text-sm font-medium text-gray-300 mb-1">每月租金金額</label>
             <input type="number" id="monthly-rent" class="form-input" placeholder="輸入租金金額" required>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">銀行名稱</label>
+            <label class="block text-sm font-medium text-gray-300 mb-1">銀行名稱</label>
             <input type="text" id="bank-name" class="form-input" placeholder="輸入銀行名稱" required>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">銀行帳號</label>
+            <label class="block text-sm font-medium text-gray-300 mb-1">銀行帳號</label>
             <input type="text" id="bank-account" class="form-input" placeholder="輸入銀行帳號" required>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">戶名</label>
+            <label class="block text-sm font-medium text-gray-300 mb-1">戶名</label>
             <input type="text" id="bank-holder" class="form-input" placeholder="輸入戶名" required>
           </div>
           <button type="submit" class="btn btn-primary w-full">
@@ -252,13 +253,13 @@
     <div class="modal-content p-6">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-medium">新增車隊</h2>
-        <button class="close-modal text-gray-500 hover:text-gray-700">
+        <button class="close-modal text-gray-400 hover:text-white">
           <i class="fa fa-times"></i>
         </button>
       </div>
       <form id="add-fleet-form" class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">車隊名稱（必填）</label>
+          <label class="block text-sm font-medium text-gray-300 mb-1">車隊名稱（必填）</label>
           <input 
             type="text" 
             id="new-fleet-name" 
@@ -268,7 +269,7 @@
           >
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">車隊描述（可選）</label>
+          <label class="block text-sm font-medium text-gray-300 mb-1">車隊描述（可選）</label>
           <textarea 
             id="new-fleet-desc" 
             class="form-input" 
@@ -289,13 +290,13 @@
     <div class="modal-content p-6">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-medium">編輯車隊</h2>
-        <button class="close-modal text-gray-500 hover:text-gray-700">
+        <button class="close-modal text-gray-400 hover:text-white">
           <i class="fa fa-times"></i>
         </button>
       </div>
       <form id="edit-fleet-form" class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">車隊ID（不可修改）</label>
+          <label class="block text-sm font-medium text-gray-300 mb-1">車隊ID（不可修改）</label>
           <input 
             type="text" 
             id="edit-fleet-id" 
@@ -304,7 +305,7 @@
           >
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">車隊名稱（必填）</label>
+          <label class="block text-sm font-medium text-gray-300 mb-1">車隊名稱（必填）</label>
           <input 
             type="text" 
             id="edit-fleet-name" 
@@ -314,7 +315,7 @@
           >
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">車隊描述（可選）</label>
+          <label class="block text-sm font-medium text-gray-300 mb-1">車隊描述（可選）</label>
           <textarea 
             id="edit-fleet-desc" 
             class="form-input" 
@@ -335,12 +336,12 @@
     <div class="modal-content p-6">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-medium" id="status-modal-title">變更狀態</h2>
-        <button class="close-modal text-gray-500 hover:text-gray-700">
+        <button class="close-modal text-gray-400 hover:text-white">
           <i class="fa fa-times"></i>
         </button>
       </div>
       <div class="mb-4">
-        <p id="status-modal-desc">確定要變更此管理員的狀態嗎？</p>
+        <p id="status-modal-desc" class="text-gray-300">確定要變更此管理員的狀態嗎？</p>
       </div>
       <div class="flex gap-3">
         <button type="button" class="close-modal btn btn-outline flex-1">取消</button>
@@ -349,9 +350,9 @@
     </div>
   </div>
 
-  <!-- 提示訊息彈窗 -->
+  <!-- 提示訊息彈窗（匹配截图样式） -->
   <div id="alert-modal" class="modal hidden">
-    <div class="modal-content p-6 max-w-sm">
+    <div class="modal-content p-6 max-w-sm bg-white text-black">
       <div class="text-center mb-4">
         <i id="alert-icon" class="fa fa-info-circle text-3xl text-info mb-2"></i>
         <h3 class="text-lg font-medium" id="alert-title">提示</h3>
@@ -427,7 +428,7 @@
       
       if (fleetList.length === 0) {
         listBody.innerHTML = `
-          <tr class="text-center text-gray-500">
+          <tr class="text-center text-gray-400">
             <td colspan="4" class="table-cell">暫無車隊數據，請點擊「新增車隊」創建</td>
           </tr>
         `;
@@ -464,7 +465,7 @@
       
       if (applyList.length === 0) {
         auditBody.innerHTML = `
-          <tr class="text-center text-gray-500">
+          <tr class="text-center text-gray-400">
             <td colspan="4" class="table-cell">暫無審核申請</td>
           </tr>
         `;
@@ -508,7 +509,7 @@
       
       if (approvedAdmins.length === 0) {
         manageBody.innerHTML = `
-          <tr class="text-center text-gray-500">
+          <tr class="text-center text-gray-400">
             <td colspan="10" class="table-cell">暫無管理員數據</td>
           </tr>
         `;
@@ -779,7 +780,7 @@
       currentAdminStatus = '';
     }
 
-    // 顯示提示框
+    // 顯示提示框（匹配截图的白底黑字样式）
     function showAlert(title, message, type = 'info') {
       const alertTitle = document.getElementById('alert-title');
       const alertMessage = document.getElementById('alert-message');
