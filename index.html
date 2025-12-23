@@ -46,12 +46,9 @@
   <div class="container mx-auto px-4 py-6 md:py-10 max-w-3xl">
     <h1 class="text-2xl md:text-3xl font-bold text-center text-gray-800 mb-8">搭車自由 - 乘客叫車</h1>
 
-    <!-- 地圖+表單區域 -->
     <div class="bg-white rounded-xl shadow-sm p-5 md:p-6">
-      <!-- Mapbox地圖（使用你的Token） -->
       <div class="map-container mb-6" id="map"></div>
 
-      <!-- 叫車表單 -->
       <form id="ride-form" class="space-y-4">
         <div>
           <label class="form-label">姓名</label>
@@ -85,21 +82,19 @@
   </div>
 
   <script>
-    // 1. 初始化Mapbox地圖
+    // 1. 初始化Mapbox（已正常加載）
     mapboxgl.accessToken = 'pk.eyJ1IjoiaWY5Mjlob25nIiwiYSI6ImNtamQxczU2cjAweDMzZnM1Z3BvY2JkejgifQ.q-GNcs0rqWrZ3HtjhmysEQ';
     const map = new mapboxgl.Map({
       container: 'map',
       style: 'mapbox://styles/mapbox/light-v11',
-      center: [121.5200, 25.0300], // 台北
+      center: [121.5200, 25.0300],
       zoom: 12
     });
     map.addControl(new mapboxgl.NavigationControl());
 
-    // 地圖點擊選擇地址
     let isPickup = true;
     document.getElementById('pickup').addEventListener('focus', () => isPickup = true);
     document.getElementById('dropoff').addEventListener('focus', () => isPickup = false);
-
     map.on('click', (e) => {
       fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${e.lngLat.lng},${e.lngLat.lat}.json?access_token=${mapboxgl.accessToken}`)
         .then(res => res.json())
@@ -110,40 +105,59 @@
         });
     });
 
-    // 2. 初始化Firebase（替換為你的配置）
+    // 2. 初始化Firebase（必須替換為你的真實配置！）
     const firebaseConfig = {
-      apiKey: "你的API Key",
-      authDomain: "你的Auth Domain",
-      databaseURL: "你的Database URL",
-      projectId: "你的Project ID",
-      storageBucket: "你的Storage Bucket",
-      messagingSenderId: "你的Sender ID",
-      appId: "你的App ID"
+      // 範例配置（替換成你Firebase後台的配置）
+      apiKey: "AIzaSyDxxxxxxxxx",
+      authDomain: "your-project.firebaseapp.com",
+      databaseURL: "https://your-project-default-rtdb.firebaseio.com",
+      projectId: "your-project",
+      storageBucket: "your-project.appspot.com",
+      messagingSenderId: "1234567890",
+      appId: "1:1234567890:web:xxxxxx"
     };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
 
-    // 3. 表單提交（同步到司機頁）
-    document.getElementById('ride-form').addEventListener('submit', (e) => {
+    // 3. 表單提交（強化跳轉，即使Firebase失敗也提示）
+    document.getElementById('ride-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const orderData = {
-        name: document.getElementById('name').value,
-        phone: document.getElementById('phone').value,
-        pickup: document.getElementById('pickup').value,
-        dropoff: document.getElementById('dropoff').value,
-        remark: document.getElementById('remark').value,
-        status: '待接單',
-        orderId: 'ORD-' + Date.now(),
-        createTime: new Date().toLocaleString('zh-TW')
+      const formData = {
+        name: document.getElementById('name').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+        pickup: document.getElementById('pickup').value.trim(),
+        dropoff: document.getElementById('dropoff').value.trim(),
+        remark: document.getElementById('remark').value.trim()
       };
 
-      // 上傳訂單到Firebase（司機頁會監聽這個節點）
-      db.ref('rides').push(orderData)
-        .then(() => {
-          // 跳轉到乘客確認頁
+      // 先驗證必填項
+      if (!formData.name || !formData.phone || !formData.pickup || !formData.dropoff) {
+        alert('請填寫所有必填欄位！');
+        return;
+      }
+
+      try {
+        // 初始化Firebase（避免重複初始化）
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
+
+        // 上傳訂單
+        await db.ref('rides').push({
+          ...formData,
+          status: '待接單',
+          orderId: 'ORD-' + Date.now(),
+          createTime: new Date().toLocaleString('zh-TW')
+        });
+
+        // 強制跳轉（無論如何都跳轉）
+        window.location.href = 'passenger-order.html';
+      } catch (err) {
+        console.error('Firebase錯誤:', err);
+        // 即使Firebase失敗，也跳轉到確認頁（或提示後跳轉）
+        if (confirm('訂單提交異常，是否繼續查看確認頁？')) {
           window.location.href = 'passenger-order.html';
-        })
-        .catch(err => alert('提交失敗，請稍後重試'));
+        }
+      }
     });
   </script>
 </body>
