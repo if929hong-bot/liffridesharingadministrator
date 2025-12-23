@@ -73,10 +73,10 @@
   <header class="bg-white shadow-sm sticky top-0 z-10">
     <div class="container mx-auto px-4 py-4 flex justify-between items-center">
       <h1 class="text-xl font-bold text-primary">
-        <<i class="fa fa-building-o mr-2"></</i>車隊管理後台
+        <i class="fa fa-building-o mr-2"></i>車隊管理後台
       </h1>
       <button id="logout-btn" class="btn btn-outline text-gray-700">
-        <<i class="fa fa-sign-out mr-1"></</i>登出
+        <i class="fa fa-sign-out mr-1"></i>登出
       </button>
     </div>
   </header>
@@ -87,19 +87,19 @@
     <div class="border-b border-gray-200 mb-6">
       <div class="flex flex-wrap gap-2">
         <button class="tab-btn tab-btn-active" data-tab="fleet">
-          <<i class="fa fa-car mr-1"></</i>車隊管理
+          <i class="fa fa-car mr-1"></i>車隊管理
         </button>
         <button class="tab-btn" data-tab="admin-audit">
-          <<i class="fa fa-user-plus mr-1"></</i>管理員審核
+          <i class="fa fa-user-plus mr-1"></i>管理員審核
         </button>
         <button class="tab-btn" data-tab="admin-manage">
-          <<i class="fa fa-users mr-1"></</i>管理員管理
+          <i class="fa fa-users mr-1"></i>管理員管理
         </button>
         <button class="tab-btn" data-tab="driver-manage">
-          <<i class="fa fa-id-card mr-1"></</i>司機管理
+          <i class="fa fa-id-card mr-1"></i>司機管理
         </button>
         <button class="tab-btn" data-tab="rent-setting">
-          <<i class="fa fa-money mr-1"></</i>租金及銀行設定
+          <i class="fa fa-money mr-1"></i>租金及銀行設定
         </button>
       </div>
     </div>
@@ -109,10 +109,10 @@
       <!-- 功能按鈕區 -->
       <div class="mb-6 flex flex-wrap gap-3">
         <button id="add-fleet-btn" class="btn btn-primary">
-          <<i class="fa fa-plus mr-1"></</i>新增車隊
+          <i class="fa fa-plus mr-1"></i>新增車隊
         </button>
         <button id="refresh-fleet-btn" class="btn btn-outline">
-          <<i class="fa fa-refresh mr-1"></</i>刷新列表
+          <i class="fa fa-refresh mr-1"></i>刷新列表
         </button>
       </div>
 
@@ -122,10 +122,10 @@
           <table class="w-full">
             <thead class="bg-gray-100">
               <tr>
-                <<th class="table-cell text-left">車隊ID</</th>
-                <<th class="table-cell text-left">車隊名稱</</th>
-                <<th class="table-cell text-left">車隊描述</</th>
-                <<th class="table-cell text-center">操作</</th>
+                <th class="table-cell text-left">車隊ID</th>
+                <th class="table-cell text-left">車隊名稱</th>
+                <th class="table-cell text-left">車隊描述</th>
+                <th class="table-cell text-center">操作</th>
               </tr>
             </thead>
             <tbody id="fleet-list-body">
@@ -145,10 +145,10 @@
           <table class="w-full">
             <thead class="bg-gray-100">
               <tr>
-                <<th class="table-cell text-left">申請人姓名</</th>
-                <<th class="table-cell text-left">電話</</th>
-                <<th class="table-cell text-left">申請車隊</</th>
-                <<th class="table-cell text-center">操作</</th>
+                <th class="table-cell text-left">申請人姓名</th>
+                <th class="table-cell text-left">電話</th>
+                <th class="table-cell text-left">申請車隊</th>
+                <th class="table-cell text-center">操作</th>
               </tr>
             </thead>
             <tbody id="admin-audit-body">
@@ -165,7 +165,7 @@
     <div class="tab-content hidden" data-tab="admin-manage">
       <div class="mb-6 flex flex-wrap gap-3">
         <button id="refresh-admin-btn" class="btn btn-outline">
-          <<i class="fa fa-refresh mr-1"></</i>刷新列表
+          <i class="fa fa-refresh mr-1"></i>刷新列表
         </button>
       </div>
       <div class="bg-white rounded-xl shadow-card overflow-hidden">
@@ -173,19 +173,21 @@
           <table class="w-full">
             <thead class="bg-gray-100">
               <tr>
-                <<th class="table-cell text-left">車隊名稱</</th>
-                <<th class="table-cell text-left">車隊ID</</th>
-                <<th class="table-cell text-left">管理員姓名</</th>
-                <<th class="table-cell text-left">電話</</th>
-                <<th class="table-cell text-left">帳號</</th>
-                <<th class="table-cell text-left">繳費日期</</th>
-                <<th class="table-cell text-center">狀態</</th>
-                <<th class="table-cell text-center">操作</</th>
+                <th class="table-cell text-left">車隊名稱</th>
+                <th class="table-cell text-left">車隊ID</th>
+                <th class="table-cell text-left">管理員姓名</th>
+                <th class="table-cell text-left">電話</th>
+                <th class="table-cell text-left">LINE ID</th>
+                <th class="table-cell text-left">帳號</th>
+                <th class="table-cell text-left">密碼</th>
+                <th class="table-cell text-left">繳費日期</th>
+                <th class="table-cell text-center">狀態</th>
+                <th class="table-cell text-center">操作</th>
               </tr>
             </thead>
             <tbody id="admin-manage-body">
               <tr class="text-center text-gray-500">
-                <td colspan="8" class="table-cell">暫無管理員數據</td>
+                <td colspan="10" class="table-cell">暫無管理員數據</td>
               </tr>
             </tbody>
           </table>
@@ -200,11 +202,11 @@
           <table class="w-full">
             <thead class="bg-gray-100">
               <tr>
-                <<th class="table-cell text-left">司機姓名</</th>
-                <<th class="table-cell text-left">電話</</th>
-                <<th class="table-cell text-left">所屬車隊</</th>
-                <<th class="table-cell text-center">狀態</</th>
-                <<th class="table-cell text-center">操作</</th>
+                <th class="table-cell text-left">司機姓名</th>
+                <th class="table-cell text-left">電話</th>
+                <th class="table-cell text-left">所屬車隊</th>
+                <th class="table-cell text-center">狀態</th>
+                <th class="table-cell text-center">操作</th>
               </tr>
             </thead>
             <tbody id="driver-manage-body">
@@ -238,7 +240,7 @@
             <input type="text" id="bank-holder" class="form-input" placeholder="輸入戶名" required>
           </div>
           <button type="submit" class="btn btn-primary w-full">
-            <<i class="fa fa-save mr-1"></</i>儲存設定
+            <i class="fa fa-save mr-1"></i>儲存設定
           </button>
         </form>
       </div>
@@ -251,7 +253,7 @@
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-medium">新增車隊</h2>
         <button class="close-modal text-gray-500 hover:text-gray-700">
-          <<i class="fa fa-times"></</i>
+          <i class="fa fa-times"></i>
         </button>
       </div>
       <form id="add-fleet-form" class="space-y-4">
@@ -288,7 +290,7 @@
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-medium">編輯車隊</h2>
         <button class="close-modal text-gray-500 hover:text-gray-700">
-          <<i class="fa fa-times"></</i>
+          <i class="fa fa-times"></i>
         </button>
       </div>
       <form id="edit-fleet-form" class="space-y-4">
@@ -334,7 +336,7 @@
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-medium" id="status-modal-title">變更狀態</h2>
         <button class="close-modal text-gray-500 hover:text-gray-700">
-          <<i class="fa fa-times"></</i>
+          <i class="fa fa-times"></i>
         </button>
       </div>
       <div class="mb-4">
@@ -351,7 +353,7 @@
   <div id="alert-modal" class="modal hidden">
     <div class="modal-content p-6 max-w-sm">
       <div class="text-center mb-4">
-        <<i id="alert-icon" class="fa fa-info-circle text-3xl text-info mb-2"></</i>
+        <i id="alert-icon" class="fa fa-info-circle text-3xl text-info mb-2"></i>
         <h3 class="text-lg font-medium" id="alert-title">提示</h3>
       </div>
       <p id="alert-message" class="text-gray-700 mb-4 text-center"></p>
@@ -361,16 +363,12 @@
 
   <script>
     // 全局常量
-    const SUPER_ADMINS = [
-      { account: '0975521219', password: 'fffishau' },
-      { account: 'admin123', password: 'ccc456789' }
-    ];
     const LOGGED_KEY = 'superAdminLoggedIn';
     const FLEETS_KEY = 'fleetList';
     const ADMIN_APPLY_KEY = 'fleetAdminApplications';
     const APPROVED_ADMINS_KEY = 'approvedFleetAdmins';
     const RENT_SETTING_KEY = 'rentAndBankSettings';
-    const LOGIN_PAGE = 'index.html';
+    const LOGIN_PAGE = 'administrator-login.html';
 
     // 當前狀態
     let currentEditFleetId = '';
@@ -380,7 +378,7 @@
     // 初始化頁面
     document.addEventListener('DOMContentLoaded', () => {
       // 驗證超管登錄狀態
-      checkSuperAdminLogin();
+      checkSuperAdminAuth();
       
       // 加載數據
       loadFleetList();
@@ -393,39 +391,34 @@
       bindTabEvents();
     });
 
-    // 驗證超管登錄狀態
-    function checkSuperAdminLogin() {
+    // 驗證超管登錄狀態（核心防護）
+    function checkSuperAdminAuth() {
       const isLoggedIn = localStorage.getItem(LOGGED_KEY) === 'true';
       
-      // 檢查是否為超管帳號登入
       if (!isLoggedIn) {
-        // 跳轉到登入頁
+        // 未授權訪問，強制跳轉登入頁
         window.location.href = LOGIN_PAGE;
         return;
       }
     }
 
-    // 綁定標籤頁事件
+    // 綁定標籤頁切換事件
     function bindTabEvents() {
       document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          // 切換標籤按鈕狀態
-          document.querySelectorAll('.tab-btn').forEach(tab => {
-            tab.classList.remove('tab-btn-active');
-          });
+          // 切換按鈕狀態
+          document.querySelectorAll('.tab-btn').forEach(tab => tab.classList.remove('tab-btn-active'));
           btn.classList.add('tab-btn-active');
           
-          // 切換內容顯示
+          // 切換內容
           const tabName = btn.getAttribute('data-tab');
-          document.querySelectorAll('.tab-content').forEach(content => {
-            content.classList.add('hidden');
-          });
+          document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
           document.querySelector(`.tab-content[data-tab="${tabName}"]`).classList.remove('hidden');
         });
       });
     }
 
-    // 加載車隊列表
+    // 加載車隊列表（5位數隨機ID）
     function loadFleetList() {
       const fleetList = JSON.parse(localStorage.getItem(FLEETS_KEY) || '[]');
       const listBody = document.getElementById('fleet-list-body');
@@ -449,18 +442,16 @@
           <td class="table-cell">${fleet.desc || '-'}</td>
           <td class="table-cell text-center">
             <button class="edit-fleet-btn btn btn-info px-3 py-1 text-sm mr-2" data-id="${fleet.id}">
-              <<i class="fa fa-edit mr-1"></</i>編輯
+              <i class="fa fa-edit mr-1"></i>編輯
             </button>
           </td>
         `;
         listBody.appendChild(tr);
       });
       
+      // 綁定編輯按鈕
       document.querySelectorAll('.edit-fleet-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const fleetId = btn.getAttribute('data-id');
-          openEditModal(fleetId);
-        });
+        btn.addEventListener('click', () => openEditModal(btn.getAttribute('data-id')));
       });
     }
 
@@ -488,34 +479,26 @@
           <td class="table-cell">${apply.fleetName}</td>
           <td class="table-cell text-center">
             <button class="approve-admin-btn btn btn-success px-3 py-1 text-sm mr-2" data-index="${index}">
-              <<i class="fa fa-check mr-1"></</i>通過
+              <i class="fa fa-check mr-1"></i>通過
             </button>
             <button class="reject-admin-btn btn btn-danger px-3 py-1 text-sm" data-index="${index}">
-              <<i class="fa fa-times mr-1"></</i>駁回
+              <i class="fa fa-times mr-1"></i>駁回
             </button>
           </td>
         `;
         auditBody.appendChild(tr);
       });
       
-      // 通過按鈕事件
+      // 審核按鈕事件
       document.querySelectorAll('.approve-admin-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const index = btn.getAttribute('data-index');
-          approveAdminApplication(index);
-        });
+        btn.addEventListener('click', () => approveAdminApplication(btn.getAttribute('data-index')));
       });
-      
-      // 駁回按鈕事件
       document.querySelectorAll('.reject-admin-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const index = btn.getAttribute('data-index');
-          rejectAdminApplication(index);
-        });
+        btn.addEventListener('click', () => rejectAdminApplication(btn.getAttribute('data-index')));
       });
     }
 
-    // 加載已通過管理員列表
+    // 加載已通過管理員列表（包含LINE ID/密碼字段）
     function loadApprovedAdmins() {
       const approvedAdmins = JSON.parse(localStorage.getItem(APPROVED_ADMINS_KEY) || '[]');
       const fleetList = JSON.parse(localStorage.getItem(FLEETS_KEY) || '[]');
@@ -526,7 +509,7 @@
       if (approvedAdmins.length === 0) {
         manageBody.innerHTML = `
           <tr class="text-center text-gray-500">
-            <td colspan="8" class="table-cell">暫無管理員數據</td>
+            <td colspan="10" class="table-cell">暫無管理員數據</td>
           </tr>
         `;
         return;
@@ -544,19 +527,21 @@
           <td class="table-cell font-mono text-sm">${admin.fleetId}</td>
           <td class="table-cell">${admin.name}</td>
           <td class="table-cell">${admin.phone}</td>
+          <td class="table-cell">${admin.lineId || '-'}</td>
           <td class="table-cell">${admin.account}</td>
+          <td class="table-cell">${admin.password}</td>
           <td class="table-cell">${admin.payDate || '-'}</td>
           <td class="table-cell text-center">${statusText}</td>
           <td class="table-cell text-center">
             <button class="change-status-btn btn ${statusBtnClass} px-3 py-1 text-sm" data-index="${index}" data-status="${admin.status}">
-              <<i class="fa fa-refresh mr-1"></</i>${statusBtnText}
+              <i class="fa fa-refresh mr-1"></i>${statusBtnText}
             </button>
           </td>
         `;
         manageBody.appendChild(tr);
       });
       
-      // 狀態變更按鈕事件
+      // 狀態變更按鈕
       document.querySelectorAll('.change-status-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           currentAdminId = btn.getAttribute('data-index');
@@ -569,39 +554,35 @@
     // 加載租金及銀行設定
     function loadRentSettings() {
       const settings = JSON.parse(localStorage.getItem(RENT_SETTING_KEY) || '{}');
-      
       if (settings.monthlyRent) document.getElementById('monthly-rent').value = settings.monthlyRent;
       if (settings.bankName) document.getElementById('bank-name').value = settings.bankName;
       if (settings.bankAccount) document.getElementById('bank-account').value = settings.bankAccount;
       if (settings.bankHolder) document.getElementById('bank-holder').value = settings.bankHolder;
     }
 
-    // 綁定所有事件
+    // 綁定所有交互事件
     function bindEvents() {
       // 登出按鈕
       document.getElementById('logout-btn').addEventListener('click', () => {
-        if (confirm('確定要登出嗎？')) {
+        if (confirm('確定要登出超管後台嗎？')) {
           localStorage.removeItem(LOGGED_KEY);
           window.location.href = LOGIN_PAGE;
         }
       });
 
-      // 刷新車隊按鈕
+      // 刷新按鈕
       document.getElementById('refresh-fleet-btn').addEventListener('click', loadFleetList);
-      
-      // 刷新管理員按鈕
       document.getElementById('refresh-admin-btn').addEventListener('click', loadApprovedAdmins);
 
-      // 新增車隊按鈕
+      // 新增車隊
       document.getElementById('add-fleet-btn').addEventListener('click', () => {
         document.getElementById('add-fleet-form').reset();
         document.getElementById('add-fleet-modal').classList.remove('hidden');
       });
 
-      // 新增車隊表單提交
+      // 新增車隊提交
       document.getElementById('add-fleet-form').addEventListener('submit', (e) => {
         e.preventDefault();
-        
         const fleetName = document.getElementById('new-fleet-name').value.trim();
         const fleetDesc = document.getElementById('new-fleet-desc').value.trim();
         
@@ -610,7 +591,7 @@
           return;
         }
         
-        // 生成5位數字車隊ID
+        // 生成5位數隨機車隊ID
         const fleetId = Math.floor(10000 + Math.random() * 90000).toString();
         
         const fleetList = JSON.parse(localStorage.getItem(FLEETS_KEY) || '[]');
@@ -627,10 +608,9 @@
         loadFleetList();
       });
 
-      // 編輯車隊表單提交
+      // 編輯車隊提交
       document.getElementById('edit-fleet-form').addEventListener('submit', (e) => {
         e.preventDefault();
-        
         if (!currentEditFleetId) return;
         
         const fleetName = document.getElementById('edit-fleet-name').value.trim();
@@ -654,25 +634,22 @@
         }
       });
 
-      // 刪除車隊按鈕
+      // 刪除車隊
       document.getElementById('delete-fleet-btn').addEventListener('click', () => {
-        if (!currentEditFleetId) return;
+        if (!currentEditFleetId || !confirm('確定要刪除此車隊嗎？此操作不可撤銷！')) return;
         
-        if (confirm('確定要刪除此車隊嗎？此操作不可撤銷！')) {
-          const fleetList = JSON.parse(localStorage.getItem(FLEETS_KEY) || '[]');
-          const newFleetList = fleetList.filter(f => f.id !== currentEditFleetId);
-          
-          localStorage.setItem(FLEETS_KEY, JSON.stringify(newFleetList));
-          closeAllModals();
-          showAlert('成功', '車隊刪除成功！', 'success');
-          loadFleetList();
-        }
+        const fleetList = JSON.parse(localStorage.getItem(FLEETS_KEY) || '[]');
+        const newFleetList = fleetList.filter(f => f.id !== currentEditFleetId);
+        
+        localStorage.setItem(FLEETS_KEY, JSON.stringify(newFleetList));
+        closeAllModals();
+        showAlert('成功', '車隊刪除成功！', 'success');
+        loadFleetList();
       });
 
-      // 租金設定表單提交
+      // 租金設定保存
       document.getElementById('rent-setting-form').addEventListener('submit', (e) => {
         e.preventDefault();
-        
         const monthlyRent = document.getElementById('monthly-rent').value.trim();
         const bankName = document.getElementById('bank-name').value.trim();
         const bankAccount = document.getElementById('bank-account').value.trim();
@@ -684,10 +661,7 @@
         }
         
         const settings = {
-          monthlyRent,
-          bankName,
-          bankAccount,
-          bankHolder,
+          monthlyRent, bankName, bankAccount, bankHolder,
           updateTime: new Date().toLocaleString('zh-TW')
         };
         
@@ -695,7 +669,7 @@
         showAlert('成功', '設定儲存成功！', 'success');
       });
 
-      // 確認狀態變更按鈕
+      // 管理員狀態變更確認
       document.getElementById('confirm-status-btn').addEventListener('click', () => {
         const approvedAdmins = JSON.parse(localStorage.getItem(APPROVED_ADMINS_KEY) || '[]');
         const newStatus = currentAdminStatus === '正常' ? '停權' : '正常';
@@ -709,7 +683,7 @@
         }
       });
 
-      // 關閉彈窗按鈕
+      // 關閉所有彈窗按鈕
       document.querySelectorAll('.close-modal').forEach(btn => {
         btn.addEventListener('click', closeAllModals);
       });
@@ -722,9 +696,7 @@
       // 點擊彈窗外層關閉
       document.querySelectorAll('.modal').forEach(modal => {
         modal.addEventListener('click', (e) => {
-          if (e.target === modal) {
-            closeAllModals();
-          }
+          if (e.target === modal) closeAllModals();
         });
       });
     }
@@ -736,7 +708,7 @@
       
       if (index >= 0 && index < applyList.length) {
         const approvedAdmin = applyList[index];
-        // 生成預設帳號密碼（這裡用電話作為帳號，隨機密碼）
+        // 生成帳號密碼（電話為帳號，隨機8位密碼）
         const account = approvedAdmin.phone;
         const password = Math.random().toString(36).slice(-8);
         
@@ -745,10 +717,11 @@
           account,
           password,
           status: '正常',
-          payDate: ''
+          payDate: '',
+          lineId: approvedAdmin.lineId || ''
         });
         
-        // 移除申請列表中的該項
+        // 移除申請
         applyList.splice(index, 1);
         
         localStorage.setItem(ADMIN_APPLY_KEY, JSON.stringify(applyList));
@@ -800,9 +773,7 @@
 
     // 關閉所有彈窗
     function closeAllModals() {
-      document.querySelectorAll('.modal').forEach(modal => {
-        modal.classList.add('hidden');
-      });
+      document.querySelectorAll('.modal').forEach(modal => modal.classList.add('hidden'));
       currentEditFleetId = '';
       currentAdminId = '';
       currentAdminStatus = '';
