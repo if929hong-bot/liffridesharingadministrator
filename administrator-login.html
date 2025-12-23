@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>超級管理員登入</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#228B22',
+            danger: '#dc3545',
+            success: '#198754'
+          },
+          boxShadow: {
+            card: '0 4px 20px rgba(0, 0, 0, 0.08)',
+          }
+        }
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .form-input {
+        @apply w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all;
+      }
+      .btn-primary {
+        @apply bg-primary text-white py-2.5 px-4 rounded-lg hover:bg-primary/90 active:bg-primary/80 transition-all duration-200;
+      }
+      .login-card {
+        @apply w-full max-w-md bg-white rounded-xl shadow-card p-8 sm:p-10;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
+  <div class="login-card">
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
+        <i class="fa fa-shield text-primary text-3xl"></i>
+      </div>
+      <h2 class="text-[clamp(1.5rem,3vw,1.8rem)] font-bold text-gray-800">超級管理員登入</h2>
+      <p class="text-gray-500 mt-1">請輸入超管帳號密碼</p>
+    </div>
+    
+    <form id="super-admin-login-form" class="space-y-5">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">超管帳號</label>
+        <div class="relative">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+            <i class="fa fa-user"></i>
+          </span>
+          <input 
+            type="text" 
+            id="admin-username" 
+            class="form-input pl-10" 
+            placeholder="請輸入超管帳號" 
+            required
+          >
+        </div>
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">密碼</label>
+        <div class="relative">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+            <i class="fa fa-lock"></i>
+          </span>
+          <input 
+            type="password" 
+            id="admin-password" 
+            class="form-input pl-10" 
+            placeholder="請輸入超管密碼" 
+            required
+          >
+        </div>
+      </div>
+      
+      <div class="text-red-500 text-sm text-center hidden" id="login-error">
+        <i class="fa fa-exclamation-circle mr-1"></i> 帳號或密碼錯誤！
+      </div>
+      
+      <button type="submit" class="btn-primary w-full font-medium">
+        <i class="fa fa-sign-in mr-2"></i> 登入管理後台
+      </button>
+    </form>
+  </div>
+
+  <script>
+    // 固定超管帳號密碼列表
+    const SUPER_ADMINS = [
+      { account: '0975521219', password: 'fffishau' },
+      { account: 'admin123', password: 'ccc456789' }
+    ];
+    
+    // 登入狀態存儲鍵名
+    const LOGGED_KEY = 'superAdminLoggedIn';
+    // 管理後台頁面路徑
+    const ADMIN_PAGE = 'administrator.html';
+
+    // 頁面加載時檢查是否已登入
+    document.addEventListener('DOMContentLoaded', () => {
+      const isLoggedIn = localStorage.getItem(LOGGED_KEY) === 'true';
+      if (isLoggedIn) {
+        // 已登入直接跳轉到管理後台
+        window.location.href = ADMIN_PAGE;
+      }
+      
+      // 綁定登入表單提交事件
+      document.getElementById('super-admin-login-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        login();
+      });
+    });
+
+    // 登入驗證函數
+    function login() {
+      const username = document.getElementById('admin-username').value.trim();
+      const password = document.getElementById('admin-password').value.trim();
+      const errorEl = document.getElementById('login-error');
+      
+      // 清空錯誤提示
+      errorEl.classList.add('hidden');
+      
+      // 空值驗證
+      if (!username || !password) {
+        errorEl.innerHTML = '<i class="fa fa-exclamation-circle mr-1"></i> 請輸入帳號和密碼！';
+        errorEl.classList.remove('hidden');
+        setTimeout(() => errorEl.classList.add('hidden'), 3000);
+        return;
+      }
+      
+      // 驗證帳號密碼
+      const isValidAdmin = SUPER_ADMINS.some(admin => {
+        return admin.account === username && admin.password === password;
+      });
+      
+      if (isValidAdmin) {
+        // 登入成功 - 設置登入狀態
+        localStorage.setItem(LOGGED_KEY, 'true');
+        // 跳轉到管理後台
+        window.location.href = ADMIN_PAGE;
+      } else {
+        // 登入失敗 - 顯示錯誤提示
+        errorEl.classList.remove('hidden');
+        // 清空密碼框並聚焦
+        document.getElementById('admin-password').value = '';
+        document.getElementById('admin-password').focus();
+        // 3秒後隱藏錯誤提示
+        setTimeout(() => errorEl.classList.add('hidden'), 3000);
+      }
+    }
+  </script>
+</body>
+</html>
