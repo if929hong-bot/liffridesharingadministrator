@@ -2,141 +2,37 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>搭車自由 - 乘客叫車</title>
-  <!-- Tailwind CSS -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>訂單提交成功 - 搭車自由</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Firebase兼容版 -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            primary: '#00A86B',
-            secondary: '#F5F5F5',
-            neutral: '#333333',
-          },
-        },
-      }
-    }
-  </script>
-  
   <style type="text/tailwindcss">
     @layer utilities {
-      .input-field {
-        @apply w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all;
+      .success-card {
+        @apply bg-white rounded-xl shadow-sm p-6 md:p-8 max-w-md mx-auto mt-10 text-center;
       }
-      .form-label {
-        @apply block text-sm font-medium text-neutral mb-1.5;
-      }
-      .btn-primary {
-        @apply bg-primary text-white py-3 px-4 rounded-lg font-medium w-full hover:bg-primary/90 active:bg-primary/80 transition-all shadow-md hover:shadow-lg;
-      }
-      .map-container {
-        @apply w-full h-[250px] md:h-[300px] rounded-lg overflow-hidden border border-gray-200 relative;
-      }
-      .map-placeholder {
-        @apply absolute inset-0 flex flex-col items-center justify-center bg-gray-50 text-gray-500;
+      .btn-home {
+        @apply bg-primary text-white py-3 px-6 rounded-lg font-medium hover:bg-primary/90 transition-all;
       }
     }
   </style>
 </head>
-<body class="bg-secondary min-h-screen">
-  <div class="container mx-auto px-4 py-6 md:py-10 max-w-3xl">
-    <div class="text-center mb-6 md:mb-8">
-      <h1 class="text-[clamp(1.5rem,3vw,2rem)] font-bold text-neutral">搭車自由 - 乘客叫車</h1>
-      <p class="text-gray-500 mt-2">快速提交您的行程需求，司機將實時響應</p>
-    </div>
-
-    <div class="bg-white rounded-xl shadow-sm p-5 md:p-6">
-      <!-- 地圖容器（含加載失敗備用） -->
-      <div class="map-container mb-6" id="location-map">
-        <div class="map-placeholder flex" id="map-placeholder">
-          <<<i class="fa fa-map-marker text-2xl mb-2"></</</i>
-          <p>地圖加載失敗，請手動輸入地址</p>
-        </div>
+<body class="bg-gray-50 min-h-screen">
+  <div class="container mx-auto px-4">
+    <div class="success-card">
+      <!-- 成功圖標 -->
+      <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <i class="fa fa-check text-2xl text-green-600"></i>
       </div>
-
-      <form id="passenger-form" class="space-y-4">
-        <div>
-          <label class="form-label">姓名</label>
-          <input type="text" id="passenger-name" class="input-field" placeholder="輸入您的姓名" required>
-        </div>
-        
-        <div>
-          <label class="form-label">電話</label>
-          <input type="tel" id="passenger-phone" class="input-field" placeholder="輸入您的聯絡電話" required>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="form-label">上車地點</label>
-            <input type="text" id="pickup-location" class="input-field" placeholder="手動輸入上車地址" required>
-          </div>
-          <div>
-            <label class="form-label">下車地點</label>
-            <input type="text" id="dropoff-location" class="input-field" placeholder="手動輸入下車地址" required>
-          </div>
-        </div>
-        
-        <div>
-          <label class="form-label">備註（可選）</label>
-          <textarea id="passenger-remark" class="input-field" rows="2" placeholder="輸入額外需求（如行李數量）"></textarea>
-        </div>
-        
-        <button type="submit" class="btn-primary mt-2">
-          提交訂單
-        </button>
-      </form>
+      
+      <!-- 成功提示 -->
+      <h1 class="text-xl md:text-2xl font-bold text-gray-800 mb-2">訂單提交成功！</h1>
+      <p class="text-gray-600 mb-6">司機將很快與您聯繫，請保持電話暢通</p>
+      
+      <!-- 返回首頁按鈕 -->
+      <button onclick="window.location.href='index.html'" class="btn-home">
+        返回首頁
+      </button>
     </div>
   </div>
-
-  <script>
-    // 初始化Firebase
-    const firebaseConfig = {
-      // 替換為你的Firebase配置！！！
-      apiKey: "你的API Key",
-      authDomain: "你的Auth Domain",
-      databaseURL: "你的Database URL",
-      projectId: "你的Project ID",
-      storageBucket: "你的Storage Bucket",
-      messagingSenderId: "你的Sender ID",
-      appId: "你的App ID"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    // 表單提交（添加跳轉邏輯）
-    document.getElementById('passenger-form').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const orderData = {
-        name: document.getElementById('passenger-name').value,
-        phone: document.getElementById('passenger-phone').value,
-        pickup: document.getElementById('pickup-location').value,
-        dropoff: document.getElementById('dropoff-location').value,
-        remark: document.getElementById('passenger-remark').value,
-        status: '待接單',
-        teamId: new URLSearchParams(window.location.search).get('team') || '',
-        createTime: new Date().toLocaleString('zh-TW'),
-        orderId: 'ORD-' + Date.now()
-      };
-
-      if (!orderData.teamId && !confirm('未檢測到車隊ID，是否繼續？')) return;
-
-      // 提交訂單並跳轉
-      db.ref('activeOrders').push(orderData)
-        .then(() => {
-          // 提交成功後跳轉到passenger-order.html
-          window.location.href = 'passenger-order.html';
-        })
-        .catch(err => {
-          console.error('訂單提交失敗:', err);
-          alert('叫車失敗，請稍後重試');
-        });
-    });
-  </script>
 </body>
 </html>
