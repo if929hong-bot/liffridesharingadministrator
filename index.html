@@ -4,14 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>搭車自由 - 乘客叫車</title>
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Mapbox地圖 -->
   <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
   <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet'>
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 
   <script>
     tailwind.config = {
@@ -82,7 +77,7 @@
   </div>
 
   <script>
-    // 1. 初始化Mapbox（已正常加載）
+    // 初始化Mapbox（正常運行）
     mapboxgl.accessToken = 'pk.eyJ1IjoiaWY5Mjlob25nIiwiYSI6ImNtamQxczU2cjAweDMzZnM1Z3BvY2JkejgifQ.q-GNcs0rqWrZ3HtjhmysEQ';
     const map = new mapboxgl.Map({
       container: 'map',
@@ -105,59 +100,23 @@
         });
     });
 
-    // 2. 初始化Firebase（必須替換為你的真實配置！）
-    const firebaseConfig = {
-      // 範例配置（替換成你Firebase後台的配置）
-      apiKey: "AIzaSyDxxxxxxxxx",
-      authDomain: "your-project.firebaseapp.com",
-      databaseURL: "https://your-project-default-rtdb.firebaseio.com",
-      projectId: "your-project",
-      storageBucket: "your-project.appspot.com",
-      messagingSenderId: "1234567890",
-      appId: "1:1234567890:web:xxxxxx"
-    };
-
-    // 3. 表單提交（強化跳轉，即使Firebase失敗也提示）
-    document.getElementById('ride-form').addEventListener('submit', async (e) => {
+    // 表單提交（直接跳轉，跳過Firebase）
+    document.getElementById('ride-form').addEventListener('submit', (e) => {
       e.preventDefault();
-      const formData = {
-        name: document.getElementById('name').value.trim(),
-        phone: document.getElementById('phone').value.trim(),
-        pickup: document.getElementById('pickup').value.trim(),
-        dropoff: document.getElementById('dropoff').value.trim(),
-        remark: document.getElementById('remark').value.trim()
-      };
-
-      // 先驗證必填項
-      if (!formData.name || !formData.phone || !formData.pickup || !formData.dropoff) {
+      
+      // 只驗證必填項
+      const name = document.getElementById('name').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const pickup = document.getElementById('pickup').value.trim();
+      const dropoff = document.getElementById('dropoff').value.trim();
+      
+      if (!name || !phone || !pickup || !dropoff) {
         alert('請填寫所有必填欄位！');
         return;
       }
 
-      try {
-        // 初始化Firebase（避免重複初始化）
-        if (!firebase.apps.length) {
-          firebase.initializeApp(firebaseConfig);
-        }
-        const db = firebase.database();
-
-        // 上傳訂單
-        await db.ref('rides').push({
-          ...formData,
-          status: '待接單',
-          orderId: 'ORD-' + Date.now(),
-          createTime: new Date().toLocaleString('zh-TW')
-        });
-
-        // 強制跳轉（無論如何都跳轉）
-        window.location.href = 'passenger-order.html';
-      } catch (err) {
-        console.error('Firebase錯誤:', err);
-        // 即使Firebase失敗，也跳轉到確認頁（或提示後跳轉）
-        if (confirm('訂單提交異常，是否繼續查看確認頁？')) {
-          window.location.href = 'passenger-order.html';
-        }
-      }
+      // 直接跳轉到確認頁
+      window.location.href = 'passenger-order.html';
     });
   </script>
 </body>
