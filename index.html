@@ -3,36 +3,148 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>訂單提交成功 - 搭車自由</title>
+  <title>搭車自由 - 乘客叫車</title>
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Mapbox地圖 -->
+  <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+  <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet'>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#00A86B',
+          },
+        },
+      }
+    }
+  </script>
+  
   <style type="text/tailwindcss">
     @layer utilities {
-      .success-card {
-        @apply bg-white rounded-xl shadow-sm p-6 md:p-8 max-w-md mx-auto mt-10 text-center;
+      .input-field {
+        @apply w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all;
       }
-      .btn-home {
-        @apply bg-primary text-white py-3 px-6 rounded-lg font-medium hover:bg-primary/90 transition-all;
+      .form-label {
+        @apply block text-sm font-medium text-gray-700 mb-1.5;
+      }
+      .btn-primary {
+        @apply bg-primary text-white py-3 px-4 rounded-lg font-medium w-full hover:bg-primary/90 transition-all shadow-md;
+      }
+      .map-container {
+        @apply w-full h-[250px] md:h-[300px] rounded-lg overflow-hidden border border-gray-200;
       }
     }
   </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
-  <div class="container mx-auto px-4">
-    <div class="success-card">
-      <!-- 成功圖標 -->
-      <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <i class="fa fa-check text-2xl text-green-600"></i>
-      </div>
-      
-      <!-- 成功提示 -->
-      <h1 class="text-xl md:text-2xl font-bold text-gray-800 mb-2">訂單提交成功！</h1>
-      <p class="text-gray-600 mb-6">司機將很快與您聯繫，請保持電話暢通</p>
-      
-      <!-- 返回首頁按鈕 -->
-      <button onclick="window.location.href='index.html'" class="btn-home">
-        返回首頁
-      </button>
+  <div class="container mx-auto px-4 py-6 md:py-10 max-w-3xl">
+    <h1 class="text-2xl md:text-3xl font-bold text-center text-gray-800 mb-8">搭車自由 - 乘客叫車</h1>
+
+    <!-- 地圖+表單區域 -->
+    <div class="bg-white rounded-xl shadow-sm p-5 md:p-6">
+      <!-- Mapbox地圖（使用你的Token） -->
+      <div class="map-container mb-6" id="map"></div>
+
+      <!-- 叫車表單 -->
+      <form id="ride-form" class="space-y-4">
+        <div>
+          <label class="form-label">姓名</label>
+          <input type="text" id="name" class="input-field" placeholder="輸入您的姓名" required>
+        </div>
+        
+        <div>
+          <label class="form-label">電話</label>
+          <input type="tel" id="phone" class="input-field" placeholder="輸入您的聯絡電話" required>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="form-label">上車地點</label>
+            <input type="text" id="pickup" class="input-field" placeholder="點擊地圖選擇或手動輸入" required>
+          </div>
+          <div>
+            <label class="form-label">下車地點</label>
+            <input type="text" id="dropoff" class="input-field" placeholder="點擊地圖選擇或手動輸入" required>
+          </div>
+        </div>
+        
+        <div>
+          <label class="form-label">備註（可選）</label>
+          <textarea id="remark" class="input-field" rows="2" placeholder="輸入額外需求（如行李數量）"></textarea>
+        </div>
+        
+        <button type="submit" class="btn-primary">提交訂單</button>
+      </form>
     </div>
   </div>
+
+  <script>
+    // 1. 初始化Mapbox地圖
+    mapboxgl.accessToken = 'pk.eyJ1IjoiaWY5Mjlob25nIiwiYSI6ImNtamQxczU2cjAweDMzZnM1Z3BvY2JkejgifQ.q-GNcs0rqWrZ3HtjhmysEQ';
+    const map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/light-v11',
+      center: [121.5200, 25.0300], // 台北
+      zoom: 12
+    });
+    map.addControl(new mapboxgl.NavigationControl());
+
+    // 地圖點擊選擇地址
+    let isPickup = true;
+    document.getElementById('pickup').addEventListener('focus', () => isPickup = true);
+    document.getElementById('dropoff').addEventListener('focus', () => isPickup = false);
+
+    map.on('click', (e) => {
+      fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${e.lngLat.lng},${e.lngLat.lat}.json?access_token=${mapboxgl.accessToken}`)
+        .then(res => res.json())
+        .then(data => {
+          const address = data.features[0]?.place_name || `${e.lngLat.lat.toFixed(4)}, ${e.lngLat.lng.toFixed(4)}`;
+          if (isPickup) document.getElementById('pickup').value = address;
+          else document.getElementById('dropoff').value = address;
+        });
+    });
+
+    // 2. 初始化Firebase（替換為你的配置）
+    const firebaseConfig = {
+      apiKey: "你的API Key",
+      authDomain: "你的Auth Domain",
+      databaseURL: "你的Database URL",
+      projectId: "你的Project ID",
+      storageBucket: "你的Storage Bucket",
+      messagingSenderId: "你的Sender ID",
+      appId: "你的App ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // 3. 表單提交（同步到司機頁）
+    document.getElementById('ride-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const orderData = {
+        name: document.getElementById('name').value,
+        phone: document.getElementById('phone').value,
+        pickup: document.getElementById('pickup').value,
+        dropoff: document.getElementById('dropoff').value,
+        remark: document.getElementById('remark').value,
+        status: '待接單',
+        orderId: 'ORD-' + Date.now(),
+        createTime: new Date().toLocaleString('zh-TW')
+      };
+
+      // 上傳訂單到Firebase（司機頁會監聽這個節點）
+      db.ref('rides').push(orderData)
+        .then(() => {
+          // 跳轉到乘客確認頁
+          window.location.href = 'passenger-order.html';
+        })
+        .catch(err => alert('提交失敗，請稍後重試'));
+    });
+  </script>
 </body>
 </html>
