@@ -136,3 +136,206 @@
         <h3 class="text-lg font-semibold mb-4 pb-2 border-b border-gray-700">
           <<i class="fa fa-cog text-green-500 mr-2"></</i>系統設定資訊
         </h3>
+        <div class="space-y-4" id="setting-info">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-gray-700 p-3 rounded-lg">
+              <p class="text-xs text-gray-400">月繳金額</p>
+              <p id="monthly-rent-info" class="font-mono">NT$ 0</p>
+            </div>
+            <div class="bg-gray-700 p-3 rounded-lg">
+              <p class="text-xs text-gray-400">季繳金額</p>
+              <p id="quarterly-rent-info" class="font-mono">NT$ 0</p>
+            </div>
+            <div class="bg-gray-700 p-3 rounded-lg">
+              <p class="text-xs text-gray-400">半年繳金額</p>
+              <p id="halfyear-rent-info" class="font-mono">NT$ 0</p>
+            </div>
+            <div class="bg-gray-700 p-3 rounded-lg">
+              <p class="text-xs text-gray-400">年繳金額</p>
+              <p id="yearly-rent-info" class="font-mono">NT$ 0</p>
+            </div>
+          </div>
+          <div class="bg-gray-700 p-3 rounded-lg mt-4">
+            <p class="text-xs text-gray-400">銀行帳戶</p>
+            <p id="bank-info" class="mt-1">未設定</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 最近繳費紀錄 -->
+      <div class="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700">
+        <h3 class="text-lg font-semibold mb-4 pb-2 border-b border-gray-700">
+          <<i class="fa fa-history text-blue-500 mr-2"></</i>最近繳費紀錄
+        </h3>
+        <div class="overflow-y-auto max-h-60 scrollbar-thin" id="recent-payment-list">
+          <div class="text-center text-gray-400 py-8">
+            <<i class="fa fa-credit-card text-2xl mb-3"></</i>
+            <p>暫無繳費紀錄</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // 全局常量
+    const LOGGED_KEY = 'superAdminLoggedIn';
+    const DASHBOARD_DATA_KEY = 'adminDashboardData';
+    const LOGIN_PAGE = 'administrator-login.html';
+    const ADMIN_PAGE = 'administrator.html';
+
+    // 初始化頁面
+    document.addEventListener('DOMContentLoaded', () => {
+      // 驗證登入狀態
+      if (localStorage.getItem(LOGGED_KEY) !== 'true') {
+        window.location.href = LOGIN_PAGE;
+        return;
+      }
+
+      // 加載數據
+      loadDashboardData();
+
+      // 綁定事件
+      bindRefreshEvent();
+      bindBackEvent();
+      bindLogoutEvent();
+    });
+
+    // 加載數據看板數據
+    function loadDashboardData() {
+      const dashboardData = JSON.parse(localStorage.getItem(DASHBOARD_DATA_KEY) || '{}');
+      
+      // 更新同步時間
+      if (dashboardData.lastSyncTime) {
+        document.getElementById('last-sync-time').textContent = `最後同步時間：${dashboardData.lastSyncTime}`;
+      }
+
+      // 更新車隊/管理員統計
+      const managers = dashboardData.managers || [];
+      const fleets = [...new Set(managers.map(m => m.fleetId))];
+      const activeManagers = managers.filter(m => m.status === '正常');
+      
+      document.getElementById('fleet-count').textContent = fleets.length;
+      document.getElementById('manager-count').textContent = managers.length;
+      document.getElementById('active-manager-count').textContent = activeManagers.length;
+
+      // 更新租金設定
+      const rentSettings = dashboardData.rentSettings || {};
+      document.getElementById('monthly-rent-info').textContent = `NT$ ${rentSettings.monthly || 0}`;
+      document.getElementById('quarterly-rent-info').textContent = `NT$ ${rentSettings.quarterly || 0}`;
+      document.getElementById('halfyear-rent-info').textContent = `NT$ ${rentSettings.halfyear || 0}`;
+      document.getElementById('yearly-rent-info').textContent = `NT$ ${rentSettings.yearly || 0}`;
+
+      // 更新銀行設定
+      const bankSettings = dashboardData.bankSettings || {};
+      if (bankSettings.name && bankSettings.branch && bankSettings.holder && bankSettings.account) {
+        document.getElementById('bank-info').textContent = `${bankSettings.name} ${bankSettings.branch} | 戶名：${bankSettings.holder} | 帳號：${bankSettings.account}`;
+      }
+
+      // 更新最近繳費紀錄
+      const payments = dashboardData.payments || [];
+      const recentPayments = payments.slice(-5).reverse(); // 取最近5條
+      const paymentList = document.getElementById('recent-payment-list');
+      
+      if (recentPayments.length === 0) {
+        paymentList.innerHTML = `
+          <div class="text-center text-gray-400 py-8">
+            <<i class="fa fa-credit-card text-2xl mb-3"></</i>
+            <p>暫無繳費紀錄</p>
+          </div>
+        `;
+        document.getElementById('payment-count').textContent = 0;
+        return;
+      }
+      
+      document.getElementById('payment-count').textContent = payments.length;
+      paymentList.innerHTML = '';
+      recentPayments.forEach(payment => {
+        // 繳費類型文字
+        let typeText = '';
+        switch(payment.type) {
+          case 'monthly': typeText = '月繳'; break;
+          case 'quarterly': typeText = '季繳'; break;
+          case 'halfyear': typeText = '半年繳'; break;
+          case 'yearly': typeText = '年繳'; break;
+          default: typeText = '未知';
+        }
+        
+        // 狀態樣式
+        let statusClass = '';
+        let statusText = '';
+        switch(payment.status) {
+          case 'paid':
+            statusClass = 'text-emerald-500';
+            statusText = '已繳費';
+            break;
+          case 'unpaid':
+            statusClass = 'text-yellow-500';
+            statusText = '未繳費';
+            break;
+          case 'overdue':
+            statusClass = 'text-red-500';
+            statusText = '逾期';
+            break;
+          default:
+            statusClass = 'text-gray-400';
+            statusText = '未知';
+        }
+        
+        const paymentItem = document.createElement('div');
+        paymentItem.className = 'bg-gray-700 p-3 rounded-lg mb-3 hover:bg-gray-600 transition-colors';
+        paymentItem.innerHTML = `
+          <div class="flex justify-between items-center mb-1">
+            <span class="text-sm font-medium">${payment.fleetName || '未知車隊'}</span>
+            <span class="text-xs ${statusClass}">${statusText}</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-xs text-gray-400">
+            <div>
+              <span>車隊ID：</span>
+              <span class="font-mono">${payment.fleetId || '-'}</span>
+            </div>
+            <div>
+              <span>金額：</span>
+              <span class="font-mono">NT$ ${payment.amount || 0}</span>
+            </div>
+            <div>
+              <span>類型：</span>
+              <span>${typeText}</span>
+            </div>
+            <div>
+              <span>日期：</span>
+              <span>${payment.payDate || '未填寫'}</span>
+            </div>
+          </div>
+        `;
+        paymentList.appendChild(paymentItem);
+      });
+    }
+
+    // 綁定刷新按鈕事件
+    function bindRefreshEvent() {
+      document.getElementById('refresh-btn').addEventListener('click', () => {
+        loadDashboardData();
+        alert('數據已刷新！');
+      });
+    }
+
+    // 綁定返回後台按鈕事件
+    function bindBackEvent() {
+      document.getElementById('back-btn').addEventListener('click', () => {
+        window.location.href = ADMIN_PAGE;
+      });
+    }
+
+    // 綁定登出按鈕事件
+    function bindLogoutEvent() {
+      document.getElementById('logout-btn').addEventListener('click', () => {
+        if (confirm('確定要登出嗎？')) {
+          localStorage.removeItem(LOGGED_KEY);
+          window.location.href = LOGIN_PAGE;
+        }
+      });
+    }
+  </script>
+</body>
+</html>
