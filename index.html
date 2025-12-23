@@ -6,9 +6,6 @@
   <title>搭車自由 - 乘客叫車</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Mapbox地圖（兼容版） -->
-  <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
-  <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet'>
   <!-- Firebase兼容版 -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
@@ -57,9 +54,8 @@
     <div class="bg-white rounded-xl shadow-sm p-5 md:p-6">
       <!-- 地圖容器（含加載失敗備用） -->
       <div class="map-container mb-6" id="location-map">
-        <!-- 地圖加載失敗時顯示的提示 -->
-        <div class="map-placeholder hidden" id="map-placeholder">
-          <<i class="fa fa-map-marker text-2xl mb-2"></</i>
+        <div class="map-placeholder flex" id="map-placeholder">
+          <<<i class="fa fa-map-marker text-2xl mb-2"></</</i>
           <p>地圖加載失敗，請手動輸入地址</p>
         </div>
       </div>
@@ -78,11 +74,11 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="form-label">上車地點</label>
-            <input type="text" id="pickup-location" class="input-field" placeholder="點擊地圖選擇或手動輸入" required>
+            <input type="text" id="pickup-location" class="input-field" placeholder="手動輸入上車地址" required>
           </div>
           <div>
             <label class="form-label">下車地點</label>
-            <input type="text" id="dropoff-location" class="input-field" placeholder="點擊地圖選擇或手動輸入" required>
+            <input type="text" id="dropoff-location" class="input-field" placeholder="手動輸入下車地址" required>
           </div>
         </div>
         
@@ -99,64 +95,7 @@
   </div>
 
   <script>
-    // 1. 初始化Mapbox地圖（帶錯誤處理）
-    mapboxgl.accessToken = 'pk.eyJ1IjoiaWY5Mjlob25nIiwiYSI6ImNtamQxczU2cjAweDMzZnM1Z3BvY2JkejgifQ.q-GNcs0rqWrZ3HtjhmysEQ';
-    let map, pickupMarker, dropoffMarker;
-    let isPickup = true;
-
-    function initMap() {
-      try {
-        map = new mapboxgl.Map({
-          container: 'location-map',
-          style: 'mapbox://styles/mapbox/light-v11',
-          center: [121.5200, 25.0300], // 台北
-          zoom: 12
-        });
-
-        // 地圖加載完成
-        map.on('load', () => {
-          document.getElementById('map-placeholder').classList.add('hidden');
-          
-          // 添加控制元件
-          map.addControl(new mapboxgl.NavigationControl(), 'top-right');
-          
-          // 初始化標記
-          pickupMarker = new mapboxgl.Marker({ color: '#00A86B' })
-            .setPopup(new mapboxgl.Popup().setHTML('<h3>上車地點</h3>'));
-            
-          dropoffMarker = new mapboxgl.Marker({ color: '#FF6B6B' })
-            .setPopup(new mapboxgl.Popup().setHTML('<h3>下車地點</h3>'));
-
-          // 地圖點擊事件
-          map.on('click', (e) => {
-            const [lng, lat] = e.lngLat.toArray();
-            // 逆地理編碼
-            fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxgl.accessToken}`)
-              .then(res => res.json())
-              .then(data => {
-                const address = data.features[0]?.place_name || `經緯度: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-                if (isPickup) {
-                  pickupMarker.setLngLat(e.lngLat).addTo(map);
-                  document.getElementById('pickup-location').value = address;
-                } else {
-                  dropoffMarker.setLngLat(e.lngLat).addTo(map);
-                  document.getElementById('dropoff-location').value = address;
-                }
-              });
-          });
-        });
-      } catch (err) {
-        // 地圖加載失敗，顯示備用提示
-        document.getElementById('map-placeholder').classList.remove('hidden');
-        console.error('地圖加載失敗:', err);
-      }
-    }
-
-    // 2. 切換上車/下車選擇
-    document.getElementById('pickup-location').addEventListener('focus', () => isPickup = true);
-    document.getElementById('dropoff-location').addEventListener('focus', () => isPickup = false);
-
-    // 3. 初始化Firebase
+    // 初始化Firebase
     const firebaseConfig = {
       // 替換為你的Firebase配置！！！
       apiKey: "你的API Key",
@@ -170,7 +109,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // 4. 表單提交
+    // 表單提交（添加跳轉邏輯）
     document.getElementById('passenger-form').addEventListener('submit', (e) => {
       e.preventDefault();
       const orderData = {
@@ -187,21 +126,17 @@
 
       if (!orderData.teamId && !confirm('未檢測到車隊ID，是否繼續？')) return;
 
+      // 提交訂單並跳轉
       db.ref('activeOrders').push(orderData)
         .then(() => {
-          alert('叫車成功！');
-          e.target.reset();
-          pickupMarker?.remove();
-          dropoffMarker?.remove();
+          // 提交成功後跳轉到passenger-order.html
+          window.location.href = 'passenger-order.html';
         })
         .catch(err => {
           console.error('訂單提交失敗:', err);
           alert('叫車失敗，請稍後重試');
         });
     });
-
-    // 頁面加載後初始化地圖
-    window.addEventListener('load', initMap);
   </script>
 </body>
 </html>
