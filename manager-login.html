@@ -26,13 +26,19 @@
   <style type="text/tailwindcss">
     @layer utilities {
       .form-input {
-        @apply w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all;
+        @apply w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all;
       }
       .btn-primary {
-        @apply bg-primary text-white py-2.5 px-4 rounded-lg hover:bg-primary/90 active:bg-primary/80 transition-all duration-200;
+        @apply bg-primary text-white py-3 px-4 rounded-lg hover:bg-primary/90 active:bg-primary/80 transition-all duration-200;
       }
       .text-link {
         @apply text-primary hover:text-primary/80 hover:underline transition-colors;
+      }
+      .form-group {
+        @apply mb-5;
+      }
+      .form-label {
+        @apply block text-sm font-medium text-gray-700 mb-2;
       }
     }
   </style>
@@ -41,18 +47,19 @@
   <div class="w-full max-w-md bg-white rounded-xl shadow-card p-8 sm:p-10">
     <div class="text-center mb-8">
       <div class="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
-        <<i class="fa fa-building text-primary text-3xl"></</i>
+        <i class="fa fa-building text-primary text-3xl"></i>
       </div>
       <h2 class="text-[clamp(1.5rem,3vw,1.8rem)] font-bold text-gray-800">車隊管理員登入</h2>
       <p class="text-gray-500 mt-1">請輸入您的帳號密碼</p>
     </div>
     
-    <form id="manager-login-form" class="space-y-5">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1.5">管理員帳號</label>
+    <form id="manager-login-form" class="space-y-4">
+      <!-- 管理員帳號 -->
+      <div class="form-group">
+        <label class="form-label">管理員帳號</label>
         <div class="relative">
           <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-            <<i class="fa fa-user"></</i>
+            <i class="fa fa-user"></i>
           </span>
           <input 
             type="text" 
@@ -64,11 +71,12 @@
         </div>
       </div>
       
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1.5">密碼</label>
+      <!-- 密碼 -->
+      <div class="form-group">
+        <label class="form-label">密碼</label>
         <div class="relative">
           <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-            <<i class="fa fa-lock"></</i>
+            <i class="fa fa-lock"></i>
           </span>
           <input 
             type="password" 
@@ -80,15 +88,18 @@
         </div>
       </div>
       
-      <div class="text-red-500 text-sm text-center hidden" id="login-error">
-        <<i class="fa fa-exclamation-circle mr-1"></</i> 帳號未審核或密碼錯誤！
+      <!-- 錯誤提示 -->
+      <div class="text-red-500 text-sm text-center hidden mt-2" id="login-error">
+        <i class="fa fa-exclamation-circle mr-1"></i> 帳號未審核或密碼錯誤！
       </div>
       
-      <button type="submit" class="btn-primary w-full font-medium">
-        <<i class="fa fa-sign-in mr-2"></</i> 登入
+      <!-- 登入按鈕 -->
+      <button type="submit" class="btn-primary w-full font-medium mt-2">
+        <i class="fa fa-sign-in mr-2"></i> 登入
       </button>
     </form>
     
+    <!-- 註冊連結 -->
     <div class="mt-8 text-center pt-6 border-t border-gray-100">
       <p class="text-gray-600">尚未註冊車隊管理員？
         <a href="register.html" class="text-link font-medium">立即註冊</a>
@@ -97,21 +108,18 @@
   </div>
 
   <script>
-    // 全局常量（與administrator.html保持一致）
     const APPROVED_KEY = 'approvedFleetAdmins';
     const LOGGED_KEY = 'loggedInFleetAdmin';
     const BACKUP_LOGGED_KEY = 'currentFleetAdmin';
-    const BACKEND_PAGE = 'admin-dashboard.html'; // 注意：若後台頁是administrator.html，需改為'administrator.html'
+    const BACKEND_PAGE = 'admin-dashboard.html';
 
     document.addEventListener('DOMContentLoaded', () => {
-      // 清空無效的登錄數據（避免髒數據）
       const clearInvalidLoginData = () => {
         [LOGGED_KEY, BACKUP_LOGGED_KEY].forEach(key => {
           const data = localStorage.getItem(key);
           if (data) {
             try {
               const admin = JSON.parse(data);
-              // 若數據中無帳號字段，則判定為無效
               if (!admin.帳號 && !admin.username && !admin.account) {
                 localStorage.removeItem(key);
               }
@@ -124,47 +132,39 @@
       clearInvalidLoginData();
     });
 
-    // 登錄表單提交邏輯
     document.getElementById('manager-login-form').addEventListener('submit', (e) => {
       e.preventDefault();
       const username = document.getElementById('manager-username').value.trim();
       const password = document.getElementById('manager-password').value.trim();
       const errorEl = document.getElementById('login-error');
 
-      // 空值驗證
       if (!username || !password) {
-        errorEl.innerHTML = '<<i class="fa fa-exclamation-circle mr-1"></</i> 請輸入帳號和密碼！';
+        errorEl.innerHTML = '<i class="fa fa-exclamation-circle mr-1"></i> 請輸入帳號和密碼！';
         errorEl.classList.remove('hidden');
         setTimeout(() => errorEl.classList.add('hidden'), 3000);
         return;
       }
 
-      // 讀取administrator.html存入的審核通過列表
       const approvedList = JSON.parse(localStorage.getItem(APPROVED_KEY) || '[]');
       
-      // 無審核列表提示
       if (approvedList.length === 0) {
-        errorEl.innerHTML = '<<i class="fa fa-exclamation-circle mr-1"></</i> 暫無已審核的車隊管理員，請先聯繫超管審核！';
+        errorEl.innerHTML = '<i class="fa fa-exclamation-circle mr-1"></i> 暫無已審核的車隊管理員，請先聯繫超管審核！';
         errorEl.classList.remove('hidden');
         setTimeout(() => errorEl.classList.add('hidden'), 3000);
         return;
       }
 
-      // 匹配帳號密碼（兼容administrator.html的字段格式）
       const matchAdmin = approvedList.find(admin => {
         const accMatch = admin.帳號 === username || admin.username === username || admin.account === username;
         const pwdMatch = admin.密碼 === password || admin.password === password || admin.pwd === password;
         return accMatch && pwdMatch;
       });
 
-      // 登錄結果處理
       if (matchAdmin) {
-        // 存入登錄狀態，跳轉到後台頁
         localStorage.setItem(LOGGED_KEY, JSON.stringify(matchAdmin));
         localStorage.setItem(BACKUP_LOGGED_KEY, JSON.stringify(matchAdmin));
         window.location.href = BACKEND_PAGE;
       } else {
-        // 登錄失敗提示
         errorEl.classList.remove('hidden');
         document.getElementById('manager-password').value = '';
         document.getElementById('manager-password').focus();
