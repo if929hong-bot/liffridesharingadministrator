@@ -4,9 +4,41 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>搭車自由 - 乘客叫車</title>
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Mapbox地圖 -->
   <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
   <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet'>
+  
+  <!-- Firebase v12.7.0 模塊版 SDK -->
+  <script type="module">
+    // 導入Firebase核心模塊
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+    import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-database.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-analytics.js";
+
+    // 你的Firebase配置
+    const firebaseConfig = {
+      apiKey: "AIzaSyDBqRxJ076PqVsDNLPG3Ewe5QvG71rDi5w",
+      authDomain: "liffridesharingadministrator.firebaseapp.com",
+      databaseURL: "https://liffridesharingadministrator-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "liffridesharingadministrator",
+      storageBucket: "liffridesharingadministrator.firebasestorage.app",
+      messagingSenderId: "920269222684",
+      appId: "1:920269222684:web:e7c5beb2cb9ef4a6ef40d9",
+      measurementId: "G-69BPH0DVM9"
+    };
+
+    // 初始化Firebase
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const db = getDatabase(app);
+
+    // 暴露到全局供表單提交使用
+    window.db = db;
+    window.ref = ref;
+    window.push = push;
+  </script>
 
   <script>
     tailwind.config = {
@@ -77,7 +109,7 @@
   </div>
 
   <script>
-    // 初始化Mapbox（正常運行）
+    // 初始化Mapbox地圖
     mapboxgl.accessToken = 'pk.eyJ1IjoiaWY5Mjlob25nIiwiYSI6ImNtamQxczU2cjAweDMzZnM1Z3BvY2JkejgifQ.q-GNcs0rqWrZ3HtjhmysEQ';
     const map = new mapboxgl.Map({
       container: 'map',
@@ -87,6 +119,7 @@
     });
     map.addControl(new mapboxgl.NavigationControl());
 
+    // 地圖點擊選擇地址
     let isPickup = true;
     document.getElementById('pickup').addEventListener('focus', () => isPickup = true);
     document.getElementById('dropoff').addEventListener('focus', () => isPickup = false);
@@ -100,23 +133,45 @@
         });
     });
 
-    // 表單提交（直接跳轉，跳過Firebase）
-    document.getElementById('ride-form').addEventListener('submit', (e) => {
+    // 表單提交（同步到Firebase+跳轉）
+    document.getElementById('ride-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       
-      // 只驗證必填項
+      // 獲取表單數據
       const name = document.getElementById('name').value.trim();
       const phone = document.getElementById('phone').value.trim();
       const pickup = document.getElementById('pickup').value.trim();
       const dropoff = document.getElementById('dropoff').value.trim();
-      
+      const remark = document.getElementById('remark').value.trim();
+
+      // 驗證必填項
       if (!name || !phone || !pickup || !dropoff) {
         alert('請填寫所有必填欄位！');
         return;
       }
 
-      // 直接跳轉到確認頁
-      window.location.href = 'passenger-order.html';
+      try {
+        // 構建訂單數據
+        const orderData = {
+          name: name,
+          phone: phone,
+          pickup: pickup,
+          dropoff: dropoff,
+          remark: remark,
+          status: '待接單',
+          orderId: 'ORD-' + Date.now(),
+          createTime: new Date().toLocaleString('zh-TW')
+        };
+
+        // 提交訂單到Firebase即時資料庫
+        await push(ref(window.db, 'rides'), orderData);
+
+        // 跳轉到訂單確認頁
+        window.location.href = 'passenger-order.html';
+      } catch (err) {
+        console.error('提交失敗:', err);
+        alert('訂單提交失敗，請稍後重試');
+      }
     });
   </script>
 </body>

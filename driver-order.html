@@ -3,11 +3,40 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>搭車自由 - 司機接單</title>
+  <title>司機訂單管理 - 搭車自由</title>
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js"></script>
+  
+  <!-- Firebase v12.7.0 模塊版 SDK -->
+  <script type="module">
+    // 導入Firebase核心模塊
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+    import { getDatabase, ref, onChildAdded, update } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-database.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-analytics.js";
+
+    // 你的Firebase配置
+    const firebaseConfig = {
+      apiKey: "AIzaSyDBqRxJ076PqVsDNLPG3Ewe5QvG71rDi5w",
+      authDomain: "liffridesharingadministrator.firebaseapp.com",
+      databaseURL: "https://liffridesharingadministrator-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "liffridesharingadministrator",
+      storageBucket: "liffridesharingadministrator.firebasestorage.app",
+      messagingSenderId: "920269222684",
+      appId: "1:920269222684:web:e7c5beb2cb9ef4a6ef40d9",
+      measurementId: "G-69BPH0DVM9"
+    };
+
+    // 初始化Firebase
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const db = getDatabase(app);
+
+    // 暴露到全局
+    window.db = db;
+    window.ref = ref;
+    window.onChildAdded = onChildAdded;
+    window.update = update;
+  </script>
 
   <script>
     tailwind.config = {
@@ -15,195 +44,107 @@
         extend: {
           colors: {
             primary: '#00A86B',
-            secondary: '#1E40AF',
           },
         },
       }
     }
   </script>
-
+  
   <style type="text/tailwindcss">
     @layer utilities {
-      .btn-primary { @apply bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary/90 transition-colors; }
-      .btn-secondary { @apply bg-secondary text-white py-2 px-4 rounded-lg hover:bg-secondary/90 transition-colors; }
-      .card { @apply bg-white rounded-xl shadow-md p-4 mb-4; }
-      .order-item { @apply border border-gray-200 rounded-lg p-4 mb-3 bg-white shadow-sm; }
+      .order-card {
+        @apply bg-white rounded-lg shadow-sm p-4 border border-gray-200 mb-4;
+      }
+      .btn-accept {
+        @apply bg-primary text-white px-3 py-1 rounded text-sm hover:bg-primary/90 transition-all;
+      }
     }
   </style>
 </head>
-<body class="bg-gray-50 font-sans min-h-screen">
-  <header class="bg-white shadow-md py-4 px-6">
-    <div class="container mx-auto flex justify-between items-center">
-      <h1 class="text-xl font-bold text-primary flex items-center">
-        <i class="fa fa-taxi mr-2"></i> 搭車自由 - 司機接單
-      </h1>
-      <div id="team-info" class="text-gray-700 font-medium"></div>
-    </div>
-  </header>
+<body class="bg-gray-50 min-h-screen p-4">
+  <div class="container mx-auto max-w-3xl">
+    <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">司機訂單管理</h1>
 
-  <main class="container mx-auto px-4 py-8">
-    <!-- 車隊選擇（若URL無參數則顯示） -->
-    <div id="team-select-container" class="card mb-6 hidden">
-      <label class="block text-sm font-medium text-gray-700 mb-2">選擇所屬車隊</label>
-      <select id="driver-team-id" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
-        <option value="">請選擇車隊</option>
-        <!-- 動態填充車隊 -->
-      </select>
+    <!-- 訂單列表（實時接收） -->
+    <div id="order-list" class="space-y-4">
+      <p class="text-center text-gray-500">等待新訂單...</p>
     </div>
-
-    <!-- 訂單列表 -->
-    <h2 class="text-lg font-bold mb-4">待接訂單</h2>
-    <div id="orders-list" class="space-y-3">
-      <p class="text-gray-500 text-center py-8">加載中...請稍候</p>
-    </div>
-  </main>
+  </div>
 
   <script>
-    // Firebase配置（替換為你的真實配置）
-    const firebaseConfig = {
-      apiKey: "你的API Key",
-      authDomain: "你的Auth Domain",
-      databaseURL: "你的Database URL",
-      projectId: "你的Project ID",
-      storageBucket: "你的Storage Bucket",
-      messagingSenderId: "你的Sender ID",
-      appId: "你的App ID"
-    };
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
-    const db = firebase.database();
-
-    // 全局變量
-    let currentDriverTeamId = '';
-
-    // 初始化車隊選擇
-    function initTeamSelect() {
-      // 從URL讀取車隊ID
-      const urlParams = new URLSearchParams(window.location.search);
-      const urlTeamId = urlParams.get('team');
+    // 實時監聽訂單變化
+    onChildAdded(ref(window.db, 'rides'), (snapshot) => {
+      const order = snapshot.val();
+      const orderKey = snapshot.key;
+      const orderList = document.getElementById('order-list');
       
-      const teamSelect = document.getElementById('driver-team-id');
-      const teamInfoEl = document.getElementById('team-info');
-      const selectContainer = document.getElementById('team-select-container');
+      // 清空「等待新訂單」提示
+      if (orderList.innerHTML.includes('等待新訂單')) {
+        orderList.innerHTML = '';
+      }
 
-      // 加載所有車隊
-      db.ref('teams').once('value', (snapshot) => {
-        const teams = snapshot.val() || {};
-        const teamIds = Object.keys(teams);
-        
-        // 填充車隊選擇框
-        teamIds.forEach(teamId => {
-          const team = teams[teamId];
-          teamSelect.innerHTML += `<option value="${teamId}">${team.name || teamId}</option>`;
-        });
-
-        // URL有車隊ID則自動選擇
-        if (urlTeamId) {
-          currentDriverTeamId = urlTeamId;
-          teamSelect.value = urlTeamId;
-          teamInfoEl.textContent = `當前車隊：${teams[urlTeamId]?.name || urlTeamId}`;
-          selectContainer.classList.add('hidden'); // 隱藏選擇框
-          listenActiveOrders(); // 加載訂單
-        } else {
-          selectContainer.classList.remove('hidden'); // 顯示選擇框
-          teamInfoEl.textContent = '';
-        }
-      });
-
-      // 車隊選擇改變時加載訂單
-      teamSelect.addEventListener('change', () => {
-        currentDriverTeamId = teamSelect.value;
-        const teams = JSON.parse(localStorage.getItem('teams') || '{}');
-        teamInfoEl.textContent = `當前車隊：${teams[currentDriverTeamId]?.name || currentDriverTeamId}`;
-        listenActiveOrders();
-      });
-    }
-
-    // 監聽訂單變化
-    function listenActiveOrders() {
-      if (!currentDriverTeamId) return;
+      // 創建訂單卡片
+      const orderCard = document.createElement('div');
+      orderCard.className = 'order-card';
+      orderCard.innerHTML = `
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="font-medium">訂單編號：${order.orderId}</h3>
+          <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">${order.status}</span>
+        </div>
+        <table class="w-full text-sm mb-3">
+          <tr class="border-b border-gray-100 pb-2 mb-2">
+            <td class="text-gray-500 w-24">乘客姓名：</td>
+            <td>${order.name}</td>
+          </tr>
+          <tr class="border-b border-gray-100 pb-2 mb-2">
+            <td class="text-gray-500">聯絡電話：</td>
+            <td>${order.phone}</td>
+          </tr>
+          <tr class="border-b border-gray-100 pb-2 mb-2">
+            <td class="text-gray-500">上車地點：</td>
+            <td>${order.pickup}</td>
+          </tr>
+          <tr class="border-b border-gray-100 pb-2 mb-2">
+            <td class="text-gray-500">下車地點：</td>
+            <td>${order.dropoff}</td>
+          </tr>
+          <tr class="border-b border-gray-100 pb-2 mb-2">
+            <td class="text-gray-500">備註：</td>
+            <td>${order.remark || '無'}</td>
+          </tr>
+          <tr>
+            <td class="text-gray-500">提交時間：</td>
+            <td>${order.createTime}</td>
+          </tr>
+        </table>
+        <button onclick="acceptOrder('${orderKey}')" class="btn-accept">
+          接單
+        </button>
+      `;
       
-      const ordersListEl = document.getElementById('orders-list');
-      ordersListEl.innerHTML = '<p class="text-gray-500 text-center py-8">加載中...請稍候</p>';
-
-      // 只加載當前車隊的待接單
-      db.ref('activeOrders')
-        .orderByChild('teamId')
-        .equalTo(currentDriverTeamId)
-        .on('value', (snapshot) => {
-          const orders = snapshot.val() || {};
-          const orderIds = Object.keys(orders);
-          
-          // 過濾出待接單
-          const pendingOrders = orderIds.filter(id => orders[id].status === '待接單');
-          
-          if (pendingOrders.length === 0) {
-            ordersListEl.innerHTML = '<p class="text-gray-500 text-center py-8">當前車隊暫無待接訂單</p>';
-            return;
-          }
-          
-          // 渲染訂單
-          let html = '';
-          pendingOrders.forEach(orderId => {
-            const order = orders[orderId];
-            html += `
-              <div class="order-item">
-                <div class="flex justify-between items-start mb-2">
-                  <h3 class="font-bold text-lg">訂單ID：${order.orderId || orderId}</h3>
-                  <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">待接單</span>
-                </div>
-                <div class="grid grid-cols-2 gap-2 mb-3 text-sm">
-                  <div>
-                    <i class="fa fa-user text-primary mr-1"></i> 乘客：${order.name}
-                  </div>
-                  <div>
-                    <i class="fa fa-phone text-primary mr-1"></i> 電話：${order.phone}
-                  </div>
-                  <div class="col-span-2">
-                    <i class="fa fa-map-marker text-red-500 mr-1"></i> 上車：${order.pickup}
-                  </div>
-                  <div class="col-span-2">
-                    <i class="fa fa-map-marker text-green-500 mr-1"></i> 下車：${order.dropoff}
-                  </div>
-                  ${order.remark ? `<div class="col-span-2"><i class="fa fa-comment text-gray-500 mr-1"></i> 備註：${order.remark}</div>` : ''}
-                  <div class="col-span-2">
-                    <i class="fa fa-clock-o text-gray-500 mr-1"></i> 提交時間：${order.createTime}
-                  </div>
-                </div>
-                <div class="flex gap-2">
-                  <button onclick="acceptOrder('${orderId}')" class="btn-primary flex-1">
-                    <i class="fa fa-check mr-1"></i> 接單
-                  </button>
-                </div>
-              </div>
-            `;
-          });
-          
-          ordersListEl.innerHTML = html;
-        });
-    }
-
-    // 接單操作
-    function acceptOrder(orderId) {
-      if (!confirm('確認接此訂單？')) return;
-      
-      // 更新訂單狀態
-      db.ref(`activeOrders/${orderId}`).update({
-        status: '已接單',
-        acceptTime: new Date().toLocaleString('zh-TW')
-      }).then(() => {
-        alert('接單成功！請儘快聯繫乘客');
-      }).catch(err => {
-        console.error('接單失敗:', err);
-        alert('接單失敗，請稍後重試');
-      });
-    }
-
-    // 初始化
-    document.addEventListener('DOMContentLoaded', () => {
-      initTeamSelect();
+      // 新增訂單置頂
+      orderList.insertBefore(orderCard, orderList.firstChild);
     });
+
+    // 接單功能（更新訂單狀態）
+    window.acceptOrder = async function(orderKey) {
+      if (confirm('確認接單？')) {
+        try {
+          // 更新Firebase訂單狀態
+          await update(ref(window.db, `rides/${orderKey}`), { status: '已接單' });
+          
+          alert('接單成功！');
+          // 更新頁面顯示
+          const orderCard = document.querySelector(`button[onclick="acceptOrder('${orderKey}')"]`).closest('.order-card');
+          const statusSpan = orderCard.querySelector('span');
+          statusSpan.className = 'text-xs bg-green-100 text-green-800 px-2 py-1 rounded';
+          statusSpan.textContent = '已接單';
+        } catch (err) {
+          console.error('接單失敗:', err);
+          alert('接單失敗，請稍後重試');
+        }
+      }
+    }
   </script>
 </body>
 </html>
