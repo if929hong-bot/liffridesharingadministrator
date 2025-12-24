@@ -112,16 +112,16 @@
       <div class="module-title">繳租金額填寫</div>
       <div class="form-row">
         <div class="form-label">繳費類型</div>
-        <select>
-          <option>月繳 (10000/月)</option>
-          <option>季繳 (9500/月 ×3)</option>
-          <option>半年繳 (9000/月 ×6)</option>
-          <option>年繳 (8000/月 ×12)</option>
+        <select id="paymentType">
+          <option value="10000">月繳 (10000/月)</option>
+          <option value="28500">季繳 (9500/月 ×3)</option>
+          <option value="54000">半年繳 (9000/月 ×6)</option>
+          <option value="102000">年繳 (8500/月 ×12)</option>
         </select>
       </div>
       <div class="form-row">
         <div class="form-label">金額總和</div>
-        <input type="text" value="NT$ 10000" readonly>
+        <input type="text" id="totalAmount" value="NT$ 10000" readonly>
       </div>
       <div class="form-row">
         <div class="form-label">匯款後五碼</div>
@@ -219,5 +219,15 @@
 
     <button>提交繳費資訊</button>
   </div>
+
+  <script>
+    // 監聽繳費類型變更，自動更新金額總和
+    const paymentType = document.getElementById('paymentType');
+    const totalAmount = document.getElementById('totalAmount');
+    
+    paymentType.addEventListener('change', function() {
+      totalAmount.value = `NT$ ${this.value}`;
+    });
+  </script>
 </body>
 </html>
