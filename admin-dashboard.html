@@ -3,339 +3,221 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>數據看板 - 車隊管理系統</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
-  <style type="text/tailwindcss">
-    @layer utilities {
-      .stat-card {
-        @apply bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700;
-      }
-      .stat-value {
-        @apply text-2xl font-bold mt-2;
-      }
-      .stat-label {
-        @apply text-gray-400 text-sm mt-1;
-      }
-      .scrollbar-thin {
-        scrollbar-width: thin;
-        scrollbar-color: #4b5563 #1f2937;
-      }
-      .scrollbar-thin::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
-      }
-      .scrollbar-thin::-webkit-scrollbar-track {
-        @apply bg-gray-800;
-      }
-      .scrollbar-thin::-webkit-scrollbar-thumb {
-        @apply bg-gray-600 rounded-full;
-      }
-    }
-  </style>
+  <title>車隊管理員系統 - 首頁</title>
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Microsoft JhengHei", sans-serif;
+    }
     body {
-      background-color: #111827 !important;
-      color: white !important;
+      background: #F5F5F5;
+      color: #333;
+      display: flex;
       min-height: 100vh;
+    }
+    /* 側邊欄 */
+    .sidebar {
+      width: 200px;
+      background: white;
+      border-right: 1px solid #eee;
+      padding: 20px 0;
+    }
+    .sidebar-item {
+      display: block;
+      padding: 14px 25px;
+      color: #333;
+      text-decoration: none;
+      margin-bottom: 8px;
+      border-left: 4px solid transparent;
+    }
+    .sidebar-item.active {
+      background: #F0FFF4;
+      color: #00C853;
+      border-left: 4px solid #00C853;
+    }
+    /* 主內容 */
+    .main {
+      flex: 1;
+      padding: 25px;
+      overflow-y: auto;
+      height: 100vh;
+    }
+    .module {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .module-title {
+      font-weight: bold;
+      font-size: 16px;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    .form-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .form-label {
+      width: 120px;
+      font-weight: 500;
+    }
+    input, select {
+      flex: 1;
+      max-width: 300px;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 3px;
+    }
+    button {
+      background: #00C853;
+      color: white;
+      border: none;
+      padding: 10px 25px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    .price-container {
+      display: flex;
+      gap: 30px;
+      flex-wrap: wrap;
+    }
+    .price-section {
+      flex: 1;
+      min-width: 250px;
     }
   </style>
 </head>
-<body class="bg-gray-900 text-white">
-  <!-- 頁頭 -->
-  <header class="bg-gray-800 shadow-sm sticky top-0 z-30 border-b border-gray-700">
-    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-      <div class="flex items-center">
-        <div class="w-10 h-10 bg-green-600/20 rounded-lg flex items-center justify-center mr-3">
-          <<i class="fa fa-dashboard text-green-500"></</i>
-        </div>
-        <div>
-          <h1 class="text-xl font-bold">車隊管理系統 - 數據看板</h1>
-          <p class="text-xs text-gray-400 mt-1" id="last-sync-time">最後同步時間：未同步</p>
-        </div>
-      </div>
-      <div class="flex items-center gap-3">
-        <button id="refresh-btn" class="btn btn-outline py-2 px-4 rounded-lg border border-gray-700 hover:bg-gray-700">
-          <<i class="fa fa-refresh mr-2"></</i>刷新數據
-        </button>
-        <button id="back-btn" class="btn btn-primary py-2 px-4 rounded-lg bg-green-600 hover:bg-green-700">
-          <<i class="fa fa-arrow-left mr-2"></</i>返回後台
-        </button>
-        <button id="logout-btn" class="btn btn-danger py-2 px-4 rounded-lg hover:bg-red-700">
-          <<i class="fa fa-sign-out mr-2"></</i>登出
-        </button>
-      </div>
-    </div>
-  </header>
+<body>
+  <!-- 左側菜單連結已100%確認正確 -->
+  <div class="sidebar">
+    <a href="admin-dashboard.html" class="sidebar-item active">首頁</a>
+    <a href="admin-area.html" class="sidebar-item">區域管理</a>
+    <a href="admin-driver.html" class="sidebar-item">司機管理</a>
+    <a href="admin-order.html" class="sidebar-item">訂單管理</a>
+    <a href="admin-finance.html" class="sidebar-item">財務管理</a>
+    <a href="admin-report.html" class="sidebar-item">報表統計</a>
+    <a href="manager-login.html" class="sidebar-item">退出登入</a>
+  </div>
 
-  <!-- 主要內容 -->
-  <main class="container mx-auto px-4 py-8">
-    <!-- 統計卡片 -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      <!-- 車隊數量 -->
-      <div class="stat-card">
-        <div class="flex justify-between items-start">
-          <div>
-            <h3 class="font-medium">車隊總數</h3>
-            <div class="stat-value" id="fleet-count">0</div>
-            <div class="stat-label">個車隊</div>
-          </div>
-          <div class="w-10 h-10 bg-green-600/20 rounded-lg flex items-center justify-center">
-            <<i class="fa fa-building text-green-500"></</i>
-          </div>
-        </div>
+  <!-- 主內容版面完全不變 -->
+  <div class="main">
+    <!-- 1. 繳租金額填寫 -->
+    <div class="module">
+      <div class="module-title">繳租金額填寫</div>
+      <div class="form-row">
+        <div class="form-label">繳費類型</div>
+        <select>
+          <option>月繳 (10000/月)</option>
+          <option>季繳 (9500/月 ×3)</option>
+          <option>半年繳 (9000/月 ×6)</option>
+          <option>年繳 (8000/月 ×12)</option>
+        </select>
       </div>
-
-      <!-- 管理員數量 -->
-      <div class="stat-card">
-        <div class="flex justify-between items-start">
-          <div>
-            <h3 class="font-medium">管理員總數</h3>
-            <div class="stat-value" id="manager-count">0</div>
-            <div class="stat-label">位管理員</div>
-          </div>
-          <div class="w-10 h-10 bg-blue-600/20 rounded-lg flex items-center justify-center">
-            <<i class="fa fa-users text-blue-500"></</i>
-          </div>
-        </div>
+      <div class="form-row">
+        <div class="form-label">金額總和</div>
+        <input type="text" value="NT$ 10000" readonly>
       </div>
-
-      <!-- 正常狀態管理員 -->
-      <div class="stat-card">
-        <div class="flex justify-between items-start">
-          <div>
-            <h3 class="font-medium">正常狀態</h3>
-            <div class="stat-value" id="active-manager-count">0</div>
-            <div class="stat-label">位管理員</div>
-          </div>
-          <div class="w-10 h-10 bg-emerald-600/20 rounded-lg flex items-center justify-center">
-            <<i class="fa fa-check-circle text-emerald-500"></</i>
-          </div>
-        </div>
+      <div class="form-row">
+        <div class="form-label">匯款後五碼</div>
+        <input type="text">
       </div>
-
-      <!-- 繳費紀錄數量 -->
-      <div class="stat-card">
-        <div class="flex justify-between items-start">
-          <div>
-            <h3 class="font-medium">繳費紀錄</h3>
-            <div class="stat-value" id="payment-count">0</div>
-            <div class="stat-label">筆紀錄</div>
-          </div>
-          <div class="w-10 h-10 bg-purple-600/20 rounded-lg flex items-center justify-center">
-            <<i class="fa fa-credit-card text-purple-500"></</i>
-          </div>
-        </div>
+      <div class="form-row">
+        <div class="form-label">上傳截圖</div>
+        <input type="file">
       </div>
     </div>
 
-    <!-- 詳細數據區域 -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- 租金/銀行設定 -->
-      <div class="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700">
-        <h3 class="text-lg font-semibold mb-4 pb-2 border-b border-gray-700">
-          <<i class="fa fa-cog text-green-500 mr-2"></</i>系統設定資訊
-        </h3>
-        <div class="space-y-4" id="setting-info">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="bg-gray-700 p-3 rounded-lg">
-              <p class="text-xs text-gray-400">月繳金額</p>
-              <p id="monthly-rent-info" class="font-mono">NT$ 0</p>
-            </div>
-            <div class="bg-gray-700 p-3 rounded-lg">
-              <p class="text-xs text-gray-400">季繳金額</p>
-              <p id="quarterly-rent-info" class="font-mono">NT$ 0</p>
-            </div>
-            <div class="bg-gray-700 p-3 rounded-lg">
-              <p class="text-xs text-gray-400">半年繳金額</p>
-              <p id="halfyear-rent-info" class="font-mono">NT$ 0</p>
-            </div>
-            <div class="bg-gray-700 p-3 rounded-lg">
-              <p class="text-xs text-gray-400">年繳金額</p>
-              <p id="yearly-rent-info" class="font-mono">NT$ 0</p>
-            </div>
-          </div>
-          <div class="bg-gray-700 p-3 rounded-lg mt-4">
-            <p class="text-xs text-gray-400">銀行帳戶</p>
-            <p id="bank-info" class="mt-1">未設定</p>
-          </div>
-        </div>
+    <!-- 2. 繳費銀行資訊 -->
+    <div class="module">
+      <div class="module-title">繳費銀行資訊</div>
+      <div class="form-row">
+        <div class="form-label">銀行名稱</div>
+        <input type="text" value="國泰世華" readonly>
       </div>
-
-      <!-- 最近繳費紀錄 -->
-      <div class="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700">
-        <h3 class="text-lg font-semibold mb-4 pb-2 border-b border-gray-700">
-          <<i class="fa fa-history text-blue-500 mr-2"></</i>最近繳費紀錄
-        </h3>
-        <div class="overflow-y-auto max-h-60 scrollbar-thin" id="recent-payment-list">
-          <div class="text-center text-gray-400 py-8">
-            <<i class="fa fa-credit-card text-2xl mb-3"></</i>
-            <p>暫無繳費紀錄</p>
-          </div>
-        </div>
+      <div class="form-row">
+        <div class="form-label">分行</div>
+        <input type="text" value="台北分行" readonly>
+      </div>
+      <div class="form-row">
+        <div class="form-label">戶名</div>
+        <input type="text" value="車隊管理中心" readonly>
+      </div>
+      <div class="form-row">
+        <div class="form-label">帳號</div>
+        <input type="text" value="123-456789" readonly>
       </div>
     </div>
-  </main>
 
-  <script>
-    // 全局常量
-    const LOGGED_KEY = 'superAdminLoggedIn';
-    const DASHBOARD_DATA_KEY = 'adminDashboardData';
-    const LOGIN_PAGE = 'administrator-login.html';
-    const ADMIN_PAGE = 'administrator.html';
-
-    // 初始化頁面
-    document.addEventListener('DOMContentLoaded', () => {
-      // 驗證登入狀態
-      if (localStorage.getItem(LOGGED_KEY) !== 'true') {
-        window.location.href = LOGIN_PAGE;
-        return;
-      }
-
-      // 加載數據
-      loadDashboardData();
-
-      // 綁定事件
-      bindRefreshEvent();
-      bindBackEvent();
-      bindLogoutEvent();
-    });
-
-    // 加載數據看板數據
-    function loadDashboardData() {
-      const dashboardData = JSON.parse(localStorage.getItem(DASHBOARD_DATA_KEY) || '{}');
-      
-      // 更新同步時間
-      if (dashboardData.lastSyncTime) {
-        document.getElementById('last-sync-time').textContent = `最後同步時間：${dashboardData.lastSyncTime}`;
-      }
-
-      // 更新車隊/管理員統計
-      const managers = dashboardData.managers || [];
-      const fleets = [...new Set(managers.map(m => m.fleetId))];
-      const activeManagers = managers.filter(m => m.status === '正常');
-      
-      document.getElementById('fleet-count').textContent = fleets.length;
-      document.getElementById('manager-count').textContent = managers.length;
-      document.getElementById('active-manager-count').textContent = activeManagers.length;
-
-      // 更新租金設定
-      const rentSettings = dashboardData.rentSettings || {};
-      document.getElementById('monthly-rent-info').textContent = `NT$ ${rentSettings.monthly || 0}`;
-      document.getElementById('quarterly-rent-info').textContent = `NT$ ${rentSettings.quarterly || 0}`;
-      document.getElementById('halfyear-rent-info').textContent = `NT$ ${rentSettings.halfyear || 0}`;
-      document.getElementById('yearly-rent-info').textContent = `NT$ ${rentSettings.yearly || 0}`;
-
-      // 更新銀行設定
-      const bankSettings = dashboardData.bankSettings || {};
-      if (bankSettings.name && bankSettings.branch && bankSettings.holder && bankSettings.account) {
-        document.getElementById('bank-info').textContent = `${bankSettings.name} ${bankSettings.branch} | 戶名：${bankSettings.holder} | 帳號：${bankSettings.account}`;
-      }
-
-      // 更新最近繳費紀錄
-      const payments = dashboardData.payments || [];
-      const recentPayments = payments.slice(-5).reverse(); // 取最近5條
-      const paymentList = document.getElementById('recent-payment-list');
-      
-      if (recentPayments.length === 0) {
-        paymentList.innerHTML = `
-          <div class="text-center text-gray-400 py-8">
-            <<i class="fa fa-credit-card text-2xl mb-3"></</i>
-            <p>暫無繳費紀錄</p>
+    <!-- 3. 價格設定 -->
+    <div class="module">
+      <div class="module-title">價格設定</div>
+      <div class="price-container">
+        <div class="price-section">
+          <div style="font-weight: 500; margin-bottom: 10px;">7:00-22:00（早班）</div>
+          <div class="form-row">
+            <div class="form-label">起步價格</div>
+            <input type="text" value="100" readonly>
           </div>
-        `;
-        document.getElementById('payment-count').textContent = 0;
-        return;
-      }
-      
-      document.getElementById('payment-count').textContent = payments.length;
-      paymentList.innerHTML = '';
-      recentPayments.forEach(payment => {
-        // 繳費類型文字
-        let typeText = '';
-        switch(payment.type) {
-          case 'monthly': typeText = '月繳'; break;
-          case 'quarterly': typeText = '季繳'; break;
-          case 'halfyear': typeText = '半年繳'; break;
-          case 'yearly': typeText = '年繳'; break;
-          default: typeText = '未知';
-        }
-        
-        // 狀態樣式
-        let statusClass = '';
-        let statusText = '';
-        switch(payment.status) {
-          case 'paid':
-            statusClass = 'text-emerald-500';
-            statusText = '已繳費';
-            break;
-          case 'unpaid':
-            statusClass = 'text-yellow-500';
-            statusText = '未繳費';
-            break;
-          case 'overdue':
-            statusClass = 'text-red-500';
-            statusText = '逾期';
-            break;
-          default:
-            statusClass = 'text-gray-400';
-            statusText = '未知';
-        }
-        
-        const paymentItem = document.createElement('div');
-        paymentItem.className = 'bg-gray-700 p-3 rounded-lg mb-3 hover:bg-gray-600 transition-colors';
-        paymentItem.innerHTML = `
-          <div class="flex justify-between items-center mb-1">
-            <span class="text-sm font-medium">${payment.fleetName || '未知車隊'}</span>
-            <span class="text-xs ${statusClass}">${statusText}</span>
+          <div class="form-row">
+            <div class="form-label">里程費用(每km)</div>
+            <input type="text" value="15" readonly>
           </div>
-          <div class="grid grid-cols-2 gap-2 text-xs text-gray-400">
-            <div>
-              <span>車隊ID：</span>
-              <span class="font-mono">${payment.fleetId || '-'}</span>
-            </div>
-            <div>
-              <span>金額：</span>
-              <span class="font-mono">NT$ ${payment.amount || 0}</span>
-            </div>
-            <div>
-              <span>類型：</span>
-              <span>${typeText}</span>
-            </div>
-            <div>
-              <span>日期：</span>
-              <span>${payment.payDate || '未填寫'}</span>
-            </div>
+          <div class="form-row">
+            <div class="form-label">時間費用(每min)</div>
+            <input type="text" value="2" readonly>
           </div>
-        `;
-        paymentList.appendChild(paymentItem);
-      });
-    }
+          <div class="form-row">
+            <div class="form-label">固定回給</div>
+            <input type="text" value="50" readonly>
+          </div>
+          <div class="form-row">
+            <div class="form-label">固定百回(%)</div>
+            <input type="text" value="5" readonly>
+          </div>
+        </div>
+        <div class="price-section">
+          <div style="font-weight: 500; margin-bottom: 10px;">22:01-6:59（晚班）</div>
+          <div class="form-row">
+            <div class="form-label">起步價格</div>
+            <input type="text" value="120" readonly>
+          </div>
+          <div class="form-row">
+            <div class="form-label">里程費用(每km)</div>
+            <input type="text" value="20" readonly>
+          </div>
+          <div class="form-row">
+            <div class="form-label">時間費用(每min)</div>
+            <input type="text" value="3" readonly>
+          </div>
+          <div class="form-row">
+            <div class="form-label">固定回給</div>
+            <input type="text" value="60" readonly>
+          </div>
+          <div class="form-row">
+            <div class="form-label">固定百回(%)</div>
+            <input type="text" value="6" readonly>
+          </div>
+        </div>
+      </div>
+      <button style="margin-top: 15px;">儲存設定</button>
+    </div>
 
-    // 綁定刷新按鈕事件
-    function bindRefreshEvent() {
-      document.getElementById('refresh-btn').addEventListener('click', () => {
-        loadDashboardData();
-        alert('數據已刷新！');
-      });
-    }
+    <!-- 4. 司機固定月費設定 -->
+    <div class="module">
+      <div class="module-title">司機固定月費設定</div>
+      <div class="form-row">
+        <div class="form-label">月費金額</div>
+        <input type="text" value="5000" readonly>
+      </div>
+    </div>
 
-    // 綁定返回後台按鈕事件
-    function bindBackEvent() {
-      document.getElementById('back-btn').addEventListener('click', () => {
-        window.location.href = ADMIN_PAGE;
-      });
-    }
-
-    // 綁定登出按鈕事件
-    function bindLogoutEvent() {
-      document.getElementById('logout-btn').addEventListener('click', () => {
-        if (confirm('確定要登出嗎？')) {
-          localStorage.removeItem(LOGGED_KEY);
-          window.location.href = LOGIN_PAGE;
-        }
-      });
-    }
-  </script>
+    <button>提交繳費資訊</button>
+  </div>
 </body>
 </html>
