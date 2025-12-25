@@ -7,7 +7,7 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // Tailwind 配置需要放在腳本標籤內
+        // Tailwind 配置
         tailwind.config = {
             theme: {
                 extend: {
@@ -33,28 +33,32 @@
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     
     <style>
-        /* 使用純 CSS 避免 Tailwind 衝突 */
+        /* 自定義樣式 - 避免與Tailwind衝突 */
         .sidebar-menu {
             background: #fff;
             border-right: 1px solid #e6e6e6;
         }
+        
         .sidebar-menu a {
             display: flex;
             align-items: center;
             gap: 8px;
             padding: 12px 16px;
             color: #4E5969;
-            transition: all 0.2s;
+            transition: all 0.2s ease;
             text-decoration: none;
         }
+        
         .sidebar-menu a:hover {
             background-color: rgba(0, 195, 0, 0.1);
             color: #00C300;
         }
+        
         .sidebar-menu a.active {
             background-color: #00C300;
             color: white;
         }
+        
         .unauth-overlay {
             position: fixed;
             inset: 0;
@@ -197,117 +201,134 @@
     </div>
 
     <script>
-        // 全局常量（與manager-login.html/administrator.html完全一致）
+        // 全局常量（與manager-login.html/administrator.html保持一致）
         const LOGGED_IN_FLEET_KEY = 'loggedInFleetAdmin';
         const BACKUP_LOGGED_KEY = 'currentFleetAdmin';
         const APPROVED_ADMINS_KEY = 'approvedFleetAdmins';
 
-        // 頁面加載完成後檢查登錄狀態
+        // 頁面加載完成後執行初始化
         document.addEventListener('DOMContentLoaded', function() {
-            checkLoginStatus();
-            bindEvents();
-            loadFinanceData();
+            checkLoginStatus();   // 檢查登錄狀態
+            bindEvents();         // 綁定事件處理
+            loadFinanceData();    // 加載財務數據
         });
 
-        // 檢查登錄狀態
+        /**
+         * 檢查登錄狀態
+         * 優先檢查主登錄鍵，無效則檢查備份鍵
+         */
         function checkLoginStatus() {
             console.log('開始檢查登錄狀態...');
             
-            // 優先檢查主登錄鍵
-            let loggedInAdmin = localStorage.getItem(LOGGED_IN_FLEET_KEY);
-            
-            // 如果主鍵不存在，檢查備份鍵
-            if (!loggedInAdmin || loggedInAdmin === 'null' || loggedInAdmin === 'undefined') {
-                loggedInAdmin = localStorage.getItem(BACKUP_LOGGED_KEY);
-                console.log('使用備份鍵:', loggedInAdmin);
-            }
-            
-            // 檢查是否有有效的登錄數據
+            // 獲取登錄數據（優先主鍵，後備份鍵）
+            let loggedInAdmin = localStorage.getItem(LOGGED_IN_FLEET_KEY) || 
+                               localStorage.getItem(BACKUP_LOGGED_KEY);
+
+            // 驗證登錄數據有效性
             if (loggedInAdmin && loggedInAdmin !== 'null' && loggedInAdmin !== 'undefined' && loggedInAdmin !== '{}') {
                 try {
                     const adminData = JSON.parse(loggedInAdmin);
                     console.log('解析登錄數據:', adminData);
                     
-                    // 檢查是否有有效的帳號字段
-                    if (adminData.帳號 || adminData.username || adminData.account || adminData.phone) {
-                        console.log('登錄有效，隱藏遮罩');
+                    // 檢查是否包含有效帳號字段
+                    const hasValidAccount = !!adminData.帳號 || !!adminData.username || 
+                                           !!adminData.account || !!adminData.phone;
+                    
+                    if (hasValidAccount) {
+                        console.log('登錄有效，隱藏未登錄遮罩');
                         document.getElementById('unauthOverlay').style.display = 'none';
                         
-                        // 在頁面標題顯示當前用戶
-                        const currentUser = adminData.name || adminData.姓名 || adminData.username || adminData.account || '管理員';
-                        updateHeader(currentUser);
+                        // 獲取當前用戶名並更新頁頭
+                        const currentUserName = adminData.name || adminData.姓名 || adminData.username || 
+                                               adminData.account || '管理員';
+                        updateHeader(currentUserName);
                         return;
                     } else {
-                        console.warn('登錄數據缺少帳號字段:', adminData);
+                        console.warn('登錄數據缺少有效帳號字段:', adminData);
                     }
-                } catch (e) {
-                    console.error('解析登錄數據失敗:', e);
+                } catch (parseError) {
+                    console.error('解析登錄數據失敗:', parseError);
                 }
             } else {
                 console.log('未找到有效的登錄數據');
             }
-            
-            // 如果以上檢查都失敗，顯示遮罩
+
+            // 登錄無效，顯示未登錄遮罩
             console.log('顯示未登錄遮罩');
             document.getElementById('unauthOverlay').style.display = 'flex';
         }
 
-        // 更新頁頭顯示當前用戶
+        /**
+         * 更新頁頭用戶信息
+         * @param {string} userName - 當前登錄用戶名
+         */
         function updateHeader(userName) {
-            const header = document.querySelector('header .container');
-            if (header) {
-                // 檢查是否已存在用戶信息
-                let userInfo = header.querySelector('.user-info');
-                if (!userInfo) {
-                    userInfo = document.createElement('div');
-                    userInfo.className = 'ml-auto flex items-center gap-2 text-sm text-neutral-500';
-                    header.appendChild(userInfo);
-                }
-                
-                // 更新用戶信息
-                const fleetName = getCurrentFleetName();
-                userInfo.innerHTML = `
-                    <div class="text-right">
-                        <div class="font-medium">${userName}</div>
-                        <div class="text-xs">${fleetName || ''}</div>
-                    </div>
-                    <div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                        <i class="fa fa-user text-primary"></i>
-                    </div>
-                `;
+            const headerContainer = document.querySelector('header .container');
+            if (!headerContainer) return;
+
+            // 創建/獲取用戶信息容器
+            let userInfo = headerContainer.querySelector('.user-info');
+            if (!userInfo) {
+                userInfo = document.createElement('div');
+                userInfo.className = 'ml-auto flex items-center gap-2 text-sm text-neutral-500';
+                headerContainer.appendChild(userInfo);
             }
+
+            // 獲取車隊名稱
+            const fleetName = getCurrentFleetName();
+            
+            // 渲染用戶信息
+            userInfo.innerHTML = `
+                <div class="text-right">
+                    <div class="font-medium">${userName}</div>
+                    <div class="text-xs">${fleetName || ''}</div>
+                </div>
+                <div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                    <i class="fa fa-user text-primary"></i>
+                </div>
+            `;
         }
 
-        // 獲取當前車隊名稱
+        /**
+         * 獲取當前登錄用戶的車隊名稱
+         * @returns {string} 車隊名稱（空字符串表示無）
+         */
         function getCurrentFleetName() {
-            const loggedInAdmin = localStorage.getItem(LOGGED_IN_FLEET_KEY) || localStorage.getItem(BACKUP_LOGGED_KEY);
+            const loggedInAdmin = localStorage.getItem(LOGGED_IN_FLEET_KEY) || 
+                               localStorage.getItem(BACKUP_LOGGED_KEY);
+            
             if (loggedInAdmin) {
                 try {
                     const adminData = JSON.parse(loggedInAdmin);
                     return adminData.fleetName || adminData.車隊名稱 || '';
                 } catch (e) {
+                    console.error('獲取車隊名稱失敗:', e);
                     return '';
                 }
             }
             return '';
         }
 
-        // 綁定事件
+        /**
+         * 綁定頁面所有事件處理器
+         */
         function bindEvents() {
-            // 退出登錄
-            document.getElementById('logoutLink').addEventListener('click', function(e) {
-                e.preventDefault();
-                if (confirm('確定要退出登入嗎？')) {
-                    // 清除所有登錄狀態
-                    localStorage.removeItem(LOGGED_IN_FLEET_KEY);
-                    localStorage.removeItem(BACKUP_LOGGED_KEY);
-                    
-                    // 跳轉登錄頁
-                    window.location.href = 'manager-login.html';
-                }
-            });
-            
-            // 點擊遮罩中的登錄按鈕
+            // 退出登錄按鈕事件
+            const logoutLink = document.getElementById('logoutLink');
+            if (logoutLink) {
+                logoutLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (confirm('確定要退出登入嗎？')) {
+                        // 清除登錄狀態
+                        localStorage.removeItem(LOGGED_IN_FLEET_KEY);
+                        localStorage.removeItem(BACKUP_LOGGED_KEY);
+                        // 跳轉到登入頁
+                        window.location.href = 'manager-login.html';
+                    }
+                });
+            }
+
+            // 未登錄遮罩中的登入按鈕事件
             const loginBtn = document.querySelector('#unauthOverlay a[href="manager-login.html"]');
             if (loginBtn) {
                 loginBtn.addEventListener('click', function(e) {
@@ -317,38 +338,50 @@
             }
         }
 
-        // 加載財務數據
+        /**
+         * 加載財務數據（移除了虛擬演示數據）
+         * 從localStorage加載真實數據，無數據則顯示空提示
+         */
         function loadFinanceData() {
-            // 這裡可以添加從localStorage或API加載財務數據的邏輯
+            // 從localStorage獲取財務數據
             const financeData = JSON.parse(localStorage.getItem('financeData') || '[]');
             const tableBody = document.getElementById('financeTable');
             
+            // 清空表格並渲染數據
+            tableBody.innerHTML = '';
+            
+            // 無數據時顯示空提示
             if (financeData.length === 0) {
-                // 使用模擬數據演示
-                const demoData = [
-                    { id: 'ORD-001', passenger: '王小明', driver: '張師傅', amount: 350, status: '已完成', date: '2025-01-15' },
-                    { id: 'ORD-002', passenger: '林小姐', driver: '李師傅', amount: 420, status: '已完成', date: '2025-01-15' },
-                    { id: 'ORD-003', passenger: '陳先生', driver: '王師傅', amount: 280, status: '處理中', date: '2025-01-15' }
-                ];
-                
-                tableBody.innerHTML = '';
-                demoData.forEach(item => {
-                    const statusClass = item.status === '已完成' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
-                    const row = document.createElement('tr');
-                    row.className = 'hover:bg-neutral-50';
-                    row.innerHTML = `
-                        <td class="p-3 border-b">${item.id}</td>
-                        <td class="p-3 border-b">${item.passenger}</td>
-                        <td class="p-3 border-b">${item.driver}</td>
-                        <td class="p-3 border-b font-medium text-green-700">NT$ ${item.amount}</td>
-                        <td class="p-3 border-b">
-                            <span class="px-2 py-1 rounded text-xs ${statusClass}">${item.status}</span>
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="p-6 text-center text-neutral-500">
+                            暫無財務數據
                         </td>
-                        <td class="p-3 border-b">${item.date}</td>
-                    `;
-                    tableBody.appendChild(row);
-                });
+                    </tr>
+                `;
+                return;
             }
+
+            // 有數據時渲染表格行（保留真實數據渲染邏輯）
+            financeData.forEach(item => {
+                const statusClass = item.status === '已完成' 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-yellow-100 text-yellow-800';
+                
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-neutral-50';
+                row.innerHTML = `
+                    <td class="p-3 border-b">${item.id || ''}</td>
+                    <td class="p-3 border-b">${item.passenger || ''}</td>
+                    <td class="p-3 border-b">${item.driver || ''}</td>
+                    <td class="p-3 border-b font-medium text-green-700">NT$ ${item.amount || 0}</td>
+                    <td class="p-3 border-b">
+                        <span class="px-2 py-1 rounded text-xs ${statusClass}">${item.status || '未知'}</span>
+                    </td>
+                    <td class="p-3 border-b">${item.date || ''}</td>
+                `;
+                tableBody.appendChild(row);
+            });
         }
     </script>
 </body>

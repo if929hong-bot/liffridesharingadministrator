@@ -82,15 +82,7 @@
       border-radius: 3px;
       cursor: pointer;
     }
-    .price-container {
-      display: flex;
-      gap: 30px;
-      flex-wrap: wrap;
-    }
-    .price-section {
-      flex: 1;
-      min-width: 250px;
-    }
+    /* 移除原來的price-container分欄樣式（因為不需要分早晚班） */
   </style>
 </head>
 <body>
@@ -154,56 +146,29 @@
       </div>
     </div>
 
-    <!-- 3. 價格設定 -->
+    <!-- 3. 價格設定（修改後：移除早晚班，只保留一組設定） -->
     <div class="module">
       <div class="module-title">價格設定</div>
-      <div class="price-container">
-        <div class="price-section">
-          <div style="font-weight: 500; margin-bottom: 10px;">7:00-22:00（早班）</div>
-          <div class="form-row">
-            <div class="form-label">起步價格</div>
-            <input type="text" value="100" readonly>
-          </div>
-          <div class="form-row">
-            <div class="form-label">里程費用(每km)</div>
-            <input type="text" value="15" readonly>
-          </div>
-          <div class="form-row">
-            <div class="form-label">時間費用(每min)</div>
-            <input type="text" value="2" readonly>
-          </div>
-          <div class="form-row">
-            <div class="form-label">固定回給</div>
-            <input type="text" value="50" readonly>
-          </div>
-          <div class="form-row">
-            <div class="form-label">固定百回(%)</div>
-            <input type="text" value="5" readonly>
-          </div>
-        </div>
-        <div class="price-section">
-          <div style="font-weight: 500; margin-bottom: 10px;">22:01-6:59（晚班）</div>
-          <div class="form-row">
-            <div class="form-label">起步價格</div>
-            <input type="text" value="120" readonly>
-          </div>
-          <div class="form-row">
-            <div class="form-label">里程費用(每km)</div>
-            <input type="text" value="20" readonly>
-          </div>
-          <div class="form-row">
-            <div class="form-label">時間費用(每min)</div>
-            <input type="text" value="3" readonly>
-          </div>
-          <div class="form-row">
-            <div class="form-label">固定回給</div>
-            <input type="text" value="60" readonly>
-          </div>
-          <div class="form-row">
-            <div class="form-label">固定百回(%)</div>
-            <input type="text" value="6" readonly>
-          </div>
-        </div>
+      <!-- 移除原來的price-container和分欄，直接放一組表單 -->
+      <div class="form-row">
+        <div class="form-label">起步價格</div>
+        <input type="text" value="100">
+      </div>
+      <div class="form-row">
+        <div class="form-label">里程費用(每km)</div>
+        <input type="text" value="15">
+      </div>
+      <div class="form-row">
+        <div class="form-label">時間費用(每min)</div>
+        <input type="text" value="2">
+      </div>
+      <div class="form-row">
+        <div class="form-label">固定回給</div>
+        <input type="text" value="50">
+      </div>
+      <div class="form-row">
+        <div class="form-label">固定百回(%)</div>
+        <input type="text" value="5">
       </div>
       <button style="margin-top: 15px;">儲存設定</button>
     </div>
@@ -213,7 +178,7 @@
       <div class="module-title">司機固定月費設定</div>
       <div class="form-row">
         <div class="form-label">月費金額</div>
-        <input type="text" value="5000" readonly>
+        <input type="text" value="500">
       </div>
     </div>
 
