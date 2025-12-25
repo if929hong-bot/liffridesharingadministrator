@@ -29,11 +29,588 @@
       .btn-home {
         @apply bg-primary text-white py-3 px-6 rounded-lg font-medium hover:bg-primary/90 transition-all;
       }
+      .order-info-row {
+        @apply border-b border-gray-100 pb-2 mb-2 last:border-0 last:pb-0 last:mb-0;
+      }
+      .fade-in {
+        animation: fadeIn 0.5s ease forwards;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
     }
   </style>
+
+  <style>
+    /* Utils工具類樣式 */
+    .utils-alert {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      max-width: 300px;
+      width: 100%;
+      border-radius: 8px;
+      padding: 12px 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      animation: slideIn 0.3s ease forwards;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    .utils-alert.success {
+      background: #f0fdf4;
+      color: #065f46;
+    }
+    .utils-alert.error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    .utils-alert.warning {
+      background: #fffbeb;
+      color: #92400e;
+    }
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9998;
+    }
+    .loading-spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #00A86B;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .btn-loading {
+      position: relative;
+      pointer-events: none;
+      opacity: 0.8;
+    }
+    .btn-loading::after {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border: 2px solid #fff;
+      border-top: 2px solid transparent;
+      border-radius: 50%;
+      right: 1.5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      animation: spin 1s linear infinite;
+    }
+    /* 訂單卡片動畫 */
+    .success-animation {
+      animation: successPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    @keyframes successPop {
+      0% { transform: scale(0.8); opacity: 0; }
+      70% { transform: scale(1.05); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .checkmark-animation {
+      animation: checkmark 0.8s ease forwards;
+    }
+    @keyframes checkmark {
+      0% { transform: scale(0); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+  </style>
+
+  <script>
+    /**
+     * 全局工具類 - 提升網站穩定性、統一處理通用邏輯
+     * 適用於所有車隊管理系統頁面（訂單確認/乘客端/管理後台）
+     */
+    const Utils = {
+      // ========== 基礎工具方法 ==========
+      /**
+       * 安全解析JSON（避免解析失敗導致頁面崩潰）
+       * @param {string} str - 要解析的JSON字串
+       * @returns {any|null} 解析後的數據，失敗返回null
+       */
+      safeParseJSON(str) {
+        try {
+          return str && str !== 'null' && str !== 'undefined' ? JSON.parse(str) : null;
+        } catch (e) {
+          console.error('JSON解析失敗:', e, '原始字串:', str);
+          return null;
+        }
+      },
+
+      /**
+       * 安全獲取DOM元素（避免操作空元素報錯）
+       * @param {string} id - 元素ID
+       * @returns {HTMLElement|null} 元素對象或null
+       */
+      safeGetElement(id) {
+        const el = document.getElementById(id);
+        if (!el) console.warn(`[Utils] 元素#${id}不存在`);
+        return el;
+      },
+
+      /**
+       * 驗證數字輸入（適用價格、金額等表單）
+       * @param {string} value - 輸入值
+       * @param {boolean} allowZero - 是否允許0（預設不允許）
+       * @returns {boolean} 是否有效
+       */
+      validateNumber(value, allowZero = false) {
+        const trimmed = value.trim();
+        // 驗證是否為純數字
+        if (!/^\d+$/.test(trimmed)) return false;
+        // 驗證是否大於0（如果不允許0）
+        if (!allowZero && Number(trimmed) <= 0) return false;
+        return true;
+      },
+
+      /**
+       * 顯示統一提示訊息（取代alert，提升體驗）
+       * @param {string} message - 提示內容
+       * @param {string} type - 類型 success/error/warning
+       * @param {number} duration - 自動關閉時間（秒，預設3秒）
+       */
+      showMessage(message, type = 'success', duration = 3) {
+        // 移除已存在的提示
+        const oldAlert = document.querySelector('.utils-alert');
+        if (oldAlert) oldAlert.remove();
+        
+        // 創建提示元素
+        const alertEl = document.createElement('div');
+        alertEl.className = `utils-alert ${type}`;
+        
+        // 設置圖標
+        const iconMap = {
+          success: '<i class="fa fa-check-circle"></i>',
+          error: '<i class="fa fa-times-circle"></i>',
+          warning: '<i class="fa fa-exclamation-circle"></i>'
+        };
+        
+        alertEl.innerHTML = `
+          ${iconMap[type] || iconMap.success}
+          <span>${message}</span>
+        `;
+        
+        // 添加到頁面
+        document.body.appendChild(alertEl);
+        
+        // 自動移除
+        if (duration > 0) {
+          setTimeout(() => {
+            alertEl.style.animation = 'slideIn 0.3s ease reverse forwards';
+            setTimeout(() => alertEl.remove(), 300);
+          }, duration * 1000);
+        }
+        
+        return alertEl;
+      },
+
+      // ========== 本地存儲管理（帶過期機制） ==========
+      Storage: {
+        /**
+         * 儲存數據到localStorage（自動序列化+設置過期）
+         * @param {string} key - 儲存鍵名
+         * @param {any} data - 要儲存的數據
+         * @param {number} expireHours - 過期小時（預設24小時）
+         */
+        set(key, data, expireHours = 24) {
+          try {
+            const value = JSON.stringify(data);
+            localStorage.setItem(key, value);
+            // 設置過期時間戳
+            if (expireHours) {
+              const expireTime = Date.now() + expireHours * 60 * 60 * 1000;
+              localStorage.setItem(`${key}_expire`, expireTime);
+            }
+          } catch (e) {
+            console.error('[Storage] 儲存失敗:', e);
+            Utils.showMessage('本地存儲空間不足，無法保存數據！', 'error');
+          }
+        },
+
+        /**
+         * 從localStorage獲取數據（自動檢查過期）
+         * @param {string} key - 儲存鍵名
+         * @returns {any|null} 儲存的數據，過期/不存在返回null
+         */
+        get(key) {
+          try {
+            const expireTime = localStorage.getItem(`${key}_expire`);
+            // 檢查是否過期
+            if (expireTime && Date.now() > Number(expireTime)) {
+              this.remove(key);
+              return null;
+            }
+            // 解析並返回數據
+            return Utils.safeParseJSON(localStorage.getItem(key));
+          } catch (e) {
+            console.error('[Storage] 讀取失敗:', e);
+            return null;
+          }
+        },
+
+        /**
+         * 移除localStorage中的數據（包含過期標記）
+         * @param {string} key - 儲存鍵名
+         */
+        remove(key) {
+          localStorage.removeItem(key);
+          localStorage.removeItem(`${key}_expire`);
+        },
+
+        /**
+         * 清空所有車隊管理系統相關存儲
+         */
+        clearAllFleetData() {
+          const keys = Object.keys(localStorage);
+          keys.forEach(key => {
+            if (key.includes('fleet') || key.includes('admin') || key.includes('price') || key.includes('finance') || key.includes('driver') || key.includes('order') || key.includes('ride')) {
+              this.remove(key);
+            }
+          });
+        }
+      },
+
+      // ========== UI增強方法 ==========
+      /**
+       * 顯示加載狀態（適用按鈕/頁面加載場景）
+       * @param {HTMLElement} el - 要顯示加載狀態的元素（可選）
+       * @param {string} text - 加載提示文字（預設：處理中...）
+       */
+      showLoading(el, text = '處理中...') {
+        // 頁面級加載
+        if (!el) {
+          const loadingEl = document.createElement('div');
+          loadingEl.className = 'loading-overlay';
+          loadingEl.innerHTML = `
+            <div class="flex flex-col items-center gap-3">
+              <div class="loading-spinner"></div>
+              <span class="text-gray-700 text-base">${text}</span>
+            </div>
+          `;
+          loadingEl.id = 'page-loading';
+          document.body.appendChild(loadingEl);
+          return;
+        }
+
+        // 元素級加載
+        if (!el) return;
+        el.disabled = true;
+        el.classList.add('btn-loading');
+        const originalText = el.innerHTML;
+        el.setAttribute('data-original-text', originalText);
+        el.innerHTML = text;
+      },
+
+      /**
+       * 隱藏加載狀態
+       * @param {HTMLElement} el - 要還原的元素（可選）
+       * @param {string} restoreText - 還原的按鈕文字（可選）
+       */
+      hideLoading(el, restoreText = '') {
+        // 移除頁面級加載
+        const pageLoading = document.getElementById('page-loading');
+        if (pageLoading) pageLoading.remove();
+
+        // 還原元素級加載
+        if (el) {
+          el.disabled = false;
+          el.classList.remove('btn-loading');
+          const originalText = el.getAttribute('data-original-text');
+          if (originalText) el.innerHTML = originalText;
+          else if (restoreText) el.innerHTML = restoreText;
+        }
+      },
+
+      /**
+       * 安全跳轉頁面（帶加載狀態和錯誤處理）
+       * @param {string} url - 目標URL
+       * @param {string} message - 跳轉前提示訊息
+       */
+      safeNavigate(url, message = '') {
+        try {
+          // 顯示提示
+          if (message) Utils.showMessage(message, 'success');
+          
+          // 顯示頁面加載
+          Utils.showLoading(null, '正在返回...');
+          
+          // 延遲跳轉提升體驗
+          setTimeout(() => {
+            window.location.href = url;
+          }, 500);
+        } catch (e) {
+          console.error('跳轉失敗:', e);
+          Utils.hideLoading();
+          Utils.showMessage('頁面跳轉失敗，請手動操作', 'error');
+        }
+      },
+
+      // ========== 訂單管理專用方法 ==========
+      OrderManager: {
+        /**
+         * 獲取當前訂單信息（從本地存儲）
+         * @returns {object|null} 訂單數據
+         */
+        getCurrentOrder() {
+          const order = Utils.Storage.get('current_order');
+          if (!order) {
+            Utils.showMessage('未找到訂單信息，可能已過期', 'warning');
+            return null;
+          }
+          return order;
+        },
+
+        /**
+         * 格式化訂單時間
+         * @param {string|number} timestamp - 時間戳或時間字符串
+         * @returns {string} 格式化的時間字符串
+         */
+        formatOrderTime(timestamp) {
+          try {
+            let date;
+            if (typeof timestamp === 'number') {
+              date = new Date(timestamp);
+            } else {
+              date = new Date(timestamp);
+            }
+            
+            // 格式化為台灣本地時間
+            return date.toLocaleString('zh-TW', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit'
+            });
+          } catch (error) {
+            console.error('格式化時間失敗:', error);
+            return new Date().toLocaleString('zh-TW');
+          }
+        },
+
+        /**
+         * 生成訂單編號
+         * @param {number} length - 編號長度（預設8位）
+         * @returns {string} 訂單編號
+         */
+        generateOrderId(length = 8) {
+          const timestamp = Date.now().toString();
+          const randomStr = Math.random().toString(36).substring(2, 10);
+          const orderId = `ORD-${timestamp.slice(-length)}${randomStr.slice(0, 2)}`;
+          return orderId.toUpperCase();
+        },
+
+        /**
+         * 渲染訂單信息到頁面
+         * @param {object} orderData - 訂單數據
+         */
+        renderOrderInfo(orderData) {
+          // 獲取訂單信息容器
+          const orderInfoContainer = Utils.safeGetElement('order-info-container');
+          if (!orderInfoContainer) return;
+
+          // 準備訂單數據
+          const orderId = orderData.orderId || this.generateOrderId();
+          const createTime = orderData.createTime || this.formatOrderTime(Date.now());
+          const status = orderData.status || '待接單';
+          const name = orderData.name || '未填寫';
+          const phone = orderData.phone || '未填寫';
+          const pickup = orderData.pickup || '未填寫';
+          const dropoff = orderData.dropoff || '未填寫';
+          const remark = orderData.remark || '無';
+
+          // 構建訂單信息HTML
+          const orderHtml = `
+            <div class="order-info-row fade-in" style="animation-delay: 0.1s">
+              <td class="text-gray-500">訂單編號：</td>
+              <td class="font-medium text-primary">${orderId}</td>
+            </div>
+            <div class="order-info-row fade-in" style="animation-delay: 0.2s">
+              <td class="text-gray-500">提交時間：</td>
+              <td>${createTime}</td>
+            </div>
+            <div class="order-info-row fade-in" style="animation-delay: 0.3s">
+              <td class="text-gray-500">狀態：</td>
+              <td class="text-green-600 font-medium">${status}</td>
+            </div>
+            <div class="order-info-row fade-in" style="animation-delay: 0.4s">
+              <td class="text-gray-500">聯繫人：</td>
+              <td>${name}</td>
+            </div>
+            <div class="order-info-row fade-in" style="animation-delay: 0.5s">
+              <td class="text-gray-500">聯繫電話：</td>
+              <td>${phone}</td>
+            </div>
+            <div class="order-info-row fade-in" style="animation-delay: 0.6s">
+              <td class="text-gray-500">上車地點：</td>
+              <td>${pickup}</td>
+            </div>
+            <div class="order-info-row fade-in" style="animation-delay: 0.7s">
+              <td class="text-gray-500">下車地點：</td>
+              <td>${dropoff}</td>
+            </div>
+            <div class="order-info-row fade-in" style="animation-delay: 0.8s">
+              <td class="text-gray-500">備註：</td>
+              <td>${remark}</td>
+            </div>
+          `;
+
+          // 替換表格內容
+          orderInfoContainer.innerHTML = orderHtml;
+
+          // 保存訂單到最近訂單列表
+          this.saveToRecentOrders(orderData);
+        },
+
+        /**
+         * 保存訂單到最近訂單列表
+         * @param {object} orderData - 訂單數據
+         */
+        saveToRecentOrders(orderData) {
+          try {
+            const recentOrders = Utils.Storage.get('recent_orders') || [];
+            
+            // 補充訂單元數據
+            const completeOrder = {
+              ...orderData,
+              orderId: orderData.orderId || this.generateOrderId(),
+              createTimeStamp: Date.now()
+            };
+            
+            // 添加到列表開頭
+            recentOrders.unshift(completeOrder);
+            
+            // 只保留最近10條訂單
+            if (recentOrders.length > 10) {
+              recentOrders.splice(10);
+            }
+            
+            // 保存到本地存儲（保存7天）
+            Utils.Storage.set('recent_orders', recentOrders, 7 * 24);
+            
+            console.log('訂單已保存到最近訂單列表');
+          } catch (error) {
+            console.error('保存最近訂單失敗:', error);
+          }
+        }
+      }
+    };
+
+    // ========== 頁面初始化 ==========
+    document.addEventListener('DOMContentLoaded', () => {
+      // 初始化頁面動畫
+      initPageAnimations();
+      
+      // 加載訂單信息
+      loadOrderInfo();
+      
+      // 初始化按鈕事件
+      initButtonEvents();
+      
+      // 顯示成功提示
+      Utils.showMessage('訂單已成功提交，請耐心等待司機聯繫！', 'success', 5);
+    });
+
+    // ========== 頁面動畫初始化 ==========
+    function initPageAnimations() {
+      // 成功卡片動畫
+      const successCard = document.querySelector('.success-card');
+      if (successCard) {
+        successCard.classList.add('success-animation');
+      }
+      
+      // 勾號動畫
+      const checkmarkIcon = document.querySelector('.fa-check');
+      if (checkmarkIcon) {
+        checkmarkIcon.classList.add('checkmark-animation');
+      }
+    }
+
+    // ========== 加載訂單信息 ==========
+    function loadOrderInfo() {
+      try {
+        // 獲取當前訂單數據
+        const orderData = Utils.OrderManager.getCurrentOrder();
+        
+        // 渲染訂單信息
+        if (orderData) {
+          Utils.OrderManager.renderOrderInfo(orderData);
+        } else {
+          // 如果沒有訂單數據，生成默認訂單信息
+          const defaultOrder = {
+            orderId: Utils.OrderManager.generateOrderId(),
+            createTime: Utils.OrderManager.formatOrderTime(Date.now()),
+            status: '待接單'
+          };
+          Utils.OrderManager.renderOrderInfo(defaultOrder);
+          
+          // 顯示警告提示
+          Utils.showMessage('使用默認訂單信息，未找到具體訂單數據', 'warning');
+        }
+      } catch (error) {
+        console.error('加載訂單信息失敗:', error);
+        
+        // 顯示錯誤提示
+        Utils.showMessage('加載訂單信息失敗，請刷新頁面', 'error');
+        
+        // 生成基礎訂單信息
+        const fallbackOrder = {
+          orderId: Utils.OrderManager.generateOrderId(),
+          createTime: Utils.OrderManager.formatOrderTime(Date.now()),
+          status: '待接單'
+        };
+        Utils.OrderManager.renderOrderInfo(fallbackOrder);
+      }
+    }
+
+    // ========== 按鈕事件初始化 ==========
+    function initButtonEvents() {
+      // 返回首頁按鈕
+      const homeButton = Utils.safeGetElement('btn-home');
+      if (homeButton) {
+        homeButton.addEventListener('click', () => {
+          Utils.safeNavigate('index.html', '即將返回首頁，感謝您的使用！');
+        });
+      }
+      
+      // 查看訂單按鈕（新增）
+      const viewOrderButton = Utils.safeGetElement('btn-view-order');
+      if (viewOrderButton) {
+        viewOrderButton.addEventListener('click', () => {
+          Utils.safeNavigate('order-detail.html', '正在查看訂單詳情...');
+        });
+      }
+      
+      // 再次叫車按鈕（新增）
+      const newRideButton = Utils.safeGetElement('btn-new-ride');
+      if (newRideButton) {
+        newRideButton.addEventListener('click', () => {
+          Utils.safeNavigate('passenger-ride.html', '即將進入叫車頁面...');
+        });
+      }
+    }
+  </script>
 </head>
 <body class="bg-gray-50 min-h-screen">
-  <div class="container mx-auto px-4">
+  <div class="container mx-auto px-4 py-8">
     <div class="success-card">
       <!-- 成功提示區塊 -->
       <div class="text-center mb-6">
@@ -41,34 +618,57 @@
           <i class="fa fa-check text-2xl text-green-600"></i>
         </div>
         <h1 class="text-xl md:text-2xl font-bold text-gray-800 mb-2">訂單提交成功！</h1>
-        <p class="text-gray-600">司機將很快與您聯繫，請保持電話暢通</p>
+        <p class="text-gray-600 mb-2">司機將很快與您聯繫，請保持電話暢通</p>
+        <p class="text-sm text-gray-500">
+          <i class="fa fa-info-circle mr-1"></i> 您可以隨時在「我的訂單」中查看進度
+        </p>
       </div>
 
       <!-- 訂單資訊表格 -->
       <div class="border border-gray-200 rounded-lg p-4 mb-6">
         <h2 class="text-lg font-medium text-gray-700 mb-3">訂單資訊</h2>
-        <table class="w-full text-left">
-          <tr class="border-b border-gray-100 pb-2 mb-2">
+        <table class="w-full text-left" id="order-info-container">
+          <!-- 訂單信息將由JS動態生成 -->
+          <tr class="order-info-row">
             <td class="text-gray-500">訂單編號：</td>
-            <td class="font-medium">ORD-<script>document.write(Date.now().toString().slice(-8))</script></td>
+            <td class="font-medium">加載中...</td>
           </tr>
-          <tr class="border-b border-gray-100 pb-2 mb-2">
+          <tr class="order-info-row">
             <td class="text-gray-500">提交時間：</td>
-            <td><script>document.write(new Date().toLocaleString('zh-TW'))</script></td>
+            <td>加載中...</td>
           </tr>
-          <tr>
+          <tr class="order-info-row">
             <td class="text-gray-500">狀態：</td>
             <td class="text-green-600 font-medium">待接單</td>
           </tr>
         </table>
       </div>
 
-      <!-- 返回首頁按鈕 -->
-      <div class="text-center">
-        <button onclick="window.location.href='index.html'" class="btn-home">
-          返回首頁
+      <!-- 操作按鈕區 -->
+      <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <button id="btn-home" class="btn-home flex-1">
+          <i class="fa fa-home mr-2"></i> 返回首頁
+        </button>
+        <button id="btn-view-order" class="btn-home bg-gray-700 hover:bg-gray-600 flex-1">
+          <i class="fa fa-file-text-o mr-2"></i> 查看訂單
+        </button>
+        <button id="btn-new-ride" class="btn-home bg-blue-600 hover:bg-blue-500 flex-1">
+          <i class="fa fa-plus mr-2"></i> 再次叫車
         </button>
       </div>
+      
+      <!-- 備註提示 -->
+      <div class="mt-6 text-xs text-gray-500 text-center">
+        <p><i class="fa fa-phone-square mr-1"></i> 如緊急需求，請致電客服：0800-123-456</p>
+        <p class="mt-1"><i class="fa fa-clock-o mr-1"></i> 一般司機將在5-15分鐘內與您聯繫</p>
+      </div>
+    </div>
+    
+    <!-- 最近訂單提示 -->
+    <div class="max-w-md mx-auto mt-6 text-center text-sm text-gray-600">
+      <a href="order-history.html" class="text-primary hover:underline">
+        <i class="fa fa-history mr-1"></i> 查看我的訂單記錄
+      </a>
     </div>
   </div>
 </body>

@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>車隊管理員系統 - 首頁</title>
+  <!-- 引入Font Awesome（加載/驗證提示需要） -->
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -16,6 +18,18 @@
       color: #333;
       display: flex;
       min-height: 100vh;
+    }
+    /* 未登錄提示遮罩（新增） */
+    .unauth-overlay {
+      position: fixed;
+      inset: 0;
+      background: white;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
     }
     /* 側邊欄 */
     .sidebar {
@@ -81,11 +95,186 @@
       padding: 10px 25px;
       border-radius: 3px;
       cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    button:hover {
+      background: #00A600;
     }
     /* 移除原來的price-container分欄樣式（因為不需要分早晚班） */
   </style>
+  <!-- 植入通用穩定性工具類 -->
+  <script>
+    /**
+     * 全局工具類 - 提升網站穩定性、統一處理通用邏輯
+     * 適用於所有車隊管理系統頁面
+     */
+    const Utils = {
+      // ========== 基礎工具方法 ==========
+      safeParseJSON(str) {
+        try {
+          return str && str !== 'null' && str !== 'undefined' ? JSON.parse(str) : null;
+        } catch (e) {
+          console.error('JSON解析失敗:', e, '原始字串:', str);
+          return null;
+        }
+      },
+
+      safeGetElement(id) {
+        const el = document.getElementById(id);
+        if (!el) console.warn(`[Utils] 元素#${id}不存在`);
+        return el;
+      },
+
+      validateNumber(value, allowZero = false) {
+        const trimmed = value.trim();
+        if (!/^\d+$/.test(trimmed)) return false;
+        if (!allowZero && Number(trimmed) <= 0) return false;
+        return true;
+      },
+
+      // ========== 本地存儲管理（帶過期機制） ==========
+      Storage: {
+        set(key, data, expireHours = 24) {
+          try {
+            const value = JSON.stringify(data);
+            localStorage.setItem(key, value);
+            if (expireHours) {
+              const expireTime = Date.now() + expireHours * 60 * 60 * 1000;
+              localStorage.setItem(`${key}_expire`, expireTime);
+            }
+          } catch (e) {
+            console.error('[Storage] 儲存失敗:', e);
+            alert('本地存儲空間不足，無法保存數據！');
+          }
+        },
+
+        get(key) {
+          try {
+            const expireTime = localStorage.getItem(`${key}_expire`);
+            if (expireTime && Date.now() > Number(expireTime)) {
+              this.remove(key);
+              return null;
+            }
+            return Utils.safeParseJSON(localStorage.getItem(key));
+          } catch (e) {
+            console.error('[Storage] 讀取失敗:', e);
+            return null;
+          }
+        },
+
+        remove(key) {
+          localStorage.removeItem(key);
+          localStorage.removeItem(`${key}_expire`);
+        },
+
+        clearAllFleetData() {
+          const keys = Object.keys(localStorage);
+          keys.forEach(key => {
+            if (key.includes('fleet') || key.includes('admin') || key.includes('price') || key.includes('finance')) {
+              this.remove(key);
+            }
+          });
+        }
+      },
+
+      // ========== 登錄狀態管理 ==========
+      Auth: {
+        KEYS: {
+          LOGGED_IN: 'loggedInFleetAdmin',
+          BACKUP: 'currentFleetAdmin',
+          EXPIRE: 'adminExpireTime'
+        },
+
+        checkLoginStatus() {
+          let adminData = Utils.Storage.get(Utils.Auth.KEYS.LOGGED_IN);
+          if (!adminData) {
+            adminData = Utils.Storage.get(Utils.Auth.KEYS.BACKUP);
+          }
+
+          const hasValidAccount = adminData && (
+            adminData.帳號 || adminData.username || adminData.account || adminData.phone
+          );
+
+          if (!hasValidAccount) {
+            Utils.Storage.clearAllFleetData();
+            return false;
+          }
+
+          Utils.Storage.set(Utils.Auth.KEYS.LOGGED_IN, adminData, 24);
+          return true;
+        },
+
+        redirectToLogin() {
+          alert('登錄已過期或未登錄，請重新登入！');
+          window.location.href = 'manager-login.html';
+        },
+
+        logout() {
+          Utils.Storage.clearAllFleetData();
+          window.location.href = 'manager-login.html';
+        }
+      },
+
+      // ========== UI增強方法 ==========
+      showLoading(el, text = '加載中...') {
+        if (!el) return;
+        el.innerHTML = `
+          <div style="text-align: center; padding: 20px; color: #666;">
+              <i class="fa fa-spinner fa-spin mr-2"></i>${text}
+          </div>
+        `;
+      },
+
+      showEmptyData(el, text = '暫無數據', colspan = 1) {
+        if (!el) return;
+        if (el.tagName === 'TBODY') {
+          el.innerHTML = `
+            <tr>
+              <td colspan="${colspan}" style="padding: 30px; text-align: center; color: #666;">
+                ${text}
+              </td>
+            </tr>
+          `;
+        } else {
+          el.innerHTML = `
+            <div style="padding: 30px; text-align: center; color: #666;">
+              ${text}
+            </div>
+          `;
+        }
+      },
+
+      validateFormNumbers(inputs) {
+        let isValid = true;
+        inputs.forEach(input => {
+          const label = input.previousElementSibling?.textContent || input.name || '該項';
+          const value = input.value;
+
+          if (!Utils.validateNumber(value)) {
+            alert(`${label}只能填大於0的數字！`);
+            input.focus();
+            isValid = false;
+            return false;
+          }
+        });
+        return isValid;
+      }
+    };
+  </script>
 </head>
 <body>
+  <!-- 未登錄提示遮罩（新增） -->
+  <div id="unauthOverlay" class="unauth-overlay hidden">
+    <div class="text-center max-w-md">
+      <i class="fa fa-exclamation-circle text-4xl text-red-500 mb-4"></i>
+      <h2 class="text-2xl font-bold text-gray-800 mb-2">未登錄或登錄已過期</h2>
+      <p class="text-gray-600 mb-6">請先完成車隊管理員登錄</p>
+      <a href="manager-login.html" class="inline-block py-3 px-6 bg-#00C853 text-white rounded-lg font-medium hover:bg-#00A600 transition-all">
+        返回登入頁面
+      </a>
+    </div>
+  </div>
+
   <!-- 左側菜單連結已100%確認正確 -->
   <div class="sidebar">
     <a href="admin-dashboard.html" class="sidebar-item active">首頁</a>
@@ -94,7 +283,7 @@
     <a href="admin-order.html" class="sidebar-item">訂單管理</a>
     <a href="admin-finance.html" class="sidebar-item">財務管理</a>
     <a href="admin-report.html" class="sidebar-item">報表統計</a>
-    <a href="manager-login.html" class="sidebar-item">退出登入</a>
+    <a href="javascript:void(0)" class="sidebar-item" id="logoutLink">退出登入</a>
   </div>
 
   <!-- 主內容版面完全不變 -->
@@ -117,11 +306,11 @@
       </div>
       <div class="form-row">
         <div class="form-label">匯款後五碼</div>
-        <input type="text">
+        <input type="text" id="remitCode">
       </div>
       <div class="form-row">
         <div class="form-label">上傳截圖</div>
-        <input type="file">
+        <input type="file" id="remitFile">
       </div>
     </div>
 
@@ -147,30 +336,30 @@
     </div>
 
     <!-- 3. 價格設定（修改後：移除早晚班，只保留一組設定） -->
-    <div class="module">
+    <div class="module" id="priceModule">
       <div class="module-title">價格設定</div>
       <!-- 移除原來的price-container和分欄，直接放一組表單 -->
       <div class="form-row">
         <div class="form-label">起步價格</div>
-        <input type="text" value="100">
+        <input type="text" id="startPrice" value="100">
       </div>
       <div class="form-row">
         <div class="form-label">里程費用(每km)</div>
-        <input type="text" value="15">
+        <input type="text" id="kmPrice" value="15">
       </div>
       <div class="form-row">
         <div class="form-label">時間費用(每min)</div>
-        <input type="text" value="2">
+        <input type="text" id="minPrice" value="2">
       </div>
       <div class="form-row">
         <div class="form-label">固定回給</div>
-        <input type="text" value="50">
+        <input type="text" id="fixedReturn" value="50">
       </div>
       <div class="form-row">
         <div class="form-label">固定百回(%)</div>
-        <input type="text" value="5">
+        <input type="text" id="percentReturn" value="5">
       </div>
-      <button style="margin-top: 15px;">儲存設定</button>
+      <button style="margin-top: 15px;" id="savePriceBtn">儲存設定</button>
     </div>
 
     <!-- 4. 司機固定月費設定 -->
@@ -178,21 +367,159 @@
       <div class="module-title">司機固定月費設定</div>
       <div class="form-row">
         <div class="form-label">月費金額</div>
-        <input type="text" value="500">
+        <input type="text" id="monthlyFee" value="500">
       </div>
     </div>
 
-    <button>提交繳費資訊</button>
+    <button id="submitRemitBtn">提交繳費資訊</button>
   </div>
 
   <script>
-    // 監聽繳費類型變更，自動更新金額總和
-    const paymentType = document.getElementById('paymentType');
-    const totalAmount = document.getElementById('totalAmount');
-    
-    paymentType.addEventListener('change', function() {
-      totalAmount.value = `NT$ ${this.value}`;
+    // 頁面加載初始化
+    document.addEventListener('DOMContentLoaded', function() {
+      // 1. 登錄狀態檢查（核心穩定性）
+      if (!Utils.Auth.checkLoginStatus()) {
+        Utils.safeGetElement('unauthOverlay')?.classList.remove('hidden');
+        return;
+      }
+
+      // 2. 初始化繳費類型切換（增強穩定性）
+      initPaymentType();
+
+      // 3. 初始化價格設定儲存（增加驗證）
+      initPriceSave();
+
+      // 4. 初始化繳費資訊提交（增加驗證）
+      initRemitSubmit();
+
+      // 5. 初始化退出登錄（工具類統一處理）
+      initLogout();
+
+      // 6. 加載已保存的價格設定（本地存儲恢復）
+      loadSavedPriceConfig();
     });
+
+    // ========== 繳費類型切換（增強穩定性） ==========
+    function initPaymentType() {
+      const paymentType = Utils.safeGetElement('paymentType');
+      const totalAmount = Utils.safeGetElement('totalAmount');
+
+      if (paymentType && totalAmount) {
+        // 初始值設置（防止默認值丟失）
+        totalAmount.value = `NT$ ${paymentType.value}`;
+
+        // 變更事件（增加空值檢查）
+        paymentType.addEventListener('change', function() {
+          const value = this.value || '10000'; // 默認值兜底
+          totalAmount.value = `NT$ ${value}`;
+        });
+      }
+    }
+
+    // ========== 價格設定儲存（增加數字驗證） ==========
+    function initPriceSave() {
+      const saveBtn = Utils.safeGetElement('savePriceBtn');
+      if (!saveBtn) return;
+
+      saveBtn.addEventListener('click', function() {
+        // 獲取所有價格輸入框
+        const priceInputs = [
+          Utils.safeGetElement('startPrice'),
+          Utils.safeGetElement('kmPrice'),
+          Utils.safeGetElement('minPrice'),
+          Utils.safeGetElement('fixedReturn'),
+          Utils.safeGetElement('percentReturn')
+        ].filter(el => el); // 過濾空元素
+
+        // 批量驗證數字
+        if (!Utils.validateFormNumbers(priceInputs)) {
+          return;
+        }
+
+        // 構建價格配置數據
+        const priceConfig = {
+          startPrice: Utils.safeGetElement('startPrice').value,
+          kmPrice: Utils.safeGetElement('kmPrice').value,
+          minPrice: Utils.safeGetElement('minPrice').value,
+          fixedReturn: Utils.safeGetElement('fixedReturn').value,
+          percentReturn: Utils.safeGetElement('percentReturn').value
+        };
+
+        // 儲存到本地（7天過期）
+        Utils.Storage.set('priceConfig', priceConfig, 7 * 24);
+        alert('價格設定已成功保存！');
+      });
+    }
+
+    // ========== 繳費資訊提交（增加驗證） ==========
+    function initRemitSubmit() {
+      const submitBtn = Utils.safeGetElement('submitRemitBtn');
+      const remitCode = Utils.safeGetElement('remitCode');
+      const remitFile = Utils.safeGetElement('remitFile');
+
+      if (!submitBtn) return;
+
+      submitBtn.addEventListener('click', function() {
+        // 驗證匯款後五碼
+        if (remitCode) {
+          const codeValue = remitCode.value.trim();
+          if (!/^\d{5}$/.test(codeValue)) {
+            alert('匯款後五碼必須是5位數字！');
+            remitCode.focus();
+            return;
+          }
+        }
+
+        // 驗證文件上傳（可選，根據業務需求調整）
+        // if (!remitFile?.files?.length) {
+        //   alert('請上傳匯款截圖！');
+        //   return;
+        // }
+
+        // 構建繳費數據
+        const remitData = {
+          paymentType: Utils.safeGetElement('paymentType')?.value || '10000',
+          totalAmount: Utils.safeGetElement('totalAmount')?.value || 'NT$ 10000',
+          remitCode: remitCode?.value || '',
+          remitTime: new Date().toLocaleString('zh-TW')
+        };
+
+        // 儲存繳費記錄（本地存儲）
+        const remitHistory = Utils.Storage.get('remitHistory') || [];
+        remitHistory.push(remitData);
+        Utils.Storage.set('remitHistory', remitHistory, 30 * 24); // 30天保存
+
+        alert('繳費資訊已提交成功！');
+        // 重置表單
+        if (remitCode) remitCode.value = '';
+        if (remitFile) remitFile.value = '';
+      });
+    }
+
+    // ========== 加載已保存的價格設定 ==========
+    function loadSavedPriceConfig() {
+      const priceConfig = Utils.Storage.get('priceConfig');
+      if (!priceConfig) return;
+
+      // 恢復價格設定到輸入框
+      if (priceConfig.startPrice) Utils.safeGetElement('startPrice').value = priceConfig.startPrice;
+      if (priceConfig.kmPrice) Utils.safeGetElement('kmPrice').value = priceConfig.kmPrice;
+      if (priceConfig.minPrice) Utils.safeGetElement('minPrice').value = priceConfig.minPrice;
+      if (priceConfig.fixedReturn) Utils.safeGetElement('fixedReturn').value = priceConfig.fixedReturn;
+      if (priceConfig.percentReturn) Utils.safeGetElement('percentReturn').value = priceConfig.percentReturn;
+    }
+
+    // ========== 退出登錄初始化 ==========
+    function initLogout() {
+      const logoutLink = Utils.safeGetElement('logoutLink');
+      if (logoutLink) {
+        logoutLink.addEventListener('click', function() {
+          if (confirm('確定要退出登入嗎？')) {
+            Utils.Auth.logout();
+          }
+        });
+      }
+    }
   </script>
 </body>
 </html>

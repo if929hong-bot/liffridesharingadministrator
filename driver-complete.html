@@ -19,6 +19,612 @@
             }
         }
     </script>
+    <style>
+        /* Utils工具類提示樣式 */
+        .utils-alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            max-width: 300px;
+            width: 100%;
+            border-radius: 8px;
+            padding: 12px 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideIn 0.3s ease forwards;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .utils-alert.success {
+            background: #f0fdf4;
+            color: #065f46;
+        }
+        .utils-alert.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .utils-alert.warning {
+            background: #fffbeb;
+            color: #92400e;
+        }
+        /* 加載狀態樣式 */
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(255,255,255,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9998;
+        }
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #00C300;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+
+    <!-- 整合Utils工具類 -->
+    <script>
+        /**
+         * 全局工具類 - 提升網站穩定性、統一處理通用邏輯
+         * 適用於所有車隊管理系統頁面（行程完成頁/司機頁/管理頁）
+         */
+        const Utils = {
+            // ========== 基礎工具方法 ==========
+            /**
+             * 安全解析JSON（避免解析失敗導致頁面崩潰）
+             * @param {string} str - 要解析的JSON字串
+             * @returns {any|null} 解析後的數據，失敗返回null
+             */
+            safeParseJSON(str) {
+                try {
+                    return str && str !== 'null' && str !== 'undefined' ? JSON.parse(str) : null;
+                } catch (e) {
+                    console.error('JSON解析失敗:', e, '原始字串:', str);
+                    return null;
+                }
+            },
+
+            /**
+             * 安全獲取DOM元素（避免操作空元素報錯）
+             * @param {string} id - 元素ID
+             * @returns {HTMLElement|null} 元素對象或null
+             */
+            safeGetElement(id) {
+                const el = document.getElementById(id);
+                if (!el) console.warn(`[Utils] 元素#${id}不存在`);
+                return el;
+            },
+
+            /**
+             * 驗證數字輸入（適用價格、金額等表單）
+             * @param {string} value - 輸入值
+             * @param {boolean} allowZero - 是否允許0（預設不允許）
+             * @returns {boolean} 是否有效
+             */
+            validateNumber(value, allowZero = false) {
+                const trimmed = value.trim();
+                // 驗證是否為純數字
+                if (!/^\d+$/.test(trimmed)) return false;
+                // 驗證是否大於0（如果不允許0）
+                if (!allowZero && Number(trimmed) <= 0) return false;
+                return true;
+            },
+
+            /**
+             * 顯示統一提示訊息（取代alert，提升體驗）
+             * @param {string} message - 提示內容
+             * @param {string} type - 類型 success/error/warning
+             * @param {number} duration - 自動關閉時間（秒，預設3秒）
+             */
+            showMessage(message, type = 'success', duration = 3) {
+                // 移除已存在的提示
+                const oldAlert = document.querySelector('.utils-alert');
+                if (oldAlert) oldAlert.remove();
+                
+                // 創建提示元素
+                const alertEl = document.createElement('div');
+                alertEl.className = `utils-alert ${type}`;
+                
+                // 設置圖標
+                const iconMap = {
+                    success: '<i class="fa fa-check-circle"></i>',
+                    error: '<i class="fa fa-times-circle"></i>',
+                    warning: '<i class="fa fa-exclamation-circle"></i>'
+                };
+                
+                alertEl.innerHTML = `
+                    ${iconMap[type] || iconMap.success}
+                    <span>${message}</span>
+                `;
+                
+                // 添加到頁面
+                document.body.appendChild(alertEl);
+                
+                // 自動移除
+                if (duration > 0) {
+                    setTimeout(() => {
+                        alertEl.style.animation = 'slideIn 0.3s ease reverse forwards';
+                        setTimeout(() => alertEl.remove(), 300);
+                    }, duration * 1000);
+                }
+                
+                return alertEl;
+            },
+
+            // ========== 本地存儲管理（帶過期機制） ==========
+            Storage: {
+                /**
+                 * 儲存數據到localStorage（自動序列化+設置過期）
+                 * @param {string} key - 儲存鍵名
+                 * @param {any} data - 要儲存的數據
+                 * @param {number} expireHours - 過期小時（預設24小時）
+                 */
+                set(key, data, expireHours = 24) {
+                    try {
+                        const value = JSON.stringify(data);
+                        localStorage.setItem(key, value);
+                        // 設置過期時間戳
+                        if (expireHours) {
+                            const expireTime = Date.now() + expireHours * 60 * 60 * 1000;
+                            localStorage.setItem(`${key}_expire`, expireTime);
+                        }
+                    } catch (e) {
+                        console.error('[Storage] 儲存失敗:', e);
+                        Utils.showMessage('本地存儲空間不足，無法保存數據！', 'error');
+                    }
+                },
+
+                /**
+                 * 從localStorage獲取數據（自動檢查過期）
+                 * @param {string} key - 儲存鍵名
+                 * @returns {any|null} 儲存的數據，過期/不存在返回null
+                 */
+                get(key) {
+                    try {
+                        const expireTime = localStorage.getItem(`${key}_expire`);
+                        // 檢查是否過期
+                        if (expireTime && Date.now() > Number(expireTime)) {
+                            this.remove(key);
+                            return null;
+                        }
+                        // 解析並返回數據
+                        return Utils.safeParseJSON(localStorage.getItem(key));
+                    } catch (e) {
+                        console.error('[Storage] 讀取失敗:', e);
+                        return null;
+                    }
+                },
+
+                /**
+                 * 移除localStorage中的數據（包含過期標記）
+                 * @param {string} key - 儲存鍵名
+                 */
+                remove(key) {
+                    localStorage.removeItem(key);
+                    localStorage.removeItem(`${key}_expire`);
+                },
+
+                /**
+                 * 清空所有車隊管理系統相關存儲
+                 */
+                clearAllFleetData() {
+                    const keys = Object.keys(localStorage);
+                    keys.forEach(key => {
+                        if (key.includes('fleet') || key.includes('admin') || key.includes('price') || key.includes('finance') || key.includes('driver') || key.includes('amount')) {
+                            this.remove(key);
+                        }
+                    });
+                }
+            },
+
+            // ========== 登錄狀態管理 ==========
+            Auth: {
+                // 登錄狀態相關鍵名（與業務代碼統一）
+                KEYS: {
+                    LOGGED_IN: 'loggedInFleetAdmin',
+                    BACKUP: 'currentFleetAdmin',
+                    EXPIRE: 'adminExpireTime'
+                },
+
+                /**
+                 * 檢查登錄狀態是否有效（核心穩定性方法）
+                 * @returns {boolean} 是否登錄有效
+                 */
+                checkLoginStatus() {
+                    // 1. 獲取登錄數據（優先主鍵，後備份鍵）
+                    let adminData = Utils.Storage.get(Utils.Auth.KEYS.LOGGED_IN);
+                    if (!adminData) {
+                        adminData = Utils.Storage.get(Utils.Auth.KEYS.BACKUP);
+                    }
+
+                    // 2. 驗證登錄數據是否有效
+                    const hasValidAccount = adminData && (
+                        adminData.帳號 || adminData.username || adminData.account || adminData.phone
+                    );
+
+                    if (!hasValidAccount) {
+                        // 登錄無效：清除殘留數據
+                        Utils.Storage.clearAllFleetData();
+                        return false;
+                    }
+
+                    // 3. 自動續期（每次檢查都延長24小時過期）
+                    Utils.Storage.set(Utils.Auth.KEYS.LOGGED_IN, adminData, 24);
+                    return true;
+                },
+
+                /**
+                 * 強制跳轉到登入頁（登錄無效時調用）
+                 */
+                redirectToLogin() {
+                    Utils.showMessage('登錄已過期或未登錄，請重新登入！', 'warning');
+                    setTimeout(() => {
+                        window.location.href = 'driver-login.html';
+                    }, 1500);
+                },
+
+                /**
+                 * 退出登錄（清除所有登錄狀態）
+                 */
+                logout() {
+                    Utils.Storage.clearAllFleetData();
+                    window.location.href = 'driver-login.html';
+                }
+            },
+
+            // ========== UI增強方法 ==========
+            /**
+             * 顯示加載狀態（適用按鈕/頁面加載場景）
+             * @param {HTMLElement} el - 要顯示加載狀態的元素（可選）
+             * @param {string} text - 加載提示文字（預設：處理中...）
+             */
+            showLoading(el, text = '處理中...') {
+                // 頁面級加載
+                if (!el) {
+                    const loadingEl = document.createElement('div');
+                    loadingEl.className = 'loading-overlay';
+                    loadingEl.innerHTML = `
+                        <div class="flex flex-col items-center gap-2">
+                            <div class="loading-spinner"></div>
+                            <span class="text-text-dark text-sm">${text}</span>
+                        </div>
+                    `;
+                    loadingEl.id = 'page-loading';
+                    document.body.appendChild(loadingEl);
+                    return;
+                }
+
+                // 元素級加載
+                if (!el) return;
+                el.disabled = true;
+                el.innerHTML = `
+                    <div class="flex items-center justify-center gap-2">
+                        <i class="fa fa-spinner fa-spin"></i>
+                        <span>${text}</span>
+                    </div>
+                `;
+            },
+
+            /**
+             * 隱藏加載狀態
+             * @param {HTMLElement} el - 要還原的元素（可選）
+             * @param {string} restoreText - 還原的按鈕文字（可選）
+             */
+            hideLoading(el, restoreText = '') {
+                // 移除頁面級加載
+                const pageLoading = document.getElementById('page-loading');
+                if (pageLoading) pageLoading.remove();
+
+                // 還原元素級加載
+                if (el) {
+                    el.disabled = false;
+                    if (restoreText) el.innerHTML = restoreText;
+                }
+            },
+
+            /**
+             * 顯示空數據提示（適用表格）
+             * @param {HTMLElement} el - 要顯示提示的元素
+             * @param {string} text - 空數據提示文字
+             * @param {number} colspan - 表格列數（適用td colspan）
+             */
+            showEmptyData(el, text = '暫無數據', colspan = 1) {
+                if (!el) return;
+                if (el.tagName === 'TBODY') {
+                    el.innerHTML = `
+                        <tr>
+                            <td colspan="${colspan}" style="padding: 30px; text-align: center; color: #666;">
+                                ${text}
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    el.innerHTML = `
+                        <div style="padding: 30px; text-align: center; color: #666;">
+                            ${text}
+                        </div>
+                    `;
+                }
+            },
+
+            /**
+             * 表單數字驗證（批量驗證輸入框）
+             * @param {NodeList} inputs - 要驗證的輸入框集合
+             * @returns {boolean} 是否全部驗證通過
+             */
+            validateFormNumbers(inputs) {
+                let isValid = true;
+                inputs.forEach(input => {
+                    const label = input.previousElementSibling?.textContent || input.name || '該項';
+                    const value = input.value;
+
+                    if (!Utils.validateNumber(value)) {
+                        Utils.showMessage(`${label}只能填大於0的數字！`, 'error');
+                        input.focus();
+                        isValid = false;
+                        return false; // 中斷forEach
+                    }
+                });
+                return isValid;
+            },
+
+            // ========== 行程完成頁專用方法 ==========
+            /**
+             * 安全讀取並顯示最終金額
+             * @returns {string} 格式化的金額字符串
+             */
+            loadAndShowFinalAmount() {
+                try {
+                    // 安全獲取金額（支持數字/字符串格式）
+                    let finalAmount = Utils.Storage.get('totalAmount') || localStorage.getItem('totalAmount') || '000';
+                    
+                    // 驗證金額有效性
+                    if (!Utils.validateNumber(finalAmount.toString(), true)) {
+                        finalAmount = '000';
+                        Utils.showMessage('金額數據無效，已重置為0', 'warning');
+                    }
+                    
+                    // 顯示金額
+                    const amountEl = Utils.safeGetElement('finalAmount');
+                    if (amountEl) {
+                        amountEl.textContent = `${finalAmount}元`;
+                    }
+                    
+                    // 記錄行程完成金額
+                    Utils.Storage.set('trip_completed_amount', {
+                        amount: finalAmount,
+                        completedTime: new Date().toLocaleString('zh-TW')
+                    }, 48); // 48小時過期
+                    
+                    return finalAmount;
+                } catch (e) {
+                    console.error('加載金額失敗:', e);
+                    Utils.showMessage('加載金額失敗，請重試', 'error');
+                    return '000';
+                }
+            },
+
+            /**
+             * 安全跳轉頁面（帶加載狀態和錯誤處理）
+             * @param {string} url - 目標URL
+             * @param {string} message - 跳轉前提示訊息
+             */
+            safeNavigate(url, message = '') {
+                try {
+                    // 顯示提示
+                    if (message) Utils.showMessage(message, 'success');
+                    
+                    // 顯示頁面加載
+                    Utils.showLoading(null, '跳轉中...');
+                    
+                    // 延遲跳轉提升體驗
+                    setTimeout(() => {
+                        window.location.href = url;
+                    }, 500);
+                } catch (e) {
+                    console.error('跳轉失敗:', e);
+                    Utils.hideLoading();
+                    Utils.showMessage('頁面跳轉失敗，請手動操作', 'error');
+                }
+            },
+
+            /**
+             * 記錄支付方式到本地存儲
+             * @param {string} type - 支付方式（現金/電子支付）
+             */
+            recordPaymentType(type) {
+                try {
+                    const paymentRecord = {
+                        type: type,
+                        amount: Utils.Storage.get('totalAmount') || '000',
+                        payTime: new Date().toLocaleString('zh-TW'),
+                        tripStatus: 'completed'
+                    };
+                    
+                    // 儲存支付記錄（7天過期）
+                    Utils.Storage.set('trip_payment_record', paymentRecord, 24 * 7);
+                    
+                    // 顯示成功提示
+                    Utils.showMessage(`已記錄支付方式：${type}`, 'success');
+                    
+                    return true;
+                } catch (e) {
+                    console.error('記錄支付方式失敗:', e);
+                    Utils.showMessage('記錄支付方式失敗，請重試', 'error');
+                    return false;
+                }
+            },
+
+            /**
+             * 模擬上傳截圖（帶加載和狀態記錄）
+             * @param {File} file - 要上傳的文件
+             * @returns {Promise<boolean>} 上傳是否成功
+             */
+            async uploadScreenshotFile(file) {
+                try {
+                    // 顯示加載
+                    Utils.showLoading(null, '上傳中...');
+                    
+                    // 模擬上傳延遲
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    
+                    // 記錄上傳狀態
+                    const uploadRecord = {
+                        fileName: file.name,
+                        fileSize: file.size,
+                        uploadTime: new Date().toLocaleString('zh-TW'),
+                        status: 'uploaded'
+                    };
+                    Utils.Storage.set('trip_screenshot_record', uploadRecord, 24 * 7);
+                    
+                    // 隱藏加載並顯示成功提示
+                    Utils.hideLoading();
+                    Utils.showMessage('截圖已成功上傳！', 'success');
+                    
+                    return true;
+                } catch (e) {
+                    console.error('上傳截圖失敗:', e);
+                    Utils.hideLoading();
+                    Utils.showMessage('截圖上傳失敗，請重試', 'error');
+                    return false;
+                }
+            }
+        };
+
+        // ========== 頁面初始化與事件綁定 ==========
+        document.addEventListener('DOMContentLoaded', function() {
+            // 1. 初始化金額顯示
+            Utils.loadAndShowFinalAmount();
+
+            // 2. 支付方式彈窗控制
+            const paymentModal = Utils.safeGetElement('paymentModal');
+            const paymentBtn = Utils.safeGetElement('paymentBtn');
+            
+            if (paymentBtn && paymentModal) {
+                paymentBtn.addEventListener('click', () => {
+                    paymentModal.classList.remove('hidden');
+                });
+            }
+
+            // 3. 截圖上傳彈窗控制
+            const screenshotModal = Utils.safeGetElement('screenshotModal');
+            const passengerOffBtn = Utils.safeGetElement('passengerOffBtn');
+            
+            if (passengerOffBtn && screenshotModal) {
+                passengerOffBtn.addEventListener('click', () => {
+                    screenshotModal.classList.remove('hidden');
+                    // 重置文件選擇
+                    const fileInput = Utils.safeGetElement('screenshotFile');
+                    if (fileInput) {
+                        fileInput.value = '';
+                        const fileInfo = Utils.safeGetElement('fileInfo');
+                        if (fileInfo) fileInfo.textContent = '未選擇文件';
+                    }
+                });
+            }
+
+            // 4. 監聽文件選擇事件
+            const screenshotFile = Utils.safeGetElement('screenshotFile');
+            if (screenshotFile) {
+                screenshotFile.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const fileInfo = Utils.safeGetElement('fileInfo');
+                        if (fileInfo) {
+                            fileInfo.textContent = `已選擇：${file.name} (${(file.size / 1024).toFixed(1)}KB)`;
+                        }
+                    }
+                });
+            }
+
+            // 5. 接單按鈕事件
+            const takeOrderBtn = Utils.safeGetElement('takeOrderBtn');
+            if (takeOrderBtn) {
+                takeOrderBtn.addEventListener('click', () => {
+                    Utils.safeNavigate('driver-order.html', '即將返回接單頁面');
+                });
+            }
+
+            // 6. 下班按鈕事件
+            const offWorkBtn = Utils.safeGetElement('offWorkBtn');
+            if (offWorkBtn) {
+                offWorkBtn.addEventListener('click', () => {
+                    Utils.showMessage('即將登出，請確認已上傳今日行程截圖', 'warning');
+                    setTimeout(() => {
+                        Utils.Auth.logout();
+                    }, 1500);
+                });
+            }
+
+            // 7. 檢查登錄狀態（司機頁需驗證）
+            if (!Utils.Auth.checkLoginStatus()) {
+                Utils.Auth.redirectToLogin();
+            }
+        });
+
+        // ========== 全局函數（供HTML調用） ==========
+        /**
+         * 設置支付方式（HTML調用）
+         * @param {string} type - 支付方式
+         */
+        function setPayment(type) {
+            const paymentModal = Utils.safeGetElement('paymentModal');
+            if (paymentModal) {
+                // 記錄支付方式
+                Utils.recordPaymentType(type);
+                // 關閉彈窗
+                paymentModal.classList.add('hidden');
+            }
+        }
+
+        /**
+         * 關閉支付彈窗（HTML調用）
+         */
+        function closeModal() {
+            const paymentModal = Utils.safeGetElement('paymentModal');
+            if (paymentModal) paymentModal.classList.add('hidden');
+        }
+
+        /**
+         * 關閉截圖彈窗（HTML調用）
+         */
+        function closeScreenshotModal() {
+            const screenshotModal = Utils.safeGetElement('screenshotModal');
+            if (screenshotModal) screenshotModal.classList.add('hidden');
+        }
+
+        /**
+         * 上傳截圖（HTML調用）
+         */
+        async function uploadScreenshot() {
+            const fileInput = Utils.safeGetElement('screenshotFile');
+            if (!fileInput || !fileInput.files[0]) {
+                Utils.showMessage('請選擇要上傳的截圖', 'warning');
+                return;
+            }
+
+            // 執行上傳
+            const success = await Utils.uploadScreenshotFile(fileInput.files[0]);
+            if (success) {
+                const screenshotModal = Utils.safeGetElement('screenshotModal');
+                if (screenshotModal) screenshotModal.classList.add('hidden');
+            }
+        }
+    </script>
 </head>
 <body class="bg-white font-sans">
     <!-- 頁首 -->
@@ -105,68 +711,5 @@
             </button>
         </div>
     </div>
-
-    <script>
-        // 讀取最終金額
-        function loadFinalAmount() {
-            const finalAmount = localStorage.getItem('totalAmount') || '000';
-            document.getElementById('finalAmount').textContent = `${finalAmount}元`;
-        }
-
-        // 支付方式彈窗控制
-        const paymentModal = document.getElementById('paymentModal');
-        document.getElementById('paymentBtn').addEventListener('click', () => {
-            paymentModal.classList.remove('hidden');
-        });
-        function setPayment(type) {
-            alert(`已記錄支付方式：${type}`);
-            paymentModal.classList.add('hidden');
-        }
-        function closeModal() {
-            paymentModal.classList.add('hidden');
-        }
-
-        // 截圖上傳彈窗控制
-        const screenshotModal = document.getElementById('screenshotModal');
-        document.getElementById('passengerOffBtn').addEventListener('click', () => {
-            screenshotModal.classList.remove('hidden');
-        });
-        // 監聽文件選擇
-        document.getElementById('screenshotFile').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                document.getElementById('fileInfo').textContent = `已選擇：${file.name}`;
-            }
-        });
-        // 上傳截圖
-        function uploadScreenshot() {
-            const file = document.getElementById('screenshotFile').files[0];
-            if (!file) {
-                alert('請選擇要上傳的截圖');
-                return;
-            }
-            alert('截圖已成功上傳！');
-            screenshotModal.classList.add('hidden');
-        }
-        function closeScreenshotModal() {
-            screenshotModal.classList.add('hidden');
-        }
-
-        // 我要接單：連結driver-order.html
-        document.getElementById('takeOrderBtn').addEventListener('click', () => {
-            window.location.href = 'driver-order.html';
-        });
-
-        // 我要下班：連結driver-login.html
-        document.getElementById('offWorkBtn').addEventListener('click', () => {
-            alert('即將登出，請確認已上傳今日行程截圖');
-            window.location.href = 'driver-login.html';
-        });
-
-        // 初始化
-        window.onload = () => {
-            loadFinalAmount();
-        };
-    </script>
 </body>
 </html>

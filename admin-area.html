@@ -117,6 +117,165 @@
             display: none;
         }
     </style>
+    <!-- 植入通用穩定性工具類 -->
+    <script>
+        /**
+         * 全局工具類 - 提升網站穩定性、統一處理通用邏輯
+         * 適用於所有車隊管理系統頁面
+         */
+        const Utils = {
+            // ========== 基礎工具方法 ==========
+            safeParseJSON(str) {
+                try {
+                    return str && str !== 'null' && str !== 'undefined' ? JSON.parse(str) : null;
+                } catch (e) {
+                    console.error('JSON解析失敗:', e, '原始字串:', str);
+                    return null;
+                }
+            },
+
+            safeGetElement(id) {
+                const el = document.getElementById(id);
+                if (!el) console.warn(`[Utils] 元素#${id}不存在`);
+                return el;
+            },
+
+            validateNumber(value, allowZero = false) {
+                const trimmed = value.trim();
+                if (!/^\d+$/.test(trimmed)) return false;
+                if (!allowZero && Number(trimmed) <= 0) return false;
+                return true;
+            },
+
+            // ========== 本地存儲管理（帶過期機制） ==========
+            Storage: {
+                set(key, data, expireHours = 24) {
+                    try {
+                        const value = JSON.stringify(data);
+                        localStorage.setItem(key, value);
+                        if (expireHours) {
+                            const expireTime = Date.now() + expireHours * 60 * 60 * 1000;
+                            localStorage.setItem(`${key}_expire`, expireTime);
+                        }
+                    } catch (e) {
+                        console.error('[Storage] 儲存失敗:', e);
+                        alert('本地存儲空間不足，無法保存數據！');
+                    }
+                },
+
+                get(key) {
+                    try {
+                        const expireTime = localStorage.getItem(`${key}_expire`);
+                        if (expireTime && Date.now() > Number(expireTime)) {
+                            this.remove(key);
+                            return null;
+                        }
+                        return Utils.safeParseJSON(localStorage.getItem(key));
+                    } catch (e) {
+                        console.error('[Storage] 讀取失敗:', e);
+                        return null;
+                    }
+                },
+
+                remove(key) {
+                    localStorage.removeItem(key);
+                    localStorage.removeItem(`${key}_expire`);
+                },
+
+                clearAllFleetData() {
+                    const keys = Object.keys(localStorage);
+                    keys.forEach(key => {
+                        if (key.includes('fleet') || key.includes('admin') || key.includes('price') || key.includes('finance')) {
+                            this.remove(key);
+                        }
+                    });
+                }
+            },
+
+            // ========== 登錄狀態管理 ==========
+            Auth: {
+                KEYS: {
+                    LOGGED_IN: 'loggedInFleetAdmin',
+                    BACKUP: 'currentFleetAdmin',
+                    EXPIRE: 'adminExpireTime'
+                },
+
+                checkLoginStatus() {
+                    let adminData = Utils.Storage.get(Utils.Auth.KEYS.LOGGED_IN);
+                    if (!adminData) {
+                        adminData = Utils.Storage.get(Utils.Auth.KEYS.BACKUP);
+                    }
+
+                    const hasValidAccount = adminData && (
+                        adminData.帳號 || adminData.username || adminData.account || adminData.phone
+                    );
+
+                    if (!hasValidAccount) {
+                        Utils.Storage.clearAllFleetData();
+                        return false;
+                    }
+
+                    Utils.Storage.set(Utils.Auth.KEYS.LOGGED_IN, adminData, 24);
+                    return true;
+                },
+
+                redirectToLogin() {
+                    alert('登錄已過期或未登錄，請重新登入！');
+                    window.location.href = 'manager-login.html';
+                },
+
+                logout() {
+                    Utils.Storage.clearAllFleetData();
+                    window.location.href = 'manager-login.html';
+                }
+            },
+
+            // ========== UI增強方法 ==========
+            showLoading(el, text = '加載中...') {
+                if (!el) return;
+                el.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: #666;">
+                        <i class="fa fa-spinner fa-spin mr-2"></i>${text}
+                    </div>
+                `;
+            },
+
+            showEmptyData(el, text = '暫無數據', colspan = 1) {
+                if (!el) return;
+                if (el.tagName === 'TBODY') {
+                    el.innerHTML = `
+                        <tr>
+                            <td colspan="${colspan}" style="padding: 30px; text-align: center; color: #666;">
+                                ${text}
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    el.innerHTML = `
+                        <div style="padding: 30px; text-align: center; color: #666;">
+                            ${text}
+                        </div>
+                    `;
+                }
+            },
+
+            validateFormNumbers(inputs) {
+                let isValid = true;
+                inputs.forEach(input => {
+                    const label = input.previousElementSibling?.textContent || input.name || '該項';
+                    const value = input.value;
+
+                    if (!Utils.validateNumber(value)) {
+                        alert(`${label}只能填大於0的數字！`);
+                        input.focus();
+                        isValid = false;
+                        return false;
+                    }
+                });
+                return isValid;
+            }
+        };
+    </script>
 </head>
 <body>
     <!-- 未登錄提示遮罩（未登錄時顯示） -->
@@ -231,70 +390,80 @@
 
         // 頁面加載初始化
         window.onload = () => {
-            // 首先檢查登錄狀態
-            checkLoginStatus();
+            // 第一步：使用工具類檢查登錄狀態（增強穩定性）
+            if (!Utils.Auth.checkLoginStatus()) {
+                Utils.safeGetElement('unauthOverlay')?.classList.remove('hidden');
+                return;
+            }
             
             // 初始化手機菜單（基礎顯示）
             initMobileMenu();
             
-            // 初始化退出登入（基礎功能）
+            // 初始化退出登入（使用工具類增強）
             initLogout();
             
-            // 加載管理員名稱
+            // 加載管理員名稱（使用工具類安全解析）
             loadManagerName();
         };
 
-        // 檢查登錄狀態
-        function checkLoginStatus() {
-            const loggedInAdmin = localStorage.getItem(LOGGED_IN_FLEET_KEY);
-            
-            // 未登錄/信息缺失 → 顯示未登錄提示
-            if (!loggedInAdmin) {
-                document.getElementById('unauthOverlay').classList.remove('hidden');
-                return;
-            }
-        }
-
-        // 加載管理員名稱
+        // 加載管理員名稱（使用工具類優化）
         function loadManagerName() {
-            const loggedInAdmin = localStorage.getItem(LOGGED_IN_FLEET_KEY);
-            if (loggedInAdmin) {
-                const adminInfo = JSON.parse(loggedInAdmin);
-                document.getElementById('managerName').textContent = adminInfo.username || adminInfo.name || '管理員';
+            const adminInfo = Utils.Storage.get(LOGGED_IN_FLEET_KEY);
+            const managerNameEl = Utils.safeGetElement('managerName');
+            
+            if (adminInfo && managerNameEl) {
+                managerNameEl.textContent = adminInfo.username || adminInfo.name || adminInfo.帳號 || '管理員';
             }
         }
 
-        // 初始化手機端菜單（僅基礎顯示切換）
+        // 初始化手機端菜單（僅基礎顯示切換，增加空值檢查）
         function initMobileMenu() {
-            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-            const sidebar = document.getElementById('sidebar');
+            const mobileMenuBtn = Utils.safeGetElement('mobileMenuBtn');
+            const sidebar = Utils.safeGetElement('sidebar');
+            const mainContent = document.querySelector('.main-content');
             
-            mobileMenuBtn.addEventListener('click', () => {
-                sidebar.classList.toggle('sidebar-mobile-open');
-            });
+            if (mobileMenuBtn && sidebar) {
+                mobileMenuBtn.addEventListener('click', () => {
+                    sidebar.classList.toggle('sidebar-mobile-open');
+                });
+            }
 
-            // 點擊主內容區關閉手機菜單
-            document.querySelector('.main-content').addEventListener('click', () => {
-                if (window.innerWidth <= 1024) {
-                    sidebar.classList.remove('sidebar-mobile-open');
-                }
-            });
+            // 點擊主內容區關閉手機菜單（增加空值檢查）
+            if (mainContent && sidebar) {
+                mainContent.addEventListener('click', () => {
+                    if (window.innerWidth <= 1024) {
+                        sidebar.classList.remove('sidebar-mobile-open');
+                    }
+                });
+            }
         }
 
-        // 初始化退出登入（與manager-login.html同步）
+        // 初始化退出登入（使用工具類增強，與全局邏輯統一）
         function initLogout() {
-            document.getElementById('logoutLink').addEventListener('click', function() {
-                if (confirm('確定要退出登入嗎？')) {
-                    // 清除所有登錄狀態
-                    localStorage.removeItem(LOGGED_IN_FLEET_KEY);
-                    localStorage.removeItem('loggedInRole');
-                    localStorage.removeItem('currentFleetAdmin');
-                    
-                    // 跳轉到登入頁面
-                    window.location.href = 'manager-login.html';
-                }
-            });
+            const logoutLink = Utils.safeGetElement('logoutLink');
+            if (logoutLink) {
+                logoutLink.addEventListener('click', function() {
+                    if (confirm('確定要退出登入嗎？')) {
+                        // 使用工具類清空所有登錄數據
+                        Utils.Auth.logout();
+                    }
+                });
+            }
         }
+
+        // ========== 自動綁定全局退出登錄（工具類增強） ==========
+        document.addEventListener('DOMContentLoaded', function() {
+            // 雙重保障：統一處理退出登錄按鈕
+            const logoutLink = Utils.safeGetElement('logoutLink');
+            if (logoutLink) {
+                logoutLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (confirm('確定要退出登入嗎？')) {
+                        Utils.Auth.logout();
+                    }
+                });
+            }
+        });
     </script>
 </body>
 </html>

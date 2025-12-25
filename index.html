@@ -9,6 +9,8 @@
   <!-- Mapbox地圖 -->
   <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
   <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet'>
+  <!-- Font Awesome -->
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
   
   <!-- Firebase v12.7.0 模塊版 SDK -->
   <script type="module">
@@ -66,15 +68,836 @@
       .map-container {
         @apply w-full h-[250px] md:h-[300px] rounded-lg overflow-hidden border border-gray-200;
       }
+      .map-hint {
+        @apply absolute top-3 left-3 bg-white/90 px-2 py-1 rounded text-xs text-gray-600 shadow-sm z-10;
+      }
     }
   </style>
+
+  <style>
+    /* Utils工具類樣式 */
+    .utils-alert {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      max-width: 300px;
+      width: 100%;
+      border-radius: 8px;
+      padding: 12px 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      animation: slideIn 0.3s ease forwards;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    .utils-alert.success {
+      background: #f0fdf4;
+      color: #065f46;
+    }
+    .utils-alert.error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    .utils-alert.warning {
+      background: #fffbeb;
+      color: #92400e;
+    }
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9998;
+    }
+    .loading-spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #00A86B;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .btn-loading {
+      position: relative;
+      pointer-events: none;
+      opacity: 0.8;
+    }
+    .btn-loading::after {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border: 2px solid #fff;
+      border-top: 2px solid transparent;
+      border-radius: 50%;
+      right: 1.5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      animation: spin 1s linear infinite;
+    }
+    /* 地圖加載狀態 */
+    .map-loading {
+      position: absolute;
+      inset: 0;
+      background: #f9fafb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 5;
+    }
+  </style>
+
+  <script>
+    /**
+     * 全局工具類 - 提升網站穩定性、統一處理通用邏輯
+     * 適用於所有車隊管理系統頁面（乘客叫車/訂單管理/司機端/管理後台）
+     */
+    const Utils = {
+      // ========== 基礎工具方法 ==========
+      /**
+       * 安全解析JSON（避免解析失敗導致頁面崩潰）
+       * @param {string} str - 要解析的JSON字串
+       * @returns {any|null} 解析後的數據，失敗返回null
+       */
+      safeParseJSON(str) {
+        try {
+          return str && str !== 'null' && str !== 'undefined' ? JSON.parse(str) : null;
+        } catch (e) {
+          console.error('JSON解析失敗:', e, '原始字串:', str);
+          return null;
+        }
+      },
+
+      /**
+       * 安全獲取DOM元素（避免操作空元素報錯）
+       * @param {string} id - 元素ID
+       * @returns {HTMLElement|null} 元素對象或null
+       */
+      safeGetElement(id) {
+        const el = document.getElementById(id);
+        if (!el) console.warn(`[Utils] 元素#${id}不存在`);
+        return el;
+      },
+
+      /**
+       * 驗證數字輸入（適用價格、金額等表單）
+       * @param {string} value - 輸入值
+       * @param {boolean} allowZero - 是否允許0（預設不允許）
+       * @returns {boolean} 是否有效
+       */
+      validateNumber(value, allowZero = false) {
+        const trimmed = value.trim();
+        // 驗證是否為純數字
+        if (!/^\d+$/.test(trimmed)) return false;
+        // 驗證是否大於0（如果不允許0）
+        if (!allowZero && Number(trimmed) <= 0) return false;
+        return true;
+      },
+
+      /**
+       * 顯示統一提示訊息（取代alert，提升體驗）
+       * @param {string} message - 提示內容
+       * @param {string} type - 類型 success/error/warning
+       * @param {number} duration - 自動關閉時間（秒，預設3秒）
+       */
+      showMessage(message, type = 'success', duration = 3) {
+        // 移除已存在的提示
+        const oldAlert = document.querySelector('.utils-alert');
+        if (oldAlert) oldAlert.remove();
+        
+        // 創建提示元素
+        const alertEl = document.createElement('div');
+        alertEl.className = `utils-alert ${type}`;
+        
+        // 設置圖標
+        const iconMap = {
+          success: '<i class="fa fa-check-circle"></i>',
+          error: '<i class="fa fa-times-circle"></i>',
+          warning: '<i class="fa fa-exclamation-circle"></i>'
+        };
+        
+        alertEl.innerHTML = `
+          ${iconMap[type] || iconMap.success}
+          <span>${message}</span>
+        `;
+        
+        // 添加到頁面
+        document.body.appendChild(alertEl);
+        
+        // 自動移除
+        if (duration > 0) {
+          setTimeout(() => {
+            alertEl.style.animation = 'slideIn 0.3s ease reverse forwards';
+            setTimeout(() => alertEl.remove(), 300);
+          }, duration * 1000);
+        }
+        
+        return alertEl;
+      },
+
+      // ========== 本地存儲管理（帶過期機制） ==========
+      Storage: {
+        /**
+         * 儲存數據到localStorage（自動序列化+設置過期）
+         * @param {string} key - 儲存鍵名
+         * @param {any} data - 要儲存的數據
+         * @param {number} expireHours - 過期小時（預設24小時）
+         */
+        set(key, data, expireHours = 24) {
+          try {
+            const value = JSON.stringify(data);
+            localStorage.setItem(key, value);
+            // 設置過期時間戳
+            if (expireHours) {
+              const expireTime = Date.now() + expireHours * 60 * 60 * 1000;
+              localStorage.setItem(`${key}_expire`, expireTime);
+            }
+          } catch (e) {
+            console.error('[Storage] 儲存失敗:', e);
+            Utils.showMessage('本地存儲空間不足，無法保存數據！', 'error');
+          }
+        },
+
+        /**
+         * 從localStorage獲取數據（自動檢查過期）
+         * @param {string} key - 儲存鍵名
+         * @returns {any|null} 儲存的數據，過期/不存在返回null
+         */
+        get(key) {
+          try {
+            const expireTime = localStorage.getItem(`${key}_expire`);
+            // 檢查是否過期
+            if (expireTime && Date.now() > Number(expireTime)) {
+              this.remove(key);
+              return null;
+            }
+            // 解析並返回數據
+            return Utils.safeParseJSON(localStorage.getItem(key));
+          } catch (e) {
+            console.error('[Storage] 讀取失敗:', e);
+            return null;
+          }
+        },
+
+        /**
+         * 移除localStorage中的數據（包含過期標記）
+         * @param {string} key - 儲存鍵名
+         */
+        remove(key) {
+          localStorage.removeItem(key);
+          localStorage.removeItem(`${key}_expire`);
+        },
+
+        /**
+         * 清空所有車隊管理系統相關存儲
+         */
+        clearAllFleetData() {
+          const keys = Object.keys(localStorage);
+          keys.forEach(key => {
+            if (key.includes('fleet') || key.includes('admin') || key.includes('price') || key.includes('finance') || key.includes('driver') || key.includes('order') || key.includes('ride')) {
+              this.remove(key);
+            }
+          });
+        }
+      },
+
+      // ========== UI增強方法 ==========
+      /**
+       * 顯示加載狀態（適用按鈕/頁面加載場景）
+       * @param {HTMLElement} el - 要顯示加載狀態的元素（可選）
+       * @param {string} text - 加載提示文字（預設：處理中...）
+       */
+      showLoading(el, text = '處理中...') {
+        // 頁面級加載
+        if (!el) {
+          const loadingEl = document.createElement('div');
+          loadingEl.className = 'loading-overlay';
+          loadingEl.innerHTML = `
+            <div class="flex flex-col items-center gap-3">
+              <div class="loading-spinner"></div>
+              <span class="text-gray-700 text-base">${text}</span>
+            </div>
+          `;
+          loadingEl.id = 'page-loading';
+          document.body.appendChild(loadingEl);
+          return;
+        }
+
+        // 元素級加載
+        if (!el) return;
+        el.disabled = true;
+        el.classList.add('btn-loading');
+        const originalText = el.innerHTML;
+        el.setAttribute('data-original-text', originalText);
+        el.innerHTML = text;
+      },
+
+      /**
+       * 隱藏加載狀態
+       * @param {HTMLElement} el - 要還原的元素（可選）
+       * @param {string} restoreText - 還原的按鈕文字（可選）
+       */
+      hideLoading(el, restoreText = '') {
+        // 移除頁面級加載
+        const pageLoading = document.getElementById('page-loading');
+        if (pageLoading) pageLoading.remove();
+
+        // 還原元素級加載
+        if (el) {
+          el.disabled = false;
+          el.classList.remove('btn-loading');
+          const originalText = el.getAttribute('data-original-text');
+          if (originalText) el.innerHTML = originalText;
+          else if (restoreText) el.innerHTML = restoreText;
+        }
+      },
+
+      /**
+       * 安全跳轉頁面（帶加載狀態和錯誤處理）
+       * @param {string} url - 目標URL
+       * @param {string} message - 跳轉前提示訊息
+       */
+      safeNavigate(url, message = '') {
+        try {
+          // 顯示提示
+          if (message) Utils.showMessage(message, 'success');
+          
+          // 顯示頁面加載
+          Utils.showLoading(null, '跳轉中...');
+          
+          // 延遲跳轉提升體驗
+          setTimeout(() => {
+            window.location.href = url;
+          }, 800);
+        } catch (e) {
+          console.error('跳轉失敗:', e);
+          Utils.hideLoading();
+          Utils.showMessage('頁面跳轉失敗，請手動操作', 'error');
+        }
+      },
+
+      // ========== 表單驗證專用方法 ==========
+      FormValidator: {
+        /**
+         * 驗證手機號碼（台灣手機號）
+         * @param {string} phone - 手機號
+         * @returns {boolean} 是否有效
+         */
+        validatePhoneNumber(phone) {
+          const cleanPhone = phone.replace(/[^0-9]/g, '');
+          // 台灣手機號：09開頭，共10位
+          const phoneRegex = /^09\d{8}$/;
+          return phoneRegex.test(cleanPhone);
+        },
+
+        /**
+         * 驗證姓名（至少2個字）
+         * @param {string} name - 姓名
+         * @returns {boolean} 是否有效
+         */
+        validateName(name) {
+          if (!name || name.trim().length < 2) return false;
+          // 只允許中文、英文、空格
+          const nameRegex = /^[\u4e00-\u9fa5a-zA-Z\s]+$/;
+          return nameRegex.test(name.trim());
+        },
+
+        /**
+         * 驗證地址（非空且至少5個字符）
+         * @param {string} address - 地址
+         * @returns {boolean} 是否有效
+         */
+        validateAddress(address) {
+          if (!address || address.trim().length < 5) return false;
+          return true;
+        },
+
+        /**
+         * 驗證表單數據
+         * @param {object} data - 表單數據
+         * @returns {object} 驗證結果 { isValid: boolean, errors: array }
+         */
+        validateRideForm(data) {
+          const errors = [];
+          
+          // 驗證姓名
+          if (!this.validateName(data.name)) {
+            errors.push('姓名格式不正確，請輸入至少2個字的真實姓名');
+          }
+          
+          // 驗證電話
+          if (!this.validatePhoneNumber(data.phone)) {
+            errors.push('手機號碼格式錯誤，請輸入09開頭的10位數字');
+          }
+          
+          // 驗證上車地點
+          if (!this.validateAddress(data.pickup)) {
+            errors.push('上車地點格式不正確，請輸入詳細的地址信息');
+          }
+          
+          // 驗證下車地點
+          if (!this.validateAddress(data.dropoff)) {
+            errors.push('下車地點格式不正確，請輸入詳細的地址信息');
+          }
+          
+          // 驗證上下車地點是否相同
+          if (data.pickup && data.dropoff && 
+              data.pickup.trim() === data.dropoff.trim()) {
+            errors.push('上車地點和下車地點不能相同');
+          }
+          
+          return {
+            isValid: errors.length === 0,
+            errors: errors
+          };
+        }
+      },
+
+      // ========== 地圖相關工具方法 ==========
+      MapUtils: {
+        /**
+         * 獲取地址的經緯度（反向地理編碼）
+         * @param {string} address - 地址
+         * @param {string} accessToken - Mapbox Token
+         * @returns {Promise<{lng: number, lat: number}|null>} 經緯度坐標
+         */
+        async getCoordinates(address, accessToken) {
+          try {
+            const response = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${accessToken}&limit=1`);
+            const data = await response.json();
+            
+            if (data.features && data.features.length > 0) {
+              const [lng, lat] = data.features[0].center;
+              return { lng, lat };
+            }
+            
+            return null;
+          } catch (error) {
+            console.error('獲取地址坐標失敗:', error);
+            return null;
+          }
+        },
+
+        /**
+         * 獲取經緯度的地址（正向地理編碼）
+         * @param {number} lng - 經度
+         * @param {number} lat - 緯度
+         * @param {string} accessToken - Mapbox Token
+         * @returns {Promise<string|null>} 地址字符串
+         */
+        async getAddress(lng, lat, accessToken) {
+          try {
+            const response = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${accessToken}`);
+            const data = await response.json();
+            
+            if (data.features && data.features.length > 0) {
+              return data.features[0].place_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+            }
+            
+            return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+          } catch (error) {
+            console.error('獲取地址信息失敗:', error);
+            return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+          }
+        },
+
+        /**
+         * 初始化Mapbox地圖（帶錯誤處理）
+         * @param {string} containerId - 地圖容器ID
+         * @param {string} accessToken - Mapbox Token
+         * @param {object} options - 地圖選項
+         * @returns {object|null} 地圖實例
+         */
+        initMap(containerId, accessToken, options = {}) {
+          try {
+            if (!window.mapboxgl) {
+              Utils.showMessage('地圖加載失敗，請檢查網絡連接', 'error');
+              return null;
+            }
+            
+            const mapContainer = Utils.safeGetElement(containerId);
+            if (!mapContainer) {
+              Utils.showMessage('地圖容器不存在', 'error');
+              return null;
+            }
+            
+            // 顯示地圖加載狀態
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'map-loading';
+            loadingDiv.innerHTML = `
+              <div class="flex flex-col items-center gap-2">
+                <div class="loading-spinner"></div>
+                <span class="text-xs text-gray-500">地圖加載中...</span>
+              </div>
+            `;
+            mapContainer.appendChild(loadingDiv);
+            
+            // 默認選項
+            const defaultOptions = {
+              container: containerId,
+              style: 'mapbox://styles/mapbox/light-v11',
+              center: [121.5200, 25.0300],
+              zoom: 12
+            };
+            
+            // 合併選項
+            const mapOptions = { ...defaultOptions, ...options };
+            
+            // 創建地圖
+            const map = new mapboxgl.Map(mapOptions);
+            
+            // 添加導航控件
+            map.addControl(new mapboxgl.NavigationControl());
+            
+            // 地圖加載完成
+            map.on('load', () => {
+              mapContainer.removeChild(loadingDiv);
+              Utils.showMessage('地圖加載完成', 'success', 1);
+            });
+            
+            // 地圖加載錯誤處理
+            map.on('error', (e) => {
+              console.error('地圖加載錯誤:', e);
+              mapContainer.removeChild(loadingDiv);
+              mapContainer.innerHTML = `
+                <div class="w-full h-full flex flex-col items-center justify-center p-4 text-center">
+                  <i class="fa fa-map-marker text-4xl text-gray-300 mb-2"></i>
+                  <p class="text-sm text-gray-500">地圖加載失敗</p>
+                  <p class="text-xs text-gray-400 mt-1">請刷新頁面或檢查網絡</p>
+                </div>
+              `;
+              Utils.showMessage('地圖加載失敗，請刷新頁面', 'error');
+            });
+            
+            return map;
+          } catch (error) {
+            console.error('初始化地圖失敗:', error);
+            Utils.showMessage('地圖初始化失敗', 'error');
+            return null;
+          }
+        }
+      },
+
+      // ========== Firebase操作專用方法 ==========
+      Firebase: {
+        /**
+         * 提交訂單到Firebase
+         * @param {object} orderData - 訂單數據
+         * @returns {Promise<string|null>} 訂單ID
+         */
+        async submitRideOrder(orderData) {
+          try {
+            if (!window.db || !window.ref || !window.push) {
+              throw new Error('Firebase未正確初始化');
+            }
+            
+            // 補充訂單元數據
+            const completeOrderData = {
+              ...orderData,
+              orderId: `ORD-${Date.now()}`,
+              createTime: new Date().toLocaleString('zh-TW'),
+              createTimeStamp: Date.now(),
+              status: '待接單',
+              passengerIp: window.location.hostname,
+              deviceType: /Mobile|Android/.test(navigator.userAgent) ? 'mobile' : 'desktop'
+            };
+            
+            // 提交到Firebase
+            const orderRef = await push(ref(window.db, 'rides'), completeOrderData);
+            
+            // 本地存儲訂單記錄
+            Utils.Storage.set(`recent_order_${completeOrderData.orderId}`, completeOrderData, 72);
+            
+            // 更新最近訂單列表
+            const recentOrders = Utils.Storage.get('recent_orders') || [];
+            recentOrders.unshift(completeOrderData);
+            if (recentOrders.length > 10) recentOrders.splice(10);
+            Utils.Storage.set('recent_orders', recentOrders, 7 * 24);
+            
+            return orderRef.key;
+          } catch (error) {
+            console.error('提交訂單到Firebase失敗:', error);
+            throw error;
+          }
+        }
+      }
+    };
+
+    // ========== 頁面全局變量 ==========
+    let map = null;
+    let isPickup = true;
+    const MAPBOX_TOKEN = 'pk.eyJ1IjoiaWY5Mjlob25nIiwiYSI6ImNtamQxczU2cjAweDMzZnM1Z3BvY2JkejgifQ.q-GNcs0rqWrZ3HtjhmysEQ';
+
+    // ========== 頁面初始化 ==========
+    document.addEventListener('DOMContentLoaded', () => {
+      // 初始化地圖
+      initMap();
+      
+      // 初始化地圖點擊事件
+      initMapClickHandler();
+      
+      // 初始化表單提交事件
+      initFormSubmit();
+      
+      // 初始化表單交互
+      initFormInteractions();
+      
+      // 顯示歡迎提示
+      Utils.showMessage('歡迎使用搭車自由服務', 'success', 2);
+    });
+
+    // ========== 地圖初始化 ==========
+    function initMap() {
+      // 使用工具類初始化地圖
+      map = Utils.MapUtils.initMap('map', MAPBOX_TOKEN, {
+        center: [121.5200, 25.0300],
+        zoom: 12
+      });
+      
+      // 添加地圖提示
+      const mapContainer = Utils.safeGetElement('map');
+      if (mapContainer) {
+        const hintDiv = document.createElement('div');
+        hintDiv.className = 'map-hint';
+        hintDiv.innerHTML = '<i class="fa fa-hand-pointer-o mr-1"></i>點擊選擇地址';
+        mapContainer.appendChild(hintDiv);
+      }
+    }
+
+    // ========== 地圖點擊事件初始化 ==========
+    function initMapClickHandler() {
+      const pickupInput = Utils.safeGetElement('pickup');
+      const dropoffInput = Utils.safeGetElement('dropoff');
+      
+      if (!pickupInput || !dropoffInput || !map) return;
+      
+      // 焦點切換
+      pickupInput.addEventListener('focus', () => {
+        isPickup = true;
+        Utils.showMessage('請在地圖上點擊選擇上車地點', 'warning', 2);
+      });
+      
+      dropoffInput.addEventListener('focus', () => {
+        isPickup = false;
+        Utils.showMessage('請在地圖上點擊選擇下車地點', 'warning', 2);
+      });
+      
+      // 地圖點擊事件
+      map.on('click', async (e) => {
+        try {
+          // 顯示加載狀態
+          Utils.showLoading(null, '獲取地址信息中...');
+          
+          // 獲取地址信息
+          const address = await Utils.MapUtils.getAddress(e.lngLat.lng, e.lngLat.lat, MAPBOX_TOKEN);
+          
+          // 設置地址
+          if (isPickup) {
+            pickupInput.value = address;
+            // 添加標記
+            addMapMarker(e.lngLat.lng, e.lngLat.lat, '上車地點', '#00A86B');
+          } else {
+            dropoffInput.value = address;
+            // 添加標記
+            addMapMarker(e.lngLat.lng, e.lngLat.lat, '下車地點', '#FF6B6B');
+          }
+          
+          // 隱藏加載狀態
+          Utils.hideLoading();
+          
+          // 顯示成功提示
+          Utils.showMessage(`${isPickup ? '上車' : '下車'}地點已選擇: ${address.substring(0, 15)}...`, 'success', 3);
+        } catch (error) {
+          console.error('獲取地址失敗:', error);
+          Utils.hideLoading();
+          Utils.showMessage('獲取地址信息失敗，請手動輸入', 'error');
+        }
+      });
+    }
+
+    // ========== 地圖標記添加 ==========
+    function addMapMarker(lng, lat, title, color = '#00A86B') {
+      if (!map) return;
+      
+      // 移除現有標記
+      document.querySelectorAll('.mapboxgl-marker').forEach(marker => {
+        if (marker.title === title) marker.remove();
+      });
+      
+      // 添加新標記
+      new mapboxgl.Marker({ 
+        color: color,
+        draggable: true
+      })
+      .setLngLat([lng, lat])
+      .setPopup(new mapboxgl.Popup().setHTML(`<p class="text-sm font-medium">${title}</p>`))
+      .addTo(map)
+      .togglePopup();
+      
+      // 地圖居中
+      map.flyTo({
+        center: [lng, lat],
+        zoom: 15,
+        speed: 0.8
+      });
+    }
+
+    // ========== 表單交互初始化 ==========
+    function initFormInteractions() {
+      // 即時驗證手機號
+      const phoneInput = Utils.safeGetElement('phone');
+      if (phoneInput) {
+        phoneInput.addEventListener('input', (e) => {
+          // 只允許數字輸入
+          e.target.value = e.target.value.replace(/[^0-9]/g, '');
+          
+          // 即時驗證格式
+          if (e.target.value.length === 10) {
+            if (Utils.FormValidator.validatePhoneNumber(e.target.value)) {
+              e.target.classList.add('border-green-500');
+              e.target.classList.remove('border-red-500');
+            } else {
+              e.target.classList.add('border-red-500');
+              e.target.classList.remove('border-green-500');
+            }
+          } else {
+            e.target.classList.remove('border-green-500', 'border-red-500');
+          }
+        });
+      }
+      
+      // 姓名輸入驗證
+      const nameInput = Utils.safeGetElement('name');
+      if (nameInput) {
+        nameInput.addEventListener('blur', (e) => {
+          if (!Utils.FormValidator.validateName(e.target.value)) {
+            Utils.showMessage('姓名格式不正確，請輸入至少2個字的真實姓名', 'warning');
+            e.target.classList.add('border-red-500');
+          } else {
+            e.target.classList.remove('border-red-500');
+            e.target.classList.add('border-green-500');
+          }
+        });
+      }
+    }
+
+    // ========== 表單提交初始化 ==========
+    function initFormSubmit() {
+      const rideForm = Utils.safeGetElement('ride-form');
+      if (!rideForm) return;
+
+      rideForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        // 獲取表單數據
+        const name = Utils.safeGetElement('name')?.value.trim() || '';
+        const phone = Utils.safeGetElement('phone')?.value.trim() || '';
+        const pickup = Utils.safeGetElement('pickup')?.value.trim() || '';
+        const dropoff = Utils.safeGetElement('dropoff')?.value.trim() || '';
+        const remark = Utils.safeGetElement('remark')?.value.trim() || '';
+
+        // 構建表單數據對象
+        const formData = { name, phone, pickup, dropoff, remark };
+
+        // 表單驗證
+        const validationResult = Utils.FormValidator.validateRideForm(formData);
+        
+        if (!validationResult.isValid) {
+          // 顯示驗證錯誤
+          validationResult.errors.forEach(error => {
+            Utils.showMessage(error, 'error');
+          });
+          return;
+        }
+
+        // 獲取提交按鈕
+        const submitBtn = e.submitter || rideForm.querySelector('button[type="submit"]');
+        
+        try {
+          // 顯示加載狀態
+          Utils.showLoading(submitBtn, '<i class="fa fa-spinner fa-spin mr-2"></i>提交訂單中...');
+          Utils.showLoading(null, '處理您的訂單請稍候...');
+          
+          // 構建訂單數據
+          const orderData = {
+            name: name,
+            phone: phone,
+            pickup: pickup,
+            dropoff: dropoff,
+            remark: remark,
+            status: '待接單'
+          };
+
+          // 提交訂單到Firebase
+          const orderId = await Utils.Firebase.submitRideOrder(orderData);
+          
+          if (orderId) {
+            // 保存當前訂單到本地存儲
+            Utils.Storage.set('current_order', {
+              orderId: `ORD-${Date.now()}`,
+              name: name,
+              phone: phone,
+              pickup: pickup,
+              dropoff: dropoff,
+              createTime: new Date().toLocaleString('zh-TW')
+            }, 24);
+            
+            // 顯示成功提示
+            Utils.showMessage(`訂單提交成功！訂單編號: ${orderData.orderId}`, 'success');
+            
+            // 安全跳轉到訂單確認頁
+            Utils.safeNavigate('passenger-order.html', '訂單已提交，即將跳轉到訂單確認頁');
+          }
+        } catch (err) {
+          console.error('提交失敗:', err);
+          
+          // 隱藏加載狀態
+          Utils.hideLoading(submitBtn);
+          Utils.hideLoading();
+          
+          // 顯示錯誤提示
+          Utils.showMessage(`訂單提交失敗：${err.message}`, 'error');
+          
+          // 備案：保存到本地存儲
+          const backupOrder = {
+            name: name,
+            phone: phone,
+            pickup: pickup,
+            dropoff: dropoff,
+            remark: remark,
+            status: '待同步',
+            orderId: `ORD-${Date.now()}`,
+            createTime: new Date().toLocaleString('zh-TW'),
+            syncFailed: true
+          };
+          
+          const backupOrders = Utils.Storage.get('backup_orders') || [];
+          backupOrders.push(backupOrder);
+          Utils.Storage.set('backup_orders', backupOrders, 24);
+          
+          Utils.showMessage('訂單已保存到本地，網絡恢復後將自動同步', 'warning');
+        }
+      });
+    }
+  </script>
 </head>
 <body class="bg-gray-50 min-h-screen">
   <div class="container mx-auto px-4 py-6 md:py-10 max-w-3xl">
     <h1 class="text-2xl md:text-3xl font-bold text-center text-gray-800 mb-8">搭車自由 - 乘客叫車</h1>
 
     <div class="bg-white rounded-xl shadow-sm p-5 md:p-6">
-      <div class="map-container mb-6" id="map"></div>
+      <div class="map-container relative mb-6" id="map"></div>
 
       <form id="ride-form" class="space-y-4">
         <div>
@@ -84,7 +907,7 @@
         
         <div>
           <label class="form-label">電話</label>
-          <input type="tel" id="phone" class="input-field" placeholder="輸入您的聯絡電話" required>
+          <input type="tel" id="phone" class="input-field" placeholder="輸入您的聯絡電話（09開頭）" required>
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -100,79 +923,17 @@
         
         <div>
           <label class="form-label">備註（可選）</label>
-          <textarea id="remark" class="input-field" rows="2" placeholder="輸入額外需求（如行李數量）"></textarea>
+          <textarea id="remark" class="input-field" rows="2" placeholder="輸入額外需求（如行李數量、是否需要兒童座椅等）"></textarea>
         </div>
         
         <button type="submit" class="btn-primary">提交訂單</button>
       </form>
     </div>
+    
+    <!-- 底部提示 -->
+    <div class="mt-4 text-center text-xs text-gray-500">
+      <p>提交訂單即表示您同意<a href="#" class="text-primary hover:underline">服務條款</a>和<a href="#" class="text-primary hover:underline">隱私政策</a></p>
+    </div>
   </div>
-
-  <script>
-    // 初始化Mapbox地圖
-    mapboxgl.accessToken = 'pk.eyJ1IjoiaWY5Mjlob25nIiwiYSI6ImNtamQxczU2cjAweDMzZnM1Z3BvY2JkejgifQ.q-GNcs0rqWrZ3HtjhmysEQ';
-    const map = new mapboxgl.Map({
-      container: 'map',
-      style: 'mapbox://styles/mapbox/light-v11',
-      center: [121.5200, 25.0300],
-      zoom: 12
-    });
-    map.addControl(new mapboxgl.NavigationControl());
-
-    // 地圖點擊選擇地址
-    let isPickup = true;
-    document.getElementById('pickup').addEventListener('focus', () => isPickup = true);
-    document.getElementById('dropoff').addEventListener('focus', () => isPickup = false);
-    map.on('click', (e) => {
-      fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${e.lngLat.lng},${e.lngLat.lat}.json?access_token=${mapboxgl.accessToken}`)
-        .then(res => res.json())
-        .then(data => {
-          const address = data.features[0]?.place_name || `${e.lngLat.lat.toFixed(4)}, ${e.lngLat.lng.toFixed(4)}`;
-          if (isPickup) document.getElementById('pickup').value = address;
-          else document.getElementById('dropoff').value = address;
-        });
-    });
-
-    // 表單提交（同步到Firebase+跳轉）
-    document.getElementById('ride-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      // 獲取表單數據
-      const name = document.getElementById('name').value.trim();
-      const phone = document.getElementById('phone').value.trim();
-      const pickup = document.getElementById('pickup').value.trim();
-      const dropoff = document.getElementById('dropoff').value.trim();
-      const remark = document.getElementById('remark').value.trim();
-
-      // 驗證必填項
-      if (!name || !phone || !pickup || !dropoff) {
-        alert('請填寫所有必填欄位！');
-        return;
-      }
-
-      try {
-        // 構建訂單數據
-        const orderData = {
-          name: name,
-          phone: phone,
-          pickup: pickup,
-          dropoff: dropoff,
-          remark: remark,
-          status: '待接單',
-          orderId: 'ORD-' + Date.now(),
-          createTime: new Date().toLocaleString('zh-TW')
-        };
-
-        // 提交訂單到Firebase即時資料庫
-        await push(ref(window.db, 'rides'), orderData);
-
-        // 跳轉到訂單確認頁
-        window.location.href = 'passenger-order.html';
-      } catch (err) {
-        console.error('提交失敗:', err);
-        alert('訂單提交失敗，請稍後重試');
-      }
-    });
-  </script>
 </body>
 </html>

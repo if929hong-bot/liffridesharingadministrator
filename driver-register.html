@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>司機註冊</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
   <style>
     .register-card {
       background: white;
@@ -60,7 +61,754 @@
       margin-top: 4px;
       display: none;
     }
+    /* Utils工具類樣式 */
+    .utils-alert {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      max-width: 300px;
+      width: 100%;
+      border-radius: 8px;
+      padding: 12px 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      animation: slideIn 0.3s ease forwards;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    .utils-alert.success {
+      background: #f0fdf4;
+      color: #065f46;
+    }
+    .utils-alert.error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    .utils-alert.warning {
+      background: #fffbeb;
+      color: #92400e;
+    }
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9998;
+    }
+    .loading-spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #22c55e;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .btn-loading {
+      position: relative;
+      pointer-events: none;
+      opacity: 0.8;
+    }
+    .btn-loading::after {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border: 2px solid #fff;
+      border-top: 2px solid transparent;
+      border-radius: 50%;
+      right: 1.5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      animation: spin 1s linear infinite;
+    }
   </style>
+
+  <script>
+    /**
+     * 全局工具類 - 提升網站穩定性、統一處理通用邏輯
+     * 適用於所有車隊管理系統頁面（司機註冊/登錄/訂單管理/計費頁）
+     */
+    const Utils = {
+      // ========== 基礎工具方法 ==========
+      /**
+       * 安全解析JSON（避免解析失敗導致頁面崩潰）
+       * @param {string} str - 要解析的JSON字串
+       * @returns {any|null} 解析後的數據，失敗返回null
+       */
+      safeParseJSON(str) {
+        try {
+          return str && str !== 'null' && str !== 'undefined' ? JSON.parse(str) : null;
+        } catch (e) {
+          console.error('JSON解析失敗:', e, '原始字串:', str);
+          return null;
+        }
+      },
+
+      /**
+       * 安全獲取DOM元素（避免操作空元素報錯）
+       * @param {string} id - 元素ID
+       * @returns {HTMLElement|null} 元素對象或null
+       */
+      safeGetElement(id) {
+        const el = document.getElementById(id);
+        if (!el) console.warn(`[Utils] 元素#${id}不存在`);
+        return el;
+      },
+
+      /**
+       * 驗證數字輸入（適用價格、金額等表單）
+       * @param {string} value - 輸入值
+       * @param {boolean} allowZero - 是否允許0（預設不允許）
+       * @returns {boolean} 是否有效
+       */
+      validateNumber(value, allowZero = false) {
+        const trimmed = value.trim();
+        // 驗證是否為純數字
+        if (!/^\d+$/.test(trimmed)) return false;
+        // 驗證是否大於0（如果不允許0）
+        if (!allowZero && Number(trimmed) <= 0) return false;
+        return true;
+      },
+
+      /**
+       * 顯示統一提示訊息（取代alert，提升體驗）
+       * @param {string} message - 提示內容
+       * @param {string} type - 類型 success/error/warning
+       * @param {number} duration - 自動關閉時間（秒，預設3秒）
+       */
+      showMessage(message, type = 'success', duration = 3) {
+        // 移除已存在的提示
+        const oldAlert = document.querySelector('.utils-alert');
+        if (oldAlert) oldAlert.remove();
+        
+        // 創建提示元素
+        const alertEl = document.createElement('div');
+        alertEl.className = `utils-alert ${type}`;
+        
+        // 設置圖標
+        const iconMap = {
+          success: '<i class="fa fa-check-circle"></i>',
+          error: '<i class="fa fa-times-circle"></i>',
+          warning: '<i class="fa fa-exclamation-circle"></i>'
+        };
+        
+        alertEl.innerHTML = `
+          ${iconMap[type] || iconMap.success}
+          <span>${message}</span>
+        `;
+        
+        // 添加到頁面
+        document.body.appendChild(alertEl);
+        
+        // 自動移除
+        if (duration > 0) {
+          setTimeout(() => {
+            alertEl.style.animation = 'slideIn 0.3s ease reverse forwards';
+            setTimeout(() => alertEl.remove(), 300);
+          }, duration * 1000);
+        }
+        
+        return alertEl;
+      },
+
+      // ========== 本地存儲管理（帶過期機制） ==========
+      Storage: {
+        /**
+         * 儲存數據到localStorage（自動序列化+設置過期）
+         * @param {string} key - 儲存鍵名
+         * @param {any} data - 要儲存的數據
+         * @param {number} expireHours - 過期小時（預設24小時）
+         */
+        set(key, data, expireHours = 24) {
+          try {
+            const value = JSON.stringify(data);
+            localStorage.setItem(key, value);
+            // 設置過期時間戳
+            if (expireHours) {
+              const expireTime = Date.now() + expireHours * 60 * 60 * 1000;
+              localStorage.setItem(`${key}_expire`, expireTime);
+            }
+          } catch (e) {
+            console.error('[Storage] 儲存失敗:', e);
+            Utils.showMessage('本地存儲空間不足，無法保存數據！', 'error');
+          }
+        },
+
+        /**
+         * 從localStorage獲取數據（自動檢查過期）
+         * @param {string} key - 儲存鍵名
+         * @returns {any|null} 儲存的數據，過期/不存在返回null
+         */
+        get(key) {
+          try {
+            const expireTime = localStorage.getItem(`${key}_expire`);
+            // 檢查是否過期
+            if (expireTime && Date.now() > Number(expireTime)) {
+              this.remove(key);
+              return null;
+            }
+            // 解析並返回數據
+            return Utils.safeParseJSON(localStorage.getItem(key));
+          } catch (e) {
+            console.error('[Storage] 讀取失敗:', e);
+            return null;
+          }
+        },
+
+        /**
+         * 移除localStorage中的數據（包含過期標記）
+         * @param {string} key - 儲存鍵名
+         */
+        remove(key) {
+          localStorage.removeItem(key);
+          localStorage.removeItem(`${key}_expire`);
+        },
+
+        /**
+         * 清空所有車隊管理系統相關存儲
+         */
+        clearAllFleetData() {
+          const keys = Object.keys(localStorage);
+          keys.forEach(key => {
+            if (key.includes('fleet') || key.includes('admin') || key.includes('price') || key.includes('finance') || key.includes('driver') || key.includes('order')) {
+              this.remove(key);
+            }
+          });
+        }
+      },
+
+      // ========== 登錄狀態管理 ==========
+      Auth: {
+        // 司機登錄狀態相關鍵名
+        DRIVER_KEYS: {
+          PASSED_LIST: 'driverPassedList',
+          LOGGED_IN: 'driverLoggedIn',
+          EXPIRE: 'driverExpireTime'
+        },
+
+        /**
+         * 檢查司機登錄狀態是否有效
+         * @returns {boolean} 是否登錄有效
+         */
+        checkDriverLoginStatus() {
+          // 獲取司機登錄數據
+          const driverData = Utils.Storage.get(Utils.Auth.DRIVER_KEYS.LOGGED_IN);
+          
+          // 驗證登錄數據是否有效
+          const hasValidData = driverData && driverData.phone && driverData.password;
+
+          if (!hasValidData) {
+            return false;
+          }
+
+          // 自動續期（每次檢查都延長24小時過期）
+          Utils.Storage.set(Utils.Auth.DRIVER_KEYS.LOGGED_IN, driverData, 24);
+          return true;
+        },
+
+        /**
+         * 強制跳轉到司機登入頁
+         */
+        redirectToDriverLogin() {
+          Utils.showMessage('請先登錄司機帳號！', 'warning');
+          setTimeout(() => {
+            window.location.href = 'driver-login.html';
+          }, 1000);
+        },
+
+        /**
+         * 司機退出登錄
+         */
+        driverLogout() {
+          Utils.Storage.remove(Utils.Auth.DRIVER_KEYS.LOGGED_IN);
+          window.location.href = 'driver-login.html';
+        }
+      },
+
+      // ========== UI增強方法 ==========
+      /**
+       * 顯示加載狀態（適用按鈕/頁面加載場景）
+       * @param {HTMLElement} el - 要顯示加載狀態的元素（可選）
+       * @param {string} text - 加載提示文字（預設：處理中...）
+       */
+      showLoading(el, text = '處理中...') {
+        // 頁面級加載
+        if (!el) {
+          const loadingEl = document.createElement('div');
+          loadingEl.className = 'loading-overlay';
+          loadingEl.innerHTML = `
+            <div class="flex flex-col items-center gap-3">
+              <div class="loading-spinner"></div>
+              <span class="text-gray-700 text-base">${text}</span>
+            </div>
+          `;
+          loadingEl.id = 'page-loading';
+          document.body.appendChild(loadingEl);
+          return;
+        }
+
+        // 元素級加載
+        if (!el) return;
+        el.disabled = true;
+        el.classList.add('btn-loading');
+        const originalText = el.innerHTML;
+        el.setAttribute('data-original-text', originalText);
+        el.innerHTML = text;
+      },
+
+      /**
+       * 隱藏加載狀態
+       * @param {HTMLElement} el - 要還原的元素（可選）
+       * @param {string} restoreText - 還原的按鈕文字（可選）
+       */
+      hideLoading(el, restoreText = '') {
+        // 移除頁面級加載
+        const pageLoading = document.getElementById('page-loading');
+        if (pageLoading) pageLoading.remove();
+
+        // 還原元素級加載
+        if (el) {
+          el.disabled = false;
+          el.classList.remove('btn-loading');
+          const originalText = el.getAttribute('data-original-text');
+          if (originalText) el.innerHTML = originalText;
+          else if (restoreText) el.innerHTML = restoreText;
+        }
+      },
+
+      /**
+       * 安全跳轉頁面（帶加載狀態和錯誤處理）
+       * @param {string} url - 目標URL
+       * @param {string} message - 跳轉前提示訊息
+       */
+      safeNavigate(url, message = '') {
+        try {
+          // 顯示提示
+          if (message) Utils.showMessage(message, 'success');
+          
+          // 顯示頁面加載
+          Utils.showLoading(null, '跳轉中...');
+          
+          // 延遲跳轉提升體驗
+          setTimeout(() => {
+            window.location.href = url;
+          }, 800);
+        } catch (e) {
+          console.error('跳轉失敗:', e);
+          Utils.hideLoading();
+          Utils.showMessage('頁面跳轉失敗，請手動操作', 'error');
+        }
+      },
+
+      // ========== 表單驗證專用方法 ==========
+      FormValidator: {
+        /**
+         * 驗證密碼格式（至少8位，包含字母和數字）
+         * @param {string} password - 密碼
+         * @returns {boolean} 是否有效
+         */
+        validatePassword(password) {
+          const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+          return passwordRegex.test(password);
+        },
+
+        /**
+         * 驗證身份證號（台灣身份證格式）
+         * @param {string} idNumber - 身份證號
+         * @returns {boolean} 是否有效
+         */
+        validateIdNumber(idNumber) {
+          if (!idNumber || idNumber.length !== 10) return false;
+          
+          // 台灣身份證號驗證規則
+          const idRegex = /^[A-Z][12][0-9]{8}$/;
+          if (!idRegex.test(idNumber)) return false;
+          
+          // 簡化驗證（完整驗證需加權運算）
+          return true;
+        },
+
+        /**
+         * 驗證手機號碼（台灣手機號）
+         * @param {string} phone - 手機號
+         * @returns {boolean} 是否有效
+         */
+        validatePhoneNumber(phone) {
+          const cleanPhone = phone.replace(/[^0-9]/g, '');
+          // 台灣手機號：09開頭，共10位
+          const phoneRegex = /^09\d{8}$/;
+          return phoneRegex.test(cleanPhone);
+        },
+
+        /**
+         * 驗證車牌號碼格式
+         * @param {string} plate - 車牌號
+         * @returns {boolean} 是否有效
+         */
+        validateCarPlate(plate) {
+          if (!plate || plate.length < 2 || plate.length > 8) return false;
+          // 台灣車牌格式驗證（簡化版）
+          const plateRegex = /^[A-Z0-9]{2,8}$/i;
+          return plateRegex.test(plate);
+        },
+
+        /**
+         * 驗證文件上傳（類型和大小）
+         * @param {File} file - 文件對象
+         * @param {string[]} allowedTypes - 允許的類型
+         * @param {number} maxSizeMB - 最大大小（MB）
+         * @returns {boolean} 是否有效
+         */
+        validateFileUpload(file, allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'], maxSizeMB = 5) {
+          if (!file) return false;
+          
+          // 驗證文件類型
+          if (!allowedTypes.includes(file.type)) {
+            Utils.showMessage(`文件類型錯誤，僅支持：${allowedTypes.join(', ')}`, 'error');
+            return false;
+          }
+          
+          // 驗證文件大小
+          const maxSize = maxSizeMB * 1024 * 1024; // 轉換為字節
+          if (file.size > maxSize) {
+            Utils.showMessage(`文件大小超過 ${maxSizeMB}MB 限制`, 'error');
+            return false;
+          }
+          
+          return true;
+        }
+      },
+
+      // ========== 司機註冊專用方法 ==========
+      DriverRegister: {
+        /**
+         * 保存司機註冊申請數據
+         * @param {object} driverData - 司機數據
+         * @returns {boolean} 是否保存成功
+         */
+        saveDriverApplication(driverData) {
+          try {
+            // 生成唯一申請ID
+            const applyId = `DA${Date.now()}`;
+            
+            // 補充申請數據
+            const completeData = {
+              ...driverData,
+              applyId: applyId,
+              applyTime: new Date().toISOString(),
+              applyDate: new Date().toLocaleDateString('zh-TW'),
+              auditStatus: 'pending', // 審核狀態：待審核
+              auditBy: '',
+              auditTime: '',
+              auditRemark: ''
+            };
+            
+            // 加密密碼（簡單加密演示，真實環境需使用更安全的加密方式）
+            completeData.password = btoa(completeData.password); // Base64編碼
+            
+            // 讀取現有申請數據
+            let driverApplications = Utils.Storage.get('driverApplications') || [];
+            
+            // 檢查重複註冊（根據身份證號/手機號）
+            const isDuplicate = driverApplications.some(app => 
+              app.idNumber === completeData.idNumber || 
+              app.phone === completeData.phone
+            );
+            
+            if (isDuplicate) {
+              Utils.showMessage('該身份證號或手機號已提交過申請，請勿重複註冊', 'warning');
+              return false;
+            }
+            
+            // 添加新申請
+            driverApplications.push(completeData);
+            
+            // 保存到本地存儲（保存7天）
+            Utils.Storage.set('driverApplications', driverApplications, 168);
+            
+            // 記錄註冊日志
+            const registerLogs = Utils.Storage.get('driver_register_logs') || [];
+            registerLogs.push({
+              applyId: applyId,
+              name: completeData.name,
+              phone: completeData.phone,
+              registerTime: new Date().toLocaleString('zh-TW'),
+              status: 'submitted'
+            });
+            Utils.Storage.set('driver_register_logs', registerLogs, 30 * 24); // 保存30天
+            
+            return true;
+          } catch (e) {
+            console.error('保存司機申請數據失敗:', e);
+            Utils.showMessage('保存註冊數據失敗，請稍後重試', 'error');
+            return false;
+          }
+        }
+      }
+    };
+
+    // ========== 頁面初始化 ==========
+    document.addEventListener('DOMContentLoaded', () => {
+      // 初始化密碼驗證
+      initPasswordValidation();
+      
+      // 初始化表單提交事件
+      initFormSubmit();
+      
+      // 初始化文件上傳按鈕
+      initFileUploadButtons();
+    });
+
+    // ========== 密碼驗證初始化 ==========
+    function initPasswordValidation() {
+      const passwordInput = Utils.safeGetElement('registerPassword');
+      const passwordConfirmInput = Utils.safeGetElement('registerPasswordConfirm');
+      const passwordError = Utils.safeGetElement('passwordError');
+      const passwordConfirmError = Utils.safeGetElement('passwordConfirmError');
+
+      // 密碼格式驗證
+      if (passwordInput && passwordError) {
+        passwordInput.addEventListener('blur', () => {
+          const password = passwordInput.value.trim();
+          if (password && !Utils.FormValidator.validatePassword(password)) {
+            passwordError.style.display = 'block';
+          } else {
+            passwordError.style.display = 'none';
+          }
+        });
+
+        // 即時驗證
+        passwordInput.addEventListener('input', () => {
+          if (passwordError.style.display === 'block') {
+            const password = passwordInput.value.trim();
+            if (Utils.FormValidator.validatePassword(password)) {
+              passwordError.style.display = 'none';
+            }
+          }
+        });
+      }
+
+      // 確認密碼一致性驗證
+      if (passwordConfirmInput && passwordConfirmError && passwordInput) {
+        passwordConfirmInput.addEventListener('blur', () => {
+          const password = passwordInput.value.trim();
+          const confirmPassword = passwordConfirmInput.value.trim();
+          if (confirmPassword && password !== confirmPassword) {
+            passwordConfirmError.style.display = 'block';
+          } else {
+            passwordConfirmError.style.display = 'none';
+          }
+        });
+
+        // 即時驗證
+        passwordConfirmInput.addEventListener('input', () => {
+          if (passwordConfirmError.style.display === 'block') {
+            const password = passwordInput.value.trim();
+            const confirmPassword = passwordConfirmInput.value.trim();
+            if (password === confirmPassword) {
+              passwordConfirmError.style.display = 'none';
+            }
+          }
+        });
+      }
+    }
+
+    // ========== 文件上傳按鈕初始化 ==========
+    function initFileUploadButtons() {
+      // 初始化所有上傳按鈕
+      document.querySelectorAll('.upload-btn').forEach(btn => {
+        // 點擊按鈕觸發文件選擇
+        btn.addEventListener('click', () => {
+          const fileInput = btn.querySelector('input');
+          if (fileInput) fileInput.click();
+        });
+
+        // 文件選擇後更新顯示
+        const fileInput = btn.querySelector('input');
+        if (fileInput) {
+          fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+              const file = e.target.files[0];
+              const uploadText = btn.querySelector('.upload-text');
+              
+              // 驗證文件
+              if (Utils.FormValidator.validateFileUpload(file)) {
+                // 顯示文件名
+                if (uploadText) {
+                  uploadText.textContent = `已選擇：${file.name}`;
+                  uploadText.style.color = '#22c55e';
+                }
+                
+                // 顯示成功提示
+                Utils.showMessage(`文件「${file.name}」選擇成功`, 'success', 2);
+              } else {
+                // 清空選擇
+                e.target.value = '';
+                if (uploadText) {
+                  uploadText.textContent = '點擊上傳圖片（格式錯誤，僅支持JPG/PNG）';
+                  uploadText.style.color = '#ef4444';
+                }
+              }
+            }
+          });
+        }
+      });
+    }
+
+    // ========== 表單提交初始化 ==========
+    function initFormSubmit() {
+      const registerForm = Utils.safeGetElement('driverRegisterForm');
+      if (!registerForm) return;
+
+      registerForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        // 獲取所有表單元素
+        const teamName = Utils.safeGetElement('registerTeamName')?.value.trim() || '';
+        const name = Utils.safeGetElement('registerName')?.value.trim() || '';
+        const phone = Utils.safeGetElement('registerPhone')?.value.trim() || '';
+        const lineId = Utils.safeGetElement('registerLineId')?.value.trim() || '';
+        const passwordInput = Utils.safeGetElement('registerPassword');
+        const password = passwordInput?.value.trim() || '';
+        const passwordConfirmInput = Utils.safeGetElement('registerPasswordConfirm');
+        const confirmPassword = passwordConfirmInput?.value.trim() || '';
+        const idNumber = Utils.safeGetElement('registerIdNumber')?.value.trim() || '';
+        const licenseNumber = Utils.safeGetElement('registerLicenseNumber')?.value.trim() || '';
+        const carPlate = Utils.safeGetElement('registerCarPlate')?.value.trim() || '';
+        const job = Utils.safeGetElement('registerJob')?.value.trim() || '';
+        const criminal = Utils.safeGetElement('registerCriminal')?.value.trim() || '';
+        const insurance = Utils.safeGetElement('registerInsurance')?.value.trim() || '';
+        const goodCitizenImg = Utils.safeGetElement('registerGoodCitizenImg')?.files[0];
+        const carImg = Utils.safeGetElement('registerCarImg')?.files[0];
+        const licenseImg = Utils.safeGetElement('registerLicenseImg')?.files[0];
+
+        // 錯誤提示元素
+        const passwordError = Utils.safeGetElement('passwordError');
+        const passwordConfirmError = Utils.safeGetElement('passwordConfirmError');
+
+        // 表單驗證
+        let isFormValid = true;
+
+        // 1. 密碼驗證
+        if (!Utils.FormValidator.validatePassword(password)) {
+          if (passwordError) passwordError.style.display = 'block';
+          isFormValid = false;
+        }
+        if (password !== confirmPassword) {
+          if (passwordConfirmError) passwordConfirmError.style.display = 'block';
+          isFormValid = false;
+        }
+
+        // 2. 必填欄位驗證
+        const requiredFields = [
+          { name: '車隊名稱', value: teamName },
+          { name: '姓名', value: name },
+          { name: '電話', value: phone },
+          { name: 'LINE ID', value: lineId },
+          { name: '密碼', value: password },
+          { name: '確認密碼', value: confirmPassword },
+          { name: '身份證號', value: idNumber },
+          { name: '駕照號碼', value: licenseNumber },
+          { name: '車牌號碼', value: carPlate },
+          { name: '目前職業', value: job },
+          { name: '有無前科', value: criminal },
+          { name: '有無產險', value: insurance }
+        ];
+
+        const emptyFields = requiredFields.filter(field => !field.value).map(field => field.name);
+        if (emptyFields.length > 0) {
+          Utils.showMessage(`請填寫以下必填欄位：${emptyFields.join('、')}`, 'error');
+          isFormValid = false;
+        }
+
+        // 3. 格式驗證
+        if (phone && !Utils.FormValidator.validatePhoneNumber(phone)) {
+          Utils.showMessage('手機號碼格式錯誤，請輸入09開頭的10位數字', 'error');
+          isFormValid = false;
+        }
+
+        if (idNumber && !Utils.FormValidator.validateIdNumber(idNumber)) {
+          Utils.showMessage('身份證號格式錯誤，請檢查輸入', 'error');
+          isFormValid = false;
+        }
+
+        if (carPlate && !Utils.FormValidator.validateCarPlate(carPlate)) {
+          Utils.showMessage('車牌號碼格式錯誤，請檢查輸入', 'error');
+          isFormValid = false;
+        }
+
+        // 4. 文件上傳驗證
+        const requiredFiles = [
+          { name: '良民證圖片', file: goodCitizenImg },
+          { name: '車子外觀照片', file: carImg },
+          { name: '駕照圖片', file: licenseImg }
+        ];
+
+        const emptyFiles = requiredFiles.filter(file => !file.file).map(file => file.name);
+        if (emptyFiles.length > 0) {
+          Utils.showMessage(`請上傳以下必要圖片：${emptyFiles.join('、')}`, 'error');
+          isFormValid = false;
+        } else {
+          // 驗證文件類型和大小
+          requiredFiles.forEach(item => {
+            if (item.file && !Utils.FormValidator.validateFileUpload(item.file)) {
+              Utils.showMessage(`${item.name} 格式錯誤或大小超過5MB限制`, 'error');
+              isFormValid = false;
+            }
+          });
+        }
+
+        // 驗證不通過則中斷
+        if (!isFormValid) return;
+
+        // 顯示頁面加載
+        Utils.showLoading(null, '正在提交註冊資料...');
+
+        // 準備司機數據
+        const driverData = {
+          teamName,
+          name,
+          phone,
+          lineId,
+          password, // 後續會在保存方法中加密
+          idNumber,
+          licenseNumber,
+          carPlate,
+          job,
+          criminal,
+          insurance,
+          applyStatus: 'pending', // 申請狀態：待審核
+          accountStatus: 'pending', // 賬戶狀態：未激活
+          registerTime: new Date().toLocaleString('zh-TW')
+        };
+
+        // 保存司機申請數據
+        const saveSuccess = Utils.DriverRegister.saveDriverApplication(driverData);
+
+        if (saveSuccess) {
+          // 顯示成功提示
+          Utils.showMessage('註冊資料已提交，請等待管理員審核', 'success');
+          
+          // 跳轉到審核頁面
+          Utils.safeNavigate('driver-audit.html', '即將跳轉到審核狀態查詢頁面');
+        } else {
+          // 隱藏加載狀態
+          Utils.hideLoading();
+        }
+      });
+    }
+  </script>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen py-8 px-4">
   <div class="register-card mx-auto">
@@ -88,7 +836,7 @@
 
       <div class="form-group">
         <label class="form-label">電話</label>
-        <input type="tel" id="registerPhone" class="form-input" placeholder="請輸入聯繫電話" required>
+        <input type="tel" id="registerPhone" class="form-input" placeholder="請輸入聯繫電話（09開頭）" required>
       </div>
 
       <div class="form-group">
@@ -180,124 +928,5 @@
       </div>
     </form>
   </div>
-
-  <script>
-    // 密碼驗證規則
-    const passwordInput = document.getElementById('registerPassword');
-    const passwordConfirmInput = document.getElementById('registerPasswordConfirm');
-    const passwordError = document.getElementById('passwordError');
-    const passwordConfirmError = document.getElementById('passwordConfirmError');
-
-    // 密碼格式驗證
-    passwordInput.addEventListener('blur', () => {
-      const password = passwordInput.value.trim();
-      const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
-      if (password && !passwordRegex.test(password)) {
-        passwordError.style.display = 'block';
-      } else {
-        passwordError.style.display = 'none';
-      }
-    });
-
-    // 確認密碼一致性驗證
-    passwordConfirmInput.addEventListener('blur', () => {
-      const password = passwordInput.value.trim();
-      const confirmPassword = passwordConfirmInput.value.trim();
-      if (confirmPassword && password !== confirmPassword) {
-        passwordConfirmError.style.display = 'block';
-      } else {
-        passwordConfirmError.style.display = 'none';
-      }
-    });
-
-    // 表單提交驗證（核心修改：存入 driverApplications 鍵，並匹配 admin-driver.html 字段）
-    document.getElementById('driverRegisterForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      // 取得所有欄位數據
-      const teamName = document.getElementById('registerTeamName').value.trim();
-      const name = document.getElementById('registerName').value.trim();
-      const phone = document.getElementById('registerPhone').value.trim();
-      const lineId = document.getElementById('registerLineId').value.trim();
-      const password = passwordInput.value.trim();
-      const confirmPassword = passwordConfirmInput.value.trim();
-      // 新增 admin-driver.html 所需字段
-      const idNumber = document.getElementById('registerIdNumber').value.trim();
-      const licenseNumber = document.getElementById('registerLicenseNumber').value.trim();
-      const carPlate = document.getElementById('registerCarPlate').value.trim();
-      
-      const job = document.getElementById('registerJob').value.trim();
-      const criminal = document.getElementById('registerCriminal').value.trim();
-      const insurance = document.getElementById('registerInsurance').value.trim();
-      const goodCitizenImg = document.getElementById('registerGoodCitizenImg').files[0];
-      const carImg = document.getElementById('registerCarImg').files[0];
-      const licenseImg = document.getElementById('registerLicenseImg').files[0];
-
-      // 先驗證密碼
-      const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
-      let isFormValid = true;
-      
-      if (!passwordRegex.test(password)) {
-        passwordError.style.display = 'block';
-        isFormValid = false;
-      }
-      if (password !== confirmPassword) {
-        passwordConfirmError.style.display = 'block';
-        isFormValid = false;
-      }
-
-      // 驗證必填項（包含新增的身份證/駕照/車牌）
-      if (!teamName || !name || !phone || !lineId || !password || !confirmPassword || 
-          !idNumber || !licenseNumber || !carPlate || !job || !criminal || !insurance) {
-        alert('請填寫完整所有必填欄位！');
-        isFormValid = false;
-      }
-      if (!goodCitizenImg || !carImg || !licenseImg) {
-        alert('請上傳所有必要圖片！');
-        isFormValid = false;
-      }
-
-      // 驗證不通過則中斷
-      if (!isFormValid) return;
-
-      // 核心修改：數據格式完全匹配 admin-driver.html 預期
-      const driverData = {
-        teamName,
-        name,
-        phone,
-        lineId,
-        password, // 真實環境需加密，這裡僅演示
-        // 匹配 admin-driver.html 的字段名
-        idNumber,
-        licenseNumber,
-        carPlate,
-        job,
-        criminal,
-        insurance,
-        applyStatus: 'pending', // 申請狀態：待審核
-        accountStatus: 'pending', // 賬戶狀態：未激活
-        registerTime: new Date().toLocaleString('zh-TW')
-      };
-
-      // 核心修改：存入 driverApplications 鍵（和 admin-driver.html 讀取的鍵一致）
-      let driverApplications = JSON.parse(localStorage.getItem('driverApplications') || '[]');
-      driverApplications.push(driverData);
-      localStorage.setItem('driverApplications', JSON.stringify(driverApplications));
-
-      // 提交成功提示
-      alert('註冊資料已提交，請等待審核！');
-      window.location.href = 'driver-audit.html';
-    });
-
-    // 上傳按鈕交互
-    document.querySelectorAll('.upload-btn').forEach(btn => {
-      btn.addEventListener('click', () => btn.querySelector('input').click());
-      btn.querySelector('input').addEventListener('change', (e) => {
-        if (e.target.files.length > 0) {
-          btn.querySelector('.upload-text').textContent = `已選擇：${e.target.files[0].name}`;
-        }
-      });
-    });
-  </script>
 </body>
 </html>

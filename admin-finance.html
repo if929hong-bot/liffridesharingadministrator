@@ -70,7 +70,234 @@
             justify-content: center;
             padding: 2rem;
         }
+
+        /* 加載狀態樣式（新增） */
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(255,255,255,0.8);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.5rem;
+        }
+        .loading-text {
+            color: #00C300;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+
+        /* 統計卡片加載狀態 */
+        .stat-card-skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 0.5rem;
+            height: 80px;
+        }
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
     </style>
+    <!-- 植入通用穩定性工具類 -->
+    <script>
+        /**
+         * 全局工具類 - 提升網站穩定性、統一處理通用邏輯
+         * 適用於所有車隊管理系統頁面
+         */
+        const Utils = {
+            // ========== 基礎工具方法 ==========
+            safeParseJSON(str) {
+                try {
+                    return str && str !== 'null' && str !== 'undefined' ? JSON.parse(str) : null;
+                } catch (e) {
+                    console.error('JSON解析失敗:', e, '原始字串:', str);
+                    return null;
+                }
+            },
+
+            safeGetElement(id) {
+                const el = document.getElementById(id);
+                if (!el) console.warn(`[Utils] 元素#${id}不存在`);
+                return el;
+            },
+
+            validateNumber(value, allowZero = false) {
+                const trimmed = value.trim();
+                if (!/^\d+$/.test(trimmed)) return false;
+                if (!allowZero && Number(trimmed) <= 0) return false;
+                return true;
+            },
+
+            // 格式化金額（新增財務專用）
+            formatAmount(amount) {
+                if (typeof amount !== 'number' || isNaN(amount)) return '0';
+                return amount.toLocaleString('zh-TW');
+            },
+
+            // 計算日期範圍內的數據（新增財務專用）
+            filterDataByDate(data, type = 'today') {
+                const today = new Date();
+                const todayStr = today.toISOString().split('T')[0];
+                
+                return data.filter(item => {
+                    if (!item.date) return false;
+                    
+                    const itemDate = new Date(item.date);
+                    const itemDateStr = itemDate.toISOString().split('T')[0];
+                    
+                    switch (type) {
+                        case 'today':
+                            return itemDateStr === todayStr;
+                        case 'month':
+                            return itemDate.getMonth() === today.getMonth() && 
+                                   itemDate.getFullYear() === today.getFullYear();
+                        default:
+                            return true;
+                    }
+                });
+            },
+
+            // ========== 本地存儲管理（帶過期機制） ==========
+            Storage: {
+                set(key, data, expireHours = 24) {
+                    try {
+                        const value = JSON.stringify(data);
+                        localStorage.setItem(key, value);
+                        if (expireHours) {
+                            const expireTime = Date.now() + expireHours * 60 * 60 * 1000;
+                            localStorage.setItem(`${key}_expire`, expireTime);
+                        }
+                    } catch (e) {
+                        console.error('[Storage] 儲存失敗:', e);
+                        alert('本地存儲空間不足，無法保存數據！');
+                    }
+                },
+
+                get(key) {
+                    try {
+                        const expireTime = localStorage.getItem(`${key}_expire`);
+                        if (expireTime && Date.now() > Number(expireTime)) {
+                            this.remove(key);
+                            return null;
+                        }
+                        return Utils.safeParseJSON(localStorage.getItem(key));
+                    } catch (e) {
+                        console.error('[Storage] 讀取失敗:', e);
+                        return null;
+                    }
+                },
+
+                remove(key) {
+                    localStorage.removeItem(key);
+                    localStorage.removeItem(`${key}_expire`);
+                },
+
+                clearAllFleetData() {
+                    const keys = Object.keys(localStorage);
+                    keys.forEach(key => {
+                        if (key.includes('fleet') || key.includes('admin') || key.includes('finance') || key.includes('order')) {
+                            this.remove(key);
+                        }
+                    });
+                }
+            },
+
+            // ========== 登錄狀態管理 ==========
+            Auth: {
+                KEYS: {
+                    LOGGED_IN: 'loggedInFleetAdmin',
+                    BACKUP: 'currentFleetAdmin',
+                    EXPIRE: 'adminExpireTime'
+                },
+
+                checkLoginStatus() {
+                    let adminData = Utils.Storage.get(Utils.Auth.KEYS.LOGGED_IN);
+                    if (!adminData) {
+                        adminData = Utils.Storage.get(Utils.Auth.KEYS.BACKUP);
+                    }
+
+                    const hasValidAccount = adminData && (
+                        adminData.帳號 || adminData.username || adminData.account || adminData.phone
+                    );
+
+                    if (!hasValidAccount) {
+                        Utils.Storage.clearAllFleetData();
+                        return false;
+                    }
+
+                    Utils.Storage.set(Utils.Auth.KEYS.LOGGED_IN, adminData, 24);
+                    return true;
+                },
+
+                redirectToLogin() {
+                    alert('登錄已過期或未登錄，請重新登入！');
+                    window.location.href = 'manager-login.html';
+                },
+
+                logout() {
+                    Utils.Storage.clearAllFleetData();
+                    window.location.href = 'manager-login.html';
+                }
+            },
+
+            // ========== UI增強方法 ==========
+            showLoading(el, text = '載入中...') {
+                if (!el) return;
+                
+                // 創建加載層
+                const loadingEl = document.createElement('div');
+                loadingEl.className = 'loading-overlay';
+                loadingEl.innerHTML = `
+                    <div class="loading-text">
+                        <i class="fa fa-spinner fa-spin mr-2"></i>${text}
+                    </div>
+                `;
+                
+                el.appendChild(loadingEl);
+                return loadingEl;
+            },
+
+            hideLoading(el) {
+                if (!el) return;
+                const loadingEl = el.querySelector('.loading-overlay');
+                if (loadingEl) loadingEl.remove();
+            },
+
+            showEmptyData(el, text = '暫無數據', colspan = 1) {
+                if (!el) return;
+                if (el.tagName === 'TBODY') {
+                    el.innerHTML = `
+                        <tr>
+                            <td colspan="${colspan}" class="p-6 text-center text-neutral-500">
+                                <i class="fa fa-inbox mr-2"></i>${text}
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    el.innerHTML = `
+                        <div style="padding: 30px; text-align: center; color: #666;">
+                            <i class="fa fa-inbox mr-2"></i>${text}
+                        </div>
+                    `;
+                }
+            },
+
+            // 確認操作彈窗（統一風格）
+            confirmAction(message, confirmText = '確定', cancelText = '取消') {
+                return new Promise((resolve) => {
+                    if (confirm(`${message}\n\n點擊「${confirmText}」確認，「${cancelText}」取消。`)) {
+                        resolve(true);
+                    } else {
+                        resolve(false);
+                    }
+                });
+            }
+        };
+    </script>
 </head>
 <body class="bg-neutral-100 font-sans text-neutral-700 min-h-screen flex">
     <!-- 未登錄提示遮罩 -->
@@ -134,38 +361,17 @@
         </header>
 
         <main class="container mx-auto px-4 py-6 flex-1">
-            <section class="bg-white rounded-xl p-6">
+            <section class="bg-white rounded-xl p-6 relative" id="financeSection">
                 <h2 class="text-lg font-bold text-neutral-700 mb-4">財務管理</h2>
                 
                 <!-- 財務統計卡片 -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <div class="bg-green-50 p-4 rounded-lg border border-green-100">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm text-green-700">今日收入</p>
-                                <p class="text-2xl font-bold text-green-800">NT$ 0</p>
-                            </div>
-                            <i class="fa fa-money text-green-600 text-2xl"></i>
-                        </div>
-                    </div>
-                    <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm text-blue-700">本月收入</p>
-                                <p class="text-2xl font-bold text-blue-800">NT$ 0</p>
-                            </div>
-                            <i class="fa fa-calendar text-blue-600 text-2xl"></i>
-                        </div>
-                    </div>
-                    <div class="bg-purple-50 p-4 rounded-lg border border-purple-100">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm text-purple-700">待處理金額</p>
-                                <p class="text-2xl font-bold text-purple-800">NT$ 0</p>
-                            </div>
-                            <i class="fa fa-clock-o text-purple-600 text-2xl"></i>
-                        </div>
-                    </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6" id="statCards">
+                    <!-- 今日收入 -->
+                    <div class="bg-green-50 p-4 rounded-lg border border-green-100 stat-card-skeleton"></div>
+                    <!-- 本月收入 -->
+                    <div class="bg-blue-50 p-4 rounded-lg border border-blue-100 stat-card-skeleton"></div>
+                    <!-- 待處理金額 -->
+                    <div class="bg-purple-50 p-4 rounded-lg border border-purple-100 stat-card-skeleton"></div>
                 </div>
                 
                 <!-- 訂單收入表格 -->
@@ -184,7 +390,7 @@
                         <tbody id="financeTable">
                             <tr>
                                 <td colspan="6" class="p-6 text-center text-neutral-500">
-                                    暫無財務數據
+                                    <i class="fa fa-spinner fa-spin mr-2"></i>載入財務數據中...
                                 </td>
                             </tr>
                         </tbody>
@@ -201,61 +407,51 @@
     </div>
 
     <script>
-        // 全局常量（與manager-login.html/administrator.html保持一致）
+        // 全局常量
         const LOGGED_IN_FLEET_KEY = 'loggedInFleetAdmin';
         const BACKUP_LOGGED_KEY = 'currentFleetAdmin';
         const APPROVED_ADMINS_KEY = 'approvedFleetAdmins';
+        const FINANCE_DATA_KEY = 'financeData';
 
         // 頁面加載完成後執行初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            checkLoginStatus();   // 檢查登錄狀態
-            bindEvents();         // 綁定事件處理
-            loadFinanceData();    // 加載財務數據
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 1. 登錄狀態檢查（使用工具類增強）
+            if (!Utils.Auth.checkLoginStatus()) {
+                Utils.safeGetElement('unauthOverlay').style.display = 'flex';
+                return;
+            } else {
+                Utils.safeGetElement('unauthOverlay').style.display = 'none';
+            }
+
+            // 2. 初始化頁面
+            initPage();
+            
+            // 3. 綁定事件處理
+            bindEvents();
+            
+            // 4. 加載財務數據（異步加載）
+            await loadFinanceData();
+            
+            // 5. 計算並更新統計數據
+            updateFinanceStats();
         });
 
         /**
-         * 檢查登錄狀態
-         * 優先檢查主登錄鍵，無效則檢查備份鍵
+         * 初始化頁面（用戶信息等）
          */
-        function checkLoginStatus() {
-            console.log('開始檢查登錄狀態...');
+        function initPage() {
+            // 獲取並更新用戶信息
+            const adminData = Utils.Storage.get(LOGGED_IN_FLEET_KEY) || 
+                             Utils.Storage.get(BACKUP_LOGGED_KEY);
             
-            // 獲取登錄數據（優先主鍵，後備份鍵）
-            let loggedInAdmin = localStorage.getItem(LOGGED_IN_FLEET_KEY) || 
-                               localStorage.getItem(BACKUP_LOGGED_KEY);
-
-            // 驗證登錄數據有效性
-            if (loggedInAdmin && loggedInAdmin !== 'null' && loggedInAdmin !== 'undefined' && loggedInAdmin !== '{}') {
-                try {
-                    const adminData = JSON.parse(loggedInAdmin);
-                    console.log('解析登錄數據:', adminData);
-                    
-                    // 檢查是否包含有效帳號字段
-                    const hasValidAccount = !!adminData.帳號 || !!adminData.username || 
-                                           !!adminData.account || !!adminData.phone;
-                    
-                    if (hasValidAccount) {
-                        console.log('登錄有效，隱藏未登錄遮罩');
-                        document.getElementById('unauthOverlay').style.display = 'none';
-                        
-                        // 獲取當前用戶名並更新頁頭
-                        const currentUserName = adminData.name || adminData.姓名 || adminData.username || 
-                                               adminData.account || '管理員';
-                        updateHeader(currentUserName);
-                        return;
-                    } else {
-                        console.warn('登錄數據缺少有效帳號字段:', adminData);
-                    }
-                } catch (parseError) {
-                    console.error('解析登錄數據失敗:', parseError);
-                }
-            } else {
-                console.log('未找到有效的登錄數據');
+            if (adminData) {
+                // 獲取當前用戶名
+                const currentUserName = adminData.name || adminData.姓名 || adminData.username || 
+                                       adminData.account || adminData.帳號 || '管理員';
+                
+                // 更新頁頭用戶信息
+                updateHeader(currentUserName);
             }
-
-            // 登錄無效，顯示未登錄遮罩
-            console.log('顯示未登錄遮罩');
-            document.getElementById('unauthOverlay').style.display = 'flex';
         }
 
         /**
@@ -274,7 +470,7 @@
                 headerContainer.appendChild(userInfo);
             }
 
-            // 獲取車隊名稱
+            // 獲取車隊名稱（使用工具類安全解析）
             const fleetName = getCurrentFleetName();
             
             // 渲染用戶信息
@@ -294,17 +490,11 @@
          * @returns {string} 車隊名稱（空字符串表示無）
          */
         function getCurrentFleetName() {
-            const loggedInAdmin = localStorage.getItem(LOGGED_IN_FLEET_KEY) || 
-                               localStorage.getItem(BACKUP_LOGGED_KEY);
+            const adminData = Utils.Storage.get(LOGGED_IN_FLEET_KEY) || 
+                             Utils.Storage.get(BACKUP_LOGGED_KEY);
             
-            if (loggedInAdmin) {
-                try {
-                    const adminData = JSON.parse(loggedInAdmin);
-                    return adminData.fleetName || adminData.車隊名稱 || '';
-                } catch (e) {
-                    console.error('獲取車隊名稱失敗:', e);
-                    return '';
-                }
+            if (adminData) {
+                return adminData.fleetName || adminData.車隊名稱 || '';
             }
             return '';
         }
@@ -313,17 +503,14 @@
          * 綁定頁面所有事件處理器
          */
         function bindEvents() {
-            // 退出登錄按鈕事件
-            const logoutLink = document.getElementById('logoutLink');
+            // 退出登錄按鈕事件（使用工具類增強）
+            const logoutLink = Utils.safeGetElement('logoutLink');
             if (logoutLink) {
-                logoutLink.addEventListener('click', function(e) {
+                logoutLink.addEventListener('click', async function(e) {
                     e.preventDefault();
-                    if (confirm('確定要退出登入嗎？')) {
-                        // 清除登錄狀態
-                        localStorage.removeItem(LOGGED_IN_FLEET_KEY);
-                        localStorage.removeItem(BACKUP_LOGGED_KEY);
-                        // 跳轉到登入頁
-                        window.location.href = 'manager-login.html';
+                    const confirmLogout = await Utils.confirmAction('確定要退出登入嗎？');
+                    if (confirmLogout) {
+                        Utils.Auth.logout();
                     }
                 });
             }
@@ -339,49 +526,138 @@
         }
 
         /**
-         * 加載財務數據（移除了虛擬演示數據）
-         * 從localStorage加載真實數據，無數據則顯示空提示
+         * 加載財務數據（增強穩定性）
          */
-        function loadFinanceData() {
-            // 從localStorage獲取財務數據
-            const financeData = JSON.parse(localStorage.getItem('financeData') || '[]');
-            const tableBody = document.getElementById('financeTable');
-            
-            // 清空表格並渲染數據
-            tableBody.innerHTML = '';
-            
-            // 無數據時顯示空提示
-            if (financeData.length === 0) {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="6" class="p-6 text-center text-neutral-500">
-                            暫無財務數據
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
+        async function loadFinanceData() {
+            const financeSection = Utils.safeGetElement('financeSection');
+            const loadingEl = Utils.showLoading(financeSection, '載入財務數據中...');
+            const tableBody = Utils.safeGetElement('financeTable');
 
-            // 有數據時渲染表格行（保留真實數據渲染邏輯）
-            financeData.forEach(item => {
-                const statusClass = item.status === '已完成' 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-yellow-100 text-yellow-800';
+            try {
+                // 安全讀取財務數據（使用工具類）
+                const financeData = Utils.Storage.get(FINANCE_DATA_KEY) || [];
                 
-                const row = document.createElement('tr');
-                row.className = 'hover:bg-neutral-50';
-                row.innerHTML = `
-                    <td class="p-3 border-b">${item.id || ''}</td>
-                    <td class="p-3 border-b">${item.passenger || ''}</td>
-                    <td class="p-3 border-b">${item.driver || ''}</td>
-                    <td class="p-3 border-b font-medium text-green-700">NT$ ${item.amount || 0}</td>
-                    <td class="p-3 border-b">
-                        <span class="px-2 py-1 rounded text-xs ${statusClass}">${item.status || '未知'}</span>
-                    </td>
-                    <td class="p-3 border-b">${item.date || ''}</td>
-                `;
-                tableBody.appendChild(row);
+                // 清空表格
+                tableBody.innerHTML = '';
+                
+                // 無數據時顯示空提示
+                if (financeData.length === 0) {
+                    Utils.showEmptyData(tableBody, '暫無財務數據', 6);
+                    return;
+                }
+
+                // 驗證數據格式並渲染
+                const validData = financeData.filter(item => {
+                    // 驗證核心字段
+                    return item && item.id && (item.amount || item.amount === 0);
+                });
+
+                if (validData.length === 0) {
+                    Utils.showEmptyData(tableBody, '財務數據格式無效，請聯繫技術人員', 6);
+                    return;
+                }
+
+                // 有數據時渲染表格行
+                validData.forEach(item => {
+                    // 補充默認值
+                    const orderData = {
+                        id: item.id || '未知訂單',
+                        passenger: item.passenger || '未知乘客',
+                        driver: item.driver || '未知司機',
+                        amount: item.amount || 0,
+                        status: item.status || '未知',
+                        date: item.date || '未知時間'
+                    };
+                    
+                    const statusClass = orderData.status === '已完成' 
+                        ? 'bg-green-100 text-green-800' 
+                        : orderData.status === '處理中' 
+                            ? 'bg-yellow-100 text-yellow-800' 
+                            : 'bg-gray-100 text-gray-800';
+                    
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-neutral-50';
+                    row.innerHTML = `
+                        <td class="p-3 border-b">${orderData.id}</td>
+                        <td class="p-3 border-b">${orderData.passenger}</td>
+                        <td class="p-3 border-b">${orderData.driver}</td>
+                        <td class="p-3 border-b font-medium text-green-700">NT$ ${Utils.formatAmount(orderData.amount)}</td>
+                        <td class="p-3 border-b">
+                            <span class="px-2 py-1 rounded text-xs ${statusClass}">${orderData.status}</span>
+                        </td>
+                        <td class="p-3 border-b">${orderData.date}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } catch (e) {
+                console.error('加載財務數據失敗:', e);
+                Utils.showEmptyData(tableBody, '加載財務數據失敗，請刷新頁面', 6);
+            } finally {
+                // 隱藏加載狀態
+                Utils.hideLoading(financeSection);
+            }
+        }
+
+        /**
+         * 更新財務統計數據（今日/本月/待處理）
+         */
+        function updateFinanceStats() {
+            const statCards = Utils.safeGetElement('statCards');
+            if (!statCards) return;
+
+            // 安全讀取財務數據
+            const financeData = Utils.Storage.get(FINANCE_DATA_KEY) || [];
+            
+            // 過濾有效數據
+            const validData = financeData.filter(item => {
+                return item && item.amount && !isNaN(item.amount) && item.date;
             });
+
+            // 計算今日收入
+            const todayData = Utils.filterDataByDate(validData, 'today');
+            const todayTotal = todayData.reduce((sum, item) => sum + Number(item.amount), 0);
+            
+            // 計算本月收入
+            const monthData = Utils.filterDataByDate(validData, 'month');
+            const monthTotal = monthData.reduce((sum, item) => sum + Number(item.amount), 0);
+            
+            // 計算待處理金額
+            const pendingData = validData.filter(item => item.status !== '已完成');
+            const pendingTotal = pendingData.reduce((sum, item) => sum + Number(item.amount), 0);
+
+            // 渲染統計卡片
+            statCards.innerHTML = `
+                <!-- 今日收入 -->
+                <div class="bg-green-50 p-4 rounded-lg border border-green-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-green-700">今日收入</p>
+                            <p class="text-2xl font-bold text-green-800">NT$ ${Utils.formatAmount(todayTotal)}</p>
+                        </div>
+                        <i class="fa fa-money text-green-600 text-2xl"></i>
+                    </div>
+                </div>
+                <!-- 本月收入 -->
+                <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-blue-700">本月收入</p>
+                            <p class="text-2xl font-bold text-blue-800">NT$ ${Utils.formatAmount(monthTotal)}</p>
+                        </div>
+                        <i class="fa fa-calendar text-blue-600 text-2xl"></i>
+                    </div>
+                </div>
+                <!-- 待處理金額 -->
+                <div class="bg-purple-50 p-4 rounded-lg border border-purple-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-purple-700">待處理金額</p>
+                            <p class="text-2xl font-bold text-purple-800">NT$ ${Utils.formatAmount(pendingTotal)}</p>
+                        </div>
+                        <i class="fa fa-clock-o text-purple-600 text-2xl"></i>
+                    </div>
+                </div>
+            `;
         }
     </script>
 </body>

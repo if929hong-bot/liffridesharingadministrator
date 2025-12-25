@@ -45,7 +45,670 @@
         .mapboxgl-ctrl {
             z-index: 5 !important;
         }
+        /* Utils工具類樣式 */
+        .utils-alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            max-width: 300px;
+            width: 100%;
+            border-radius: 8px;
+            padding: 12px 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideIn 0.3s ease forwards;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .utils-alert.success {
+            background: #f0fdf4;
+            color: #065f46;
+        }
+        .utils-alert.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .utils-alert.warning {
+            background: #fffbeb;
+            color: #92400e;
+        }
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(255,255,255,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9998;
+        }
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #22c55e;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .btn-loading {
+            position: relative;
+            pointer-events: none;
+            opacity: 0.8;
+        }
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #fff;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            animation: spin 1s linear infinite;
+        }
     </style>
+
+    <script>
+        /**
+         * 全局工具類 - 提升網站穩定性、統一處理通用邏輯
+         * 適用於所有車隊管理系統頁面（乘客確認/訂單詳情/計費頁/司機頁）
+         */
+        const Utils = {
+            // ========== 基礎工具方法 ==========
+            /**
+             * 安全解析JSON（避免解析失敗導致頁面崩潰）
+             * @param {string} str - 要解析的JSON字串
+             * @returns {any|null} 解析後的數據，失敗返回null
+             */
+            safeParseJSON(str) {
+                try {
+                    return str && str !== 'null' && str !== 'undefined' ? JSON.parse(str) : null;
+                } catch (e) {
+                    console.error('JSON解析失敗:', e, '原始字串:', str);
+                    return null;
+                }
+            },
+
+            /**
+             * 安全獲取DOM元素（避免操作空元素報錯）
+             * @param {string} id - 元素ID
+             * @returns {HTMLElement|null} 元素對象或null
+             */
+            safeGetElement(id) {
+                const el = document.getElementById(id);
+                if (!el) console.warn(`[Utils] 元素#${id}不存在`);
+                return el;
+            },
+
+            /**
+             * 驗證數字輸入（適用價格、金額等表單）
+             * @param {string} value - 輸入值
+             * @param {boolean} allowZero - 是否允許0（預設不允許）
+             * @returns {boolean} 是否有效
+             */
+            validateNumber(value, allowZero = false) {
+                const trimmed = value.trim();
+                // 驗證是否為純數字
+                if (!/^\d+$/.test(trimmed)) return false;
+                // 驗證是否大於0（如果不允許0）
+                if (!allowZero && Number(trimmed) <= 0) return false;
+                return true;
+            },
+
+            /**
+             * 顯示統一提示訊息（取代alert，提升體驗）
+             * @param {string} message - 提示內容
+             * @param {string} type - 類型 success/error/warning
+             * @param {number} duration - 自動關閉時間（秒，預設3秒）
+             */
+            showMessage(message, type = 'success', duration = 3) {
+                // 移除已存在的提示
+                const oldAlert = document.querySelector('.utils-alert');
+                if (oldAlert) oldAlert.remove();
+                
+                // 創建提示元素
+                const alertEl = document.createElement('div');
+                alertEl.className = `utils-alert ${type}`;
+                
+                // 設置圖標
+                const iconMap = {
+                    success: '<i class="fa fa-check-circle"></i>',
+                    error: '<i class="fa fa-times-circle"></i>',
+                    warning: '<i class="fa fa-exclamation-circle"></i>'
+                };
+                
+                alertEl.innerHTML = `
+                    ${iconMap[type] || iconMap.success}
+                    <span>${message}</span>
+                `;
+                
+                // 添加到頁面
+                document.body.appendChild(alertEl);
+                
+                // 自動移除
+                if (duration > 0) {
+                    setTimeout(() => {
+                        alertEl.style.animation = 'slideIn 0.3s ease reverse forwards';
+                        setTimeout(() => alertEl.remove(), 300);
+                    }, duration * 1000);
+                }
+                
+                return alertEl;
+            },
+
+            // ========== 本地存儲管理（帶過期機制） ==========
+            Storage: {
+                /**
+                 * 儲存數據到localStorage（自動序列化+設置過期）
+                 * @param {string} key - 儲存鍵名
+                 * @param {any} data - 要儲存的數據
+                 * @param {number} expireHours - 過期小時（預設24小時）
+                 */
+                set(key, data, expireHours = 24) {
+                    try {
+                        const value = JSON.stringify(data);
+                        localStorage.setItem(key, value);
+                        // 設置過期時間戳
+                        if (expireHours) {
+                            const expireTime = Date.now() + expireHours * 60 * 60 * 1000;
+                            localStorage.setItem(`${key}_expire`, expireTime);
+                        }
+                    } catch (e) {
+                        console.error('[Storage] 儲存失敗:', e);
+                        Utils.showMessage('本地存儲空間不足，無法保存數據！', 'error');
+                    }
+                },
+
+                /**
+                 * 從localStorage獲取數據（自動檢查過期）
+                 * @param {string} key - 儲存鍵名
+                 * @returns {any|null} 儲存的數據，過期/不存在返回null
+                 */
+                get(key) {
+                    try {
+                        const expireTime = localStorage.getItem(`${key}_expire`);
+                        // 檢查是否過期
+                        if (expireTime && Date.now() > Number(expireTime)) {
+                            this.remove(key);
+                            return null;
+                        }
+                        // 解析並返回數據
+                        return Utils.safeParseJSON(localStorage.getItem(key));
+                    } catch (e) {
+                        console.error('[Storage] 讀取失敗:', e);
+                        return null;
+                    }
+                },
+
+                /**
+                 * 移除localStorage中的數據（包含過期標記）
+                 * @param {string} key - 儲存鍵名
+                 */
+                remove(key) {
+                    localStorage.removeItem(key);
+                    localStorage.removeItem(`${key}_expire`);
+                },
+
+                /**
+                 * 清空所有車隊管理系統相關存儲
+                 */
+                clearAllFleetData() {
+                    const keys = Object.keys(localStorage);
+                    keys.forEach(key => {
+                        if (key.includes('fleet') || key.includes('admin') || key.includes('price') || key.includes('finance') || key.includes('driver') || key.includes('order')) {
+                            this.remove(key);
+                        }
+                    });
+                }
+            },
+
+            // ========== 登錄狀態管理 ==========
+            Auth: {
+                // 司機登錄狀態相關鍵名
+                DRIVER_KEYS: {
+                    PASSED_LIST: 'driverPassedList',
+                    LOGGED_IN: 'driverLoggedIn',
+                    EXPIRE: 'driverExpireTime'
+                },
+
+                /**
+                 * 檢查司機登錄狀態是否有效
+                 * @returns {boolean} 是否登錄有效
+                 */
+                checkDriverLoginStatus() {
+                    // 獲取司機登錄數據
+                    const driverData = Utils.Storage.get(Utils.Auth.DRIVER_KEYS.LOGGED_IN);
+                    
+                    // 驗證登錄數據是否有效
+                    const hasValidData = driverData && driverData.phone && driverData.password;
+
+                    if (!hasValidData) {
+                        return false;
+                    }
+
+                    // 自動續期（每次檢查都延長24小時過期）
+                    Utils.Storage.set(Utils.Auth.DRIVER_KEYS.LOGGED_IN, driverData, 24);
+                    return true;
+                },
+
+                /**
+                 * 強制跳轉到司機登入頁
+                 */
+                redirectToDriverLogin() {
+                    Utils.showMessage('請先登錄司機帳號！', 'warning');
+                    setTimeout(() => {
+                        window.location.href = 'driver-login.html';
+                    }, 1000);
+                },
+
+                /**
+                 * 司機退出登錄
+                 */
+                driverLogout() {
+                    Utils.Storage.remove(Utils.Auth.DRIVER_KEYS.LOGGED_IN);
+                    window.location.href = 'driver-login.html';
+                }
+            },
+
+            // ========== UI增強方法 ==========
+            /**
+             * 顯示加載狀態（適用按鈕/頁面加載場景）
+             * @param {HTMLElement} el - 要顯示加載狀態的元素（可選）
+             * @param {string} text - 加載提示文字（預設：處理中...）
+             */
+            showLoading(el, text = '處理中...') {
+                // 頁面級加載
+                if (!el) {
+                    const loadingEl = document.createElement('div');
+                    loadingEl.className = 'loading-overlay';
+                    loadingEl.innerHTML = `
+                        <div class="flex flex-col items-center gap-2">
+                            <div class="loading-spinner"></div>
+                            <span class="text-text-dark text-sm">${text}</span>
+                        </div>
+                    `;
+                    loadingEl.id = 'page-loading';
+                    document.body.appendChild(loadingEl);
+                    return;
+                }
+
+                // 元素級加載
+                if (!el) return;
+                el.disabled = true;
+                el.classList.add('btn-loading');
+                const originalText = el.innerHTML;
+                el.setAttribute('data-original-text', originalText);
+                el.innerHTML = text;
+            },
+
+            /**
+             * 隱藏加載狀態
+             * @param {HTMLElement} el - 要還原的元素（可選）
+             * @param {string} restoreText - 還原的按鈕文字（可選）
+             */
+            hideLoading(el, restoreText = '') {
+                // 移除頁面級加載
+                const pageLoading = document.getElementById('page-loading');
+                if (pageLoading) pageLoading.remove();
+
+                // 還原元素級加載
+                if (el) {
+                    el.disabled = false;
+                    el.classList.remove('btn-loading');
+                    const originalText = el.getAttribute('data-original-text');
+                    if (originalText) el.innerHTML = originalText;
+                    else if (restoreText) el.innerHTML = restoreText;
+                }
+            },
+
+            /**
+             * 安全跳轉頁面（帶加載狀態和錯誤處理）
+             * @param {string} url - 目標URL
+             * @param {string} message - 跳轉前提示訊息
+             */
+            safeNavigate(url, message = '') {
+                try {
+                    // 顯示提示
+                    if (message) Utils.showMessage(message, 'success');
+                    
+                    // 顯示頁面加載
+                    Utils.showLoading(null, '跳轉中...');
+                    
+                    // 延遲跳轉提升體驗
+                    setTimeout(() => {
+                        window.location.href = url;
+                    }, 500);
+                } catch (e) {
+                    console.error('跳轉失敗:', e);
+                    Utils.hideLoading();
+                    Utils.showMessage('頁面跳轉失敗，請手動操作', 'error');
+                }
+            },
+
+            // ========== 電話處理專用方法 ==========
+            Phone: {
+                /**
+                 * 格式化電話號碼（過濾非數字字符，添加區碼）
+                 * @param {string} phone - 原始電話號碼
+                 * @returns {string} 格式化後的電話號碼
+                 */
+                formatPhoneNumber(phone) {
+                    if (!phone) return '0912345678'; // 默認號碼
+                    
+                    // 過濾非數字字符
+                    const cleanPhone = phone.replace(/[^0-9]/g, '');
+                    
+                    // 補充區碼（台灣手機號）
+                    if (cleanPhone.length === 9 && cleanPhone.startsWith('9')) {
+                        return `0${cleanPhone}`;
+                    } else if (cleanPhone.length === 8 && cleanPhone.startsWith('2')) {
+                        return `0${cleanPhone}`; // 市話
+                    }
+                    
+                    return cleanPhone || '0912345678';
+                },
+
+                /**
+                 * 安全撥打電話（帶驗證和錯誤處理）
+                 * @param {string} phone - 電話號碼
+                 */
+                makePhoneCall(phone) {
+                    try {
+                        const formattedPhone = this.formatPhoneNumber(phone);
+                        
+                        if (!confirm(`是否撥打乘客電話：${formattedPhone}`)) {
+                            return;
+                        }
+                        
+                        // 嘗試撥打電話
+                        window.location.href = `tel:${formattedPhone}`;
+                        
+                        // 記錄通話記錄
+                        Utils.Storage.set(`call_log_${new Date().getTime()}`, {
+                            phone: formattedPhone,
+                            time: new Date().toLocaleString('zh-TW'),
+                            type: 'passenger_call'
+                        }, 72); // 保存72小時
+                        
+                        Utils.showMessage('正在撥打電話...', 'success', 2);
+                    } catch (e) {
+                        console.error('撥打電話失敗:', e);
+                        Utils.showMessage('無法撥打電話，請手動撥號', 'error');
+                    }
+                }
+            },
+
+            // ========== 訂單狀態管理專用方法 ==========
+            OrderStatus: {
+                /**
+                 * 更新訂單狀態（帶驗證和錯誤處理）
+                 * @param {string} orderId - 訂單ID
+                 * @param {string} status - 新狀態
+                 * @returns {boolean} 是否更新成功
+                 */
+                updateOrderStatus(orderId, status) {
+                    try {
+                        if (!orderId || orderId === '未知訂單') {
+                            Utils.showMessage('訂單ID無效，無法更新狀態', 'warning');
+                            return false;
+                        }
+                        
+                        // 存儲行程狀態（供管理員後台讀取）
+                        Utils.Storage.set('orderStatus', status, 48);
+                        Utils.Storage.set(`order_${orderId}_status`, status, 48); // 按訂單ID存儲，支援多訂單
+                        
+                        // 記錄狀態變更日志
+                        const statusLog = Utils.Storage.get('order_status_log') || [];
+                        statusLog.push({
+                            orderId: orderId,
+                            status: status,
+                            time: new Date().toLocaleString('zh-TW'),
+                            operator: 'driver'
+                        });
+                        Utils.Storage.set('order_status_log', statusLog, 72);
+                        
+                        return true;
+                    } catch (e) {
+                        console.error('更新訂單狀態失敗:', e);
+                        Utils.showMessage('更新訂單狀態失敗，請重試', 'error');
+                        return false;
+                    }
+                }
+            },
+
+            // ========== 計時器管理 ==========
+            Timer: {
+                /**
+                 * 創建計時器（帶防重複和錯誤處理）
+                 * @param {string} elementId - 顯示計時器的元素ID
+                 * @returns {number} 計時器ID
+                 */
+                createTimer(elementId) {
+                    try {
+                        const timerEl = Utils.safeGetElement(elementId);
+                        if (!timerEl) {
+                            console.error('計時器元素不存在');
+                            return null;
+                        }
+                        
+                        // 初始化計時器顯示
+                        timerEl.textContent = '00:00';
+                        
+                        let seconds = 0;
+                        
+                        // 創建計時器
+                        const timerInterval = setInterval(() => {
+                            seconds++;
+                            const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+                            const secs = (seconds % 60).toString().padStart(2, '0');
+                            
+                            // 安全更新顯示
+                            if (timerEl) {
+                                timerEl.textContent = `${mins}:${secs}`;
+                            } else {
+                                clearInterval(timerInterval);
+                            }
+                        }, 1000);
+                        
+                        return timerInterval;
+                    } catch (e) {
+                        console.error('創建計時器失敗:', e);
+                        Utils.showMessage('計時器初始化失敗', 'warning');
+                        return null;
+                    }
+                },
+
+                /**
+                 * 銷毀計時器
+                 * @param {number} timerInterval - 計時器ID
+                 */
+                destroyTimer(timerInterval) {
+                    if (timerInterval) {
+                        clearInterval(timerInterval);
+                    }
+                }
+            }
+        };
+
+        // ========== 頁面全局變量 ==========
+        let timerInterval = null;
+        let map = null;
+
+        // ========== 地圖初始化（增強版） ==========
+        function initMap() {
+            try {
+                const mapEl = Utils.safeGetElement('passengerMap');
+                if (!mapEl) return;
+
+                if (!window.mapboxgl) {
+                    mapEl.innerHTML = 
+                        '<div class="w-full h-full flex items-center justify-center text-text-light text-sm p-4"><i class="fa fa-exclamation-circle mr-2"></i>地圖加載失敗，請檢查網絡</div>';
+                    Utils.showMessage('地圖加載失敗，不影響其他操作', 'warning');
+                    return;
+                }
+
+                // 創建地圖
+                map = new mapboxgl.Map({
+                    container: mapEl,
+                    style: 'mapbox://styles/mapbox/streets-v12',
+                    center: [121.5654, 25.0330], // 台北市經緯度
+                    zoom: 15
+                });
+
+                // 加入導航控制按鈕
+                map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
+
+                // 嘗試從本地存儲獲取乘客實際位置
+                const currentOrder = Utils.Storage.get('currentOrder') || {};
+                const pickupLng = currentOrder.pickupLng || 121.5654;
+                const pickupLat = currentOrder.pickupLat || 25.0330;
+                const pickupName = currentOrder.pickup || '乘客上車點';
+
+                // 標記乘客位置（紅色）
+                new mapboxgl.Marker({ color: '#FF0000' })
+                    .setLngLat([pickupLng, pickupLat])
+                    .setPopup(new mapboxgl.Popup().setHTML(`<p class="text-sm font-medium">${pickupName}</p>`))
+                    .addTo(map)
+                    .togglePopup(); // 默認打開彈窗
+
+                // 地圖加載完成回調
+                map.on('load', () => {
+                    console.log('地圖加載完成');
+                    // 調整視圖到乘客位置
+                    map.flyTo({
+                        center: [pickupLng, pickupLat],
+                        zoom: 16,
+                        speed: 0.8
+                    });
+                });
+
+                // 地圖加載錯誤處理
+                map.on('error', (e) => {
+                    console.error('地圖加載錯誤:', e);
+                    mapEl.innerHTML = 
+                        '<div class="w-full h-full flex items-center justify-center text-text-light text-sm p-4"><i class="fa fa-exclamation-circle mr-2"></i>地圖加載異常，請稍後重試</div>';
+                });
+            } catch (error) {
+                console.error('地圖初始化失敗：', error);
+                const mapEl = Utils.safeGetElement('passengerMap');
+                if (mapEl) {
+                    mapEl.innerHTML = 
+                        '<div class="w-full h-full flex items-center justify-center text-text-light text-sm p-4"><i class="fa fa-exclamation-circle mr-2"></i>地圖初始化異常，請稍後重試</div>';
+                }
+                Utils.showMessage('地圖加載失敗，不影響其他操作', 'warning');
+            }
+        }
+
+        // ========== 按鈕事件初始化（增強版） ==========
+        function initButtons() {
+            // 乘客已上車按鈕
+            const passengerOnBtn = Utils.safeGetElement('passengerOnBtn');
+            if (passengerOnBtn) {
+                passengerOnBtn.addEventListener('click', () => {
+                    // 顯示加載狀態
+                    Utils.showLoading(passengerOnBtn, '<i class="fa fa-spinner fa-spin mr-2"></i>處理中...');
+                    
+                    setTimeout(() => {
+                        try {
+                            // 讀取當前訂單ID（與訂單詳情頁對應）
+                            const currentOrder = Utils.Storage.get('currentOrder') || {};
+                            const orderId = currentOrder.orderId || '未知訂單';
+                            
+                            // 更新訂單狀態
+                            const updateSuccess = Utils.OrderStatus.updateOrderStatus(orderId, '行駛中');
+                            
+                            if (updateSuccess) {
+                                // 顯示成功提示
+                                Utils.showMessage(`訂單號 ${orderId} 已更新為「乘客已上車」`, 'success');
+                                
+                                // 更新按鈕狀態（禁用）
+                                passengerOnBtn.disabled = true;
+                                passengerOnBtn.classList.remove('bg-primary', 'btn-hover');
+                                passengerOnBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+                                passengerOnBtn.innerHTML = '<i class="fa fa-check-circle mr-2"></i>乘客已上車（已確認）';
+                            }
+                        } catch (e) {
+                            console.error('乘客上車確認失敗:', e);
+                            Utils.showMessage('更新狀態失敗，請重試', 'error');
+                        } finally {
+                            // 隱藏加載狀態
+                            Utils.hideLoading(passengerOnBtn);
+                        }
+                    }, 800);
+                });
+            }
+
+            // 開始跳表按鈕
+            const startMeterBtn = Utils.safeGetElement('startMeterBtn');
+            if (startMeterBtn) {
+                startMeterBtn.addEventListener('click', () => {
+                    // 驗證是否已確認乘客上車
+                    const orderStatus = Utils.Storage.get('orderStatus');
+                    
+                    if (orderStatus !== '行駛中') {
+                        if (!confirm('尚未確認乘客上車，是否直接開始跳表？')) {
+                            return;
+                        }
+                    }
+                    
+                    // 安全跳轉到計費頁
+                    Utils.safeNavigate('driver-meter.html', '即將進入計費頁面');
+                });
+            }
+
+            // 聯絡乘客按鈕
+            const callPassengerBtn = Utils.safeGetElement('callPassengerBtn');
+            if (callPassengerBtn) {
+                callPassengerBtn.addEventListener('click', () => {
+                    // 讀取當前訂單乘客電話
+                    const currentOrder = Utils.Storage.get('currentOrder') || {};
+                    const passengerPhone = currentOrder.passengerPhone || '';
+                    
+                    // 安全撥打電話
+                    Utils.Phone.makePhoneCall(passengerPhone);
+                });
+            }
+        }
+
+        // ========== 頁面初始化 ==========
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. 驗證司機登錄狀態
+            if (!Utils.Auth.checkDriverLoginStatus()) {
+                Utils.Auth.redirectToDriverLogin();
+                return;
+            }
+
+            // 2. 初始化地圖
+            initMap();
+
+            // 3. 初始化計時器
+            timerInterval = Utils.Timer.createTimer('timer');
+
+            // 4. 初始化按鈕事件
+            initButtons();
+
+            // 5. 顯示歡迎提示
+            const currentOrder = Utils.Storage.get('currentOrder') || {};
+            if (currentOrder.passengerName) {
+                Utils.showMessage(`當前服務乘客：${currentOrder.passengerName}`, 'success', 2);
+            }
+        });
+
+        // ========== 頁面離開時清除計時器（節省資源） ==========
+        window.addEventListener('beforeunload', () => {
+            Utils.Timer.destroyTimer(timerInterval);
+        });
+    </script>
 </head>
 <body class="bg-gray-50 font-sans">
     <!-- 頁首 -->
@@ -90,113 +753,5 @@
             </p>
         </div>
     </main>
-
-    <script>
-        // 全局變量
-        let timerInterval;
-        let seconds = 0;
-        let map = null;
-
-        // 初始化地圖（增加錯誤處理）
-        function initMap() {
-            if (!window.mapboxgl) {
-                document.getElementById('passengerMap').innerHTML = 
-                    '<div class="w-full h-full flex items-center justify-center text-text-light text-sm p-4">地圖加載失敗，請檢查網絡</div>';
-                return;
-            }
-
-            try {
-                map = new mapboxgl.Map({
-                    container: 'passengerMap',
-                    style: 'mapbox://styles/mapbox/streets-v12',
-                    center: [121.5654, 25.0330], // 台北市經緯度
-                    zoom: 15
-                });
-
-                // 加入導航控制按鈕
-                map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
-
-                // 標記乘客位置（紅色）
-                new mapboxgl.Marker({ color: '#FF0000' })
-                    .setLngLat([121.5654, 25.0330])
-                    .setPopup(new mapboxgl.Popup().setHTML('<p class="text-sm">乘客上車點</p>'))
-                    .addTo(map);
-
-                // 地圖加載完成回調
-                map.on('load', () => {
-                    console.log('地圖加載完成');
-                });
-            } catch (error) {
-                console.error('地圖初始化失敗：', error);
-                document.getElementById('passengerMap').innerHTML = 
-                    '<div class="w-full h-full flex items-center justify-center text-text-light text-sm p-4">地圖加載異常，請稍後重試</div>';
-            }
-        }
-
-        // 計時器（修正初始值為00:00，避免一開始顯示00:01）
-        function startTimer() {
-            // 清除之前的計時器（防止重複）
-            if (timerInterval) clearInterval(timerInterval);
-            
-            timerInterval = setInterval(() => {
-                seconds++;
-                const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
-                const secs = (seconds % 60).toString().padStart(2, '0');
-                document.getElementById('timer').textContent = `${mins}:${secs}`;
-            }, 1000);
-        }
-
-        // 按鈕事件
-        function initButtons() {
-            // 乘客已上車
-            document.getElementById('passengerOnBtn').addEventListener('click', () => {
-                // 讀取當前訂單ID（與訂單詳情頁對應）
-                const currentOrder = JSON.parse(localStorage.getItem('currentOrder') || '{}');
-                const orderId = currentOrder.orderId || '未知訂單';
-                
-                // 存儲行程狀態（供管理員後台讀取）
-                localStorage.setItem('orderStatus', '行駛中');
-                localStorage.setItem(`order_${orderId}_status`, '行駛中'); // 按訂單ID存儲，支援多訂單
-                
-                alert(`已通知管理員：\n訂單號 ${orderId}\n狀態更新為「乘客已上車」`);
-            });
-
-            // 開始跳表（跳轉到計費頁）
-            document.getElementById('startMeterBtn').addEventListener('click', () => {
-                // 驗證是否已確認乘客上車
-                const orderStatus = localStorage.getItem('orderStatus');
-                if (orderStatus !== '行駛中') {
-                    if (confirm('尚未確認乘客上車，是否直接開始跳表？')) {
-                        window.location.href = 'driver-meter.html';
-                    }
-                    return;
-                }
-                window.location.href = 'driver-meter.html';
-            });
-
-            // 聯絡乘客（新增功能，符合備註需求）
-            document.getElementById('callPassengerBtn').addEventListener('click', () => {
-                const currentOrder = JSON.parse(localStorage.getItem('currentOrder') || '{}');
-                const passengerPhone = currentOrder.passengerPhone || '0912345678';
-                const cleanPhone = passengerPhone.replace(/[^0-9]/g, ''); // 過濾非數字字符
-                
-                if (confirm(`是否撥打乘客電話：${passengerPhone}`)) {
-                    window.location.href = `tel:${cleanPhone}`;
-                }
-            });
-        }
-
-        // 初始化（統一使用DOMContentLoaded，比window.onload更穩定）
-        document.addEventListener('DOMContentLoaded', () => {
-            initMap();
-            startTimer();
-            initButtons();
-        });
-
-        // 頁面離開時清除計時器（節省資源）
-        window.addEventListener('beforeunload', () => {
-            if (timerInterval) clearInterval(timerInterval);
-        });
-    </script>
 </body>
 </html>

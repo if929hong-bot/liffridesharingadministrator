@@ -40,8 +40,641 @@
       .form-label {
         @apply block text-sm font-medium text-gray-700 mb-2;
       }
+      .shake-animation {
+        animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+      }
+      @keyframes shake {
+        10%, 90% { transform: translateX(-1px); }
+        20%, 80% { transform: translateX(2px); }
+        30%, 50%, 70% { transform: translateX(-4px); }
+        40%, 60% { transform: translateX(4px); }
+      }
     }
   </style>
+
+  <style>
+    /* Utils工具類樣式 */
+    .utils-alert {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      max-width: 300px;
+      width: 100%;
+      border-radius: 8px;
+      padding: 12px 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      animation: slideIn 0.3s ease forwards;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    .utils-alert.success {
+      background: #f0fdf4;
+      color: #065f46;
+    }
+    .utils-alert.error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    .utils-alert.warning {
+      background: #fffbeb;
+      color: #92400e;
+    }
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9998;
+    }
+    .loading-spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #228B22;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .btn-loading {
+      position: relative;
+      pointer-events: none;
+      opacity: 0.8;
+    }
+    .btn-loading::after {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border: 2px solid #fff;
+      border-top: 2px solid transparent;
+      border-radius: 50%;
+      right: 1.5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      animation: spin 1s linear infinite;
+    }
+  </style>
+
+  <script>
+    /**
+     * 全局工具類 - 提升網站穩定性、統一處理通用邏輯
+     * 適用於所有車隊管理系統頁面（管理員登入/後台管理/司機管理/訂單管理）
+     */
+    const Utils = {
+      // ========== 基礎工具方法 ==========
+      /**
+       * 安全解析JSON（避免解析失敗導致頁面崩潰）
+       * @param {string} str - 要解析的JSON字串
+       * @returns {any|null} 解析後的數據，失敗返回null
+       */
+      safeParseJSON(str) {
+        try {
+          return str && str !== 'null' && str !== 'undefined' ? JSON.parse(str) : null;
+        } catch (e) {
+          console.error('JSON解析失敗:', e, '原始字串:', str);
+          return null;
+        }
+      },
+
+      /**
+       * 安全獲取DOM元素（避免操作空元素報錯）
+       * @param {string} id - 元素ID
+       * @returns {HTMLElement|null} 元素對象或null
+       */
+      safeGetElement(id) {
+        const el = document.getElementById(id);
+        if (!el) console.warn(`[Utils] 元素#${id}不存在`);
+        return el;
+      },
+
+      /**
+       * 驗證數字輸入（適用價格、金額等表單）
+       * @param {string} value - 輸入值
+       * @param {boolean} allowZero - 是否允許0（預設不允許）
+       * @returns {boolean} 是否有效
+       */
+      validateNumber(value, allowZero = false) {
+        const trimmed = value.trim();
+        // 驗證是否為純數字
+        if (!/^\d+$/.test(trimmed)) return false;
+        // 驗證是否大於0（如果不允許0）
+        if (!allowZero && Number(trimmed) <= 0) return false;
+        return true;
+      },
+
+      /**
+       * 顯示統一提示訊息（取代alert，提升體驗）
+       * @param {string} message - 提示內容
+       * @param {string} type - 類型 success/error/warning
+       * @param {number} duration - 自動關閉時間（秒，預設3秒）
+       */
+      showMessage(message, type = 'success', duration = 3) {
+        // 移除已存在的提示
+        const oldAlert = document.querySelector('.utils-alert');
+        if (oldAlert) oldAlert.remove();
+        
+        // 創建提示元素
+        const alertEl = document.createElement('div');
+        alertEl.className = `utils-alert ${type}`;
+        
+        // 設置圖標
+        const iconMap = {
+          success: '<i class="fa fa-check-circle"></i>',
+          error: '<i class="fa fa-times-circle"></i>',
+          warning: '<i class="fa fa-exclamation-circle"></i>'
+        };
+        
+        alertEl.innerHTML = `
+          ${iconMap[type] || iconMap.success}
+          <span>${message}</span>
+        `;
+        
+        // 添加到頁面
+        document.body.appendChild(alertEl);
+        
+        // 自動移除
+        if (duration > 0) {
+          setTimeout(() => {
+            alertEl.style.animation = 'slideIn 0.3s ease reverse forwards';
+            setTimeout(() => alertEl.remove(), 300);
+          }, duration * 1000);
+        }
+        
+        return alertEl;
+      },
+
+      // ========== 本地存儲管理（帶過期機制） ==========
+      Storage: {
+        /**
+         * 儲存數據到localStorage（自動序列化+設置過期）
+         * @param {string} key - 儲存鍵名
+         * @param {any} data - 要儲存的數據
+         * @param {number} expireHours - 過期小時（預設24小時）
+         */
+        set(key, data, expireHours = 24) {
+          try {
+            const value = JSON.stringify(data);
+            localStorage.setItem(key, value);
+            // 設置過期時間戳
+            if (expireHours) {
+              const expireTime = Date.now() + expireHours * 60 * 60 * 1000;
+              localStorage.setItem(`${key}_expire`, expireTime);
+            }
+          } catch (e) {
+            console.error('[Storage] 儲存失敗:', e);
+            Utils.showMessage('本地存儲空間不足，無法保存數據！', 'error');
+          }
+        },
+
+        /**
+         * 從localStorage獲取數據（自動檢查過期）
+         * @param {string} key - 儲存鍵名
+         * @returns {any|null} 儲存的數據，過期/不存在返回null
+         */
+        get(key) {
+          try {
+            const expireTime = localStorage.getItem(`${key}_expire`);
+            // 檢查是否過期
+            if (expireTime && Date.now() > Number(expireTime)) {
+              this.remove(key);
+              return null;
+            }
+            // 解析並返回數據
+            return Utils.safeParseJSON(localStorage.getItem(key));
+          } catch (e) {
+            console.error('[Storage] 讀取失敗:', e);
+            return null;
+          }
+        },
+
+        /**
+         * 移除localStorage中的數據（包含過期標記）
+         * @param {string} key - 儲存鍵名
+         */
+        remove(key) {
+          localStorage.removeItem(key);
+          localStorage.removeItem(`${key}_expire`);
+        },
+
+        /**
+         * 清空無效的登入數據
+         * @param {string[]} keys - 要檢查的鍵名列表
+         */
+        clearInvalidLoginData(keys) {
+          keys.forEach(key => {
+            const data = this.get(key);
+            if (data) {
+              // 檢查是否包含有效的帳號信息
+              const hasValidAccount = data.帳號 || data.username || data.account;
+              if (!hasValidAccount) {
+                this.remove(key);
+                console.log(`已移除無效的登入數據: ${key}`);
+              }
+            }
+          });
+        },
+
+        /**
+         * 清空所有車隊管理系統相關存儲
+         */
+        clearAllFleetData() {
+          const keys = Object.keys(localStorage);
+          keys.forEach(key => {
+            if (key.includes('fleet') || key.includes('admin') || key.includes('manager') || key.includes('driver') || key.includes('order')) {
+              this.remove(key);
+            }
+          });
+        }
+      },
+
+      // ========== UI增強方法 ==========
+      /**
+       * 顯示加載狀態（適用按鈕/頁面加載場景）
+       * @param {HTMLElement} el - 要顯示加載狀態的元素（可選）
+       * @param {string} text - 加載提示文字（預設：處理中...）
+       */
+      showLoading(el, text = '處理中...') {
+        // 頁面級加載
+        if (!el) {
+          const loadingEl = document.createElement('div');
+          loadingEl.className = 'loading-overlay';
+          loadingEl.innerHTML = `
+            <div class="flex flex-col items-center gap-3">
+              <div class="loading-spinner"></div>
+              <span class="text-gray-700 text-base">${text}</span>
+            </div>
+          `;
+          loadingEl.id = 'page-loading';
+          document.body.appendChild(loadingEl);
+          return;
+        }
+
+        // 元素級加載
+        if (!el) return;
+        el.disabled = true;
+        el.classList.add('btn-loading');
+        const originalText = el.innerHTML;
+        el.setAttribute('data-original-text', originalText);
+        el.innerHTML = text;
+      },
+
+      /**
+       * 隱藏加載狀態
+       * @param {HTMLElement} el - 要還原的元素（可選）
+       * @param {string} restoreText - 還原的按鈕文字（可選）
+       */
+      hideLoading(el, restoreText = '') {
+        // 移除頁面級加載
+        const pageLoading = document.getElementById('page-loading');
+        if (pageLoading) pageLoading.remove();
+
+        // 還原元素級加載
+        if (el) {
+          el.disabled = false;
+          el.classList.remove('btn-loading');
+          const originalText = el.getAttribute('data-original-text');
+          if (originalText) el.innerHTML = originalText;
+          else if (restoreText) el.innerHTML = restoreText;
+        }
+      },
+
+      /**
+       * 安全跳轉頁面（帶加載狀態和錯誤處理）
+       * @param {string} url - 目標URL
+       * @param {string} message - 跳轉前提示訊息
+       */
+      safeNavigate(url, message = '') {
+        try {
+          // 顯示提示
+          if (message) Utils.showMessage(message, 'success');
+          
+          // 顯示頁面加載
+          Utils.showLoading(null, '正在進入系統...');
+          
+          // 延遲跳轉提升體驗
+          setTimeout(() => {
+            window.location.href = url;
+          }, 800);
+        } catch (e) {
+          console.error('跳轉失敗:', e);
+          Utils.hideLoading();
+          Utils.showMessage('頁面跳轉失敗，請手動操作', 'error');
+        }
+      },
+
+      // ========== 表單驗證專用方法 ==========
+      FormValidator: {
+        /**
+         * 驗證管理員登入表單
+         * @param {string} username - 用戶名
+         * @param {string} password - 密碼
+         * @returns {object} 驗證結果 { isValid: boolean, error: string }
+         */
+        validateLoginForm(username, password) {
+          // 檢查是否為空
+          if (!username || !password) {
+            return {
+              isValid: false,
+              error: '請輸入帳號和密碼！'
+            };
+          }
+
+          // 檢查用戶名格式
+          if (username.length < 3 || username.length > 20) {
+            return {
+              isValid: false,
+              error: '帳號長度需在3-20個字符之間！'
+            };
+          }
+
+          // 檢查密碼長度
+          if (password.length < 6) {
+            return {
+              isValid: false,
+              error: '密碼長度不能少於6個字符！'
+            };
+          }
+
+          return {
+            isValid: true,
+            error: ''
+          };
+        },
+
+        /**
+         * 驗證管理員憑證（從已審核列表中查找）
+         * @param {string} username - 用戶名
+         * @param {string} password - 密碼
+         * @param {string} approvedKey - 已審核列表存儲鍵名
+         * @returns {object|null} 匹配的管理員數據，無匹配返回null
+         */
+        validateAdminCredentials(username, password, approvedKey) {
+          // 獲取已審核列表
+          const approvedList = Utils.Storage.get(approvedKey) || [];
+          
+          // 檢查列表是否為空
+          if (approvedList.length === 0) {
+            Utils.showMessage('暫無已審核的車隊管理員，請先聯繫超管審核！', 'warning');
+            return null;
+          }
+
+          // 查找匹配的管理員
+          const matchAdmin = approvedList.find(admin => {
+            const accMatch = admin.帳號 === username || admin.username === username || admin.account === username;
+            const pwdMatch = admin.密碼 === password || admin.password === password || admin.pwd === password;
+            return accMatch && pwdMatch;
+          });
+
+          return matchAdmin;
+        }
+      },
+
+      // ========== 管理員登入專用方法 ==========
+      AdminAuth: {
+        /**
+         * 管理員登入處理
+         * @param {string} username - 用戶名
+         * @param {string} password - 密碼
+         * @param {string} approvedKey - 已審核列表鍵名
+         * @param {string} loggedKey - 登入狀態鍵名
+         * @param {string} backupKey - 備份鍵名
+         * @param {string} redirectUrl - 登入成功後跳轉URL
+         * @returns {boolean} 是否登入成功
+         */
+        async login(username, password, approvedKey, loggedKey, backupKey, redirectUrl) {
+          // 表單基本驗證
+          const validation = Utils.FormValidator.validateLoginForm(username, password);
+          if (!validation.isValid) {
+            Utils.showMessage(validation.error, 'error');
+            return false;
+          }
+
+          // 驗證管理員憑證
+          const matchAdmin = Utils.FormValidator.validateAdminCredentials(username, password, approvedKey);
+          
+          if (matchAdmin) {
+            // 登入成功 - 保存登入狀態
+            Utils.Storage.set(loggedKey, matchAdmin, 24); // 24小時過期
+            Utils.Storage.set(backupKey, matchAdmin, 24); // 備份
+            
+            // 記錄登入日志
+            this.logLoginActivity(matchAdmin, 'success');
+            
+            // 顯示成功提示並跳轉
+            Utils.safeNavigate(redirectUrl, `歡迎回來，${matchAdmin.姓名 || matchAdmin.name || username}！`);
+            return true;
+          } else {
+            // 登入失敗
+            this.logLoginActivity({ username: username }, 'failed');
+            
+            // 顯示錯誤提示
+            Utils.showMessage('帳號未審核或密碼錯誤！', 'error');
+            
+            // 添加抖動動畫
+            const form = Utils.safeGetElement('manager-login-form');
+            if (form) {
+              form.classList.add('shake-animation');
+              setTimeout(() => form.classList.remove('shake-animation'), 500);
+            }
+            
+            // 清空密碼並聚焦
+            const passwordInput = Utils.safeGetElement('manager-password');
+            if (passwordInput) {
+              passwordInput.value = '';
+              passwordInput.focus();
+            }
+            
+            return false;
+          }
+        },
+
+        /**
+         * 記錄登入活動日志
+         * @param {object} adminData - 管理員數據
+         * @param {string} status - 登入狀態 success/failed
+         */
+        logLoginActivity(adminData, status) {
+          try {
+            const loginLogs = Utils.Storage.get('admin_login_logs') || [];
+            
+            // 添加新日志
+            loginLogs.push({
+              username: adminData.帳號 || adminData.username || adminData.account || adminData.username,
+              timestamp: Date.now(),
+              time: new Date().toLocaleString('zh-TW'),
+              status: status,
+              ip: window.location.hostname,
+              userAgent: navigator.userAgent
+            });
+            
+            // 只保留最近100條日志
+            if (loginLogs.length > 100) {
+              loginLogs.splice(0, loginLogs.length - 100);
+            }
+            
+            // 保存日志（保存30天）
+            Utils.Storage.set('admin_login_logs', loginLogs, 30 * 24);
+          } catch (error) {
+            console.error('記錄登入日志失敗:', error);
+          }
+        },
+
+        /**
+         * 檢查是否已有登入狀態
+         * @param {string} loggedKey - 登入狀態鍵名
+         * @param {string} redirectUrl - 目標URL
+         */
+        checkLoggedInStatus(loggedKey, redirectUrl) {
+          const loggedAdmin = Utils.Storage.get(loggedKey);
+          if (loggedAdmin) {
+            // 如果已登入，直接跳轉
+            Utils.safeNavigate(redirectUrl, '檢測到您已有登入狀態，正在進入系統...');
+          }
+        }
+      }
+    };
+
+    // ========== 頁面常量定義 ==========
+    const APPROVED_KEY = 'approvedFleetAdmins';
+    const LOGGED_KEY = 'loggedInFleetAdmin';
+    const BACKUP_LOGGED_KEY = 'currentFleetAdmin';
+    const BACKEND_PAGE = 'admin-dashboard.html';
+
+    // ========== 頁面初始化 ==========
+    document.addEventListener('DOMContentLoaded', () => {
+      // 清除無效的登入數據
+      Utils.Storage.clearInvalidLoginData([LOGGED_KEY, BACKUP_LOGGED_KEY]);
+      
+      // 檢查是否已有登入狀態
+      Utils.AdminAuth.checkLoggedInStatus(LOGGED_KEY, BACKEND_PAGE);
+      
+      // 初始化登入表單提交事件
+      initLoginForm();
+      
+      // 初始化表單交互
+      initFormInteractions();
+      
+      // 顯示歡迎提示
+      Utils.showMessage('歡迎使用車隊管理系統', 'success', 2);
+    });
+
+    // ========== 登入表單初始化 ==========
+    function initLoginForm() {
+      const loginForm = Utils.safeGetElement('manager-login-form');
+      if (!loginForm) return;
+
+      loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // 獲取表單數據
+        const usernameInput = Utils.safeGetElement('manager-username');
+        const passwordInput = Utils.safeGetElement('manager-password');
+        const errorEl = Utils.safeGetElement('login-error');
+        
+        if (!usernameInput || !passwordInput || !errorEl) return;
+        
+        const username = usernameInput.value.trim();
+        const password = passwordInput.value.trim();
+        const submitBtn = e.submitter || loginForm.querySelector('button[type="submit"]');
+        
+        // 隱藏錯誤提示
+        errorEl.classList.add('hidden');
+        
+        try {
+          // 顯示按鈕加載狀態
+          if (submitBtn) {
+            Utils.showLoading(submitBtn, '<i class="fa fa-spinner fa-spin mr-2"></i> 驗證中...');
+          }
+          
+          // 執行登入驗證
+          const loginSuccess = await Utils.AdminAuth.login(
+            username, 
+            password, 
+            APPROVED_KEY, 
+            LOGGED_KEY, 
+            BACKUP_LOGGED_KEY, 
+            BACKEND_PAGE
+          );
+          
+          // 隱藏加載狀態（如果登入失敗）
+          if (!loginSuccess && submitBtn) {
+            Utils.hideLoading(submitBtn);
+          }
+          
+        } catch (error) {
+          console.error('登入處理失敗:', error);
+          
+          // 隱藏加載狀態
+          if (submitBtn) {
+            Utils.hideLoading(submitBtn);
+          }
+          
+          // 顯示錯誤提示
+          Utils.showMessage('登入處理異常，請稍後重試', 'error');
+        }
+      });
+    }
+
+    // ========== 表單交互初始化 ==========
+    function initFormInteractions() {
+      // 密碼可見性切換（可選功能）
+      const passwordInput = Utils.safeGetElement('manager-password');
+      if (passwordInput) {
+        // 按Enter鍵提交
+        passwordInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            const loginForm = Utils.safeGetElement('manager-login-form');
+            if (loginForm) {
+              loginForm.dispatchEvent(new Event('submit'));
+            }
+          }
+        });
+        
+        // 密碼輸入錯誤時添加抖動效果
+        passwordInput.addEventListener('focus', () => {
+          const errorEl = Utils.safeGetElement('login-error');
+          if (errorEl && !errorEl.classList.contains('hidden')) {
+            passwordInput.parentElement.parentElement.classList.add('shake-animation');
+            setTimeout(() => {
+              passwordInput.parentElement.parentElement.classList.remove('shake-animation');
+            }, 500);
+          }
+        });
+      }
+      
+      // 用戶名輸入框交互
+      const usernameInput = Utils.safeGetElement('manager-username');
+      if (usernameInput) {
+        // 獲取焦點時選擇文本
+        usernameInput.addEventListener('focus', () => {
+          if (usernameInput.value) {
+            usernameInput.select();
+          }
+        });
+        
+        // 限制輸入特殊字符
+        usernameInput.addEventListener('input', (e) => {
+          // 只允許字母、數字、下劃線和中文
+          const cleanValue = e.target.value.replace(/[^\u4e00-\u9fa5a-zA-Z0-9_]/g, '');
+          if (cleanValue !== e.target.value) {
+            e.target.value = cleanValue;
+            Utils.showMessage('帳號僅支持字母、數字、下劃線和中文', 'warning', 2);
+          }
+        });
+      }
+    }
+  </script>
 </head>
 <body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
   <div class="w-full max-w-md bg-white rounded-xl shadow-card p-8 sm:p-10">
@@ -67,6 +700,7 @@
             class="form-input pl-10" 
             placeholder="請輸入審核通過的帳號" 
             required
+            autocomplete="username"
           >
         </div>
       </div>
@@ -84,6 +718,7 @@
             class="form-input pl-10" 
             placeholder="請輸入密碼" 
             required
+            autocomplete="current-password"
           >
         </div>
       </div>
@@ -99,78 +734,24 @@
       </button>
     </form>
     
+    <!-- 忘記密碼連結 -->
+    <div class="mt-4 text-right">
+      <a href="forgot-password.html" class="text-link text-sm">
+        <i class="fa fa-question-circle mr-1"></i> 忘記密碼？
+      </a>
+    </div>
+    
     <!-- 註冊連結 -->
     <div class="mt-8 text-center pt-6 border-t border-gray-100">
       <p class="text-gray-600">尚未註冊車隊管理員？
         <a href="register.html" class="text-link font-medium">立即註冊</a>
       </p>
     </div>
+    
+    <!-- 安全提示 -->
+    <div class="mt-4 text-xs text-gray-500 text-center">
+      <p><i class="fa fa-shield mr-1"></i> 登入即表示您同意遵守系統使用規範</p>
+    </div>
   </div>
-
-  <script>
-    const APPROVED_KEY = 'approvedFleetAdmins';
-    const LOGGED_KEY = 'loggedInFleetAdmin';
-    const BACKUP_LOGGED_KEY = 'currentFleetAdmin';
-    const BACKEND_PAGE = 'admin-dashboard.html';
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const clearInvalidLoginData = () => {
-        [LOGGED_KEY, BACKUP_LOGGED_KEY].forEach(key => {
-          const data = localStorage.getItem(key);
-          if (data) {
-            try {
-              const admin = JSON.parse(data);
-              if (!admin.帳號 && !admin.username && !admin.account) {
-                localStorage.removeItem(key);
-              }
-            } catch (e) {
-              localStorage.removeItem(key);
-            }
-          }
-        });
-      };
-      clearInvalidLoginData();
-    });
-
-    document.getElementById('manager-login-form').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const username = document.getElementById('manager-username').value.trim();
-      const password = document.getElementById('manager-password').value.trim();
-      const errorEl = document.getElementById('login-error');
-
-      if (!username || !password) {
-        errorEl.innerHTML = '<i class="fa fa-exclamation-circle mr-1"></i> 請輸入帳號和密碼！';
-        errorEl.classList.remove('hidden');
-        setTimeout(() => errorEl.classList.add('hidden'), 3000);
-        return;
-      }
-
-      const approvedList = JSON.parse(localStorage.getItem(APPROVED_KEY) || '[]');
-      
-      if (approvedList.length === 0) {
-        errorEl.innerHTML = '<i class="fa fa-exclamation-circle mr-1"></i> 暫無已審核的車隊管理員，請先聯繫超管審核！';
-        errorEl.classList.remove('hidden');
-        setTimeout(() => errorEl.classList.add('hidden'), 3000);
-        return;
-      }
-
-      const matchAdmin = approvedList.find(admin => {
-        const accMatch = admin.帳號 === username || admin.username === username || admin.account === username;
-        const pwdMatch = admin.密碼 === password || admin.password === password || admin.pwd === password;
-        return accMatch && pwdMatch;
-      });
-
-      if (matchAdmin) {
-        localStorage.setItem(LOGGED_KEY, JSON.stringify(matchAdmin));
-        localStorage.setItem(BACKUP_LOGGED_KEY, JSON.stringify(matchAdmin));
-        window.location.href = BACKEND_PAGE;
-      } else {
-        errorEl.classList.remove('hidden');
-        document.getElementById('manager-password').value = '';
-        document.getElementById('manager-password').focus();
-        setTimeout(() => errorEl.classList.add('hidden'), 3000);
-      }
-    });
-  </script>
 </body>
 </html>

@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <title>註冊審核中</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入Font Awesome（加載動畫/圖標使用） -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
   <style>
     .audit-card {
       background: white;
@@ -14,7 +16,367 @@
       max-width: 450px;
       text-align: center;
     }
+    /* 工具類提示樣式增強 */
+    .utils-alert {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      max-width: 350px;
+      width: 100%;
+      border-radius: 8px;
+      padding: 16px;
+      background: #f0fdf4;
+      color: #065f46;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      animation: slideIn 0.3s ease forwards;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
   </style>
+  
+  <!-- 整合Utils工具類 -->
+  <script>
+    /**
+     * 全局工具類 - 提升網站穩定性、統一處理通用邏輯
+     * 適用於所有車隊管理系統頁面（admin-*.html / manager-login.html / 審核頁）
+     */
+    const Utils = {
+      // ========== 基礎工具方法 ==========
+      /**
+       * 安全解析JSON（避免解析失敗導致頁面崩潰）
+       * @param {string} str - 要解析的JSON字串
+       * @returns {any|null} 解析後的數據，失敗返回null
+       */
+      safeParseJSON(str) {
+        try {
+          return str && str !== 'null' && str !== 'undefined' ? JSON.parse(str) : null;
+        } catch (e) {
+          console.error('JSON解析失敗:', e, '原始字串:', str);
+          return null;
+        }
+      },
+
+      /**
+       * 安全獲取DOM元素（避免操作空元素報錯）
+       * @param {string} id - 元素ID
+       * @returns {HTMLElement|null} 元素對象或null
+       */
+      safeGetElement(id) {
+        const el = document.getElementById(id);
+        if (!el) console.warn(`[Utils] 元素#${id}不存在`);
+        return el;
+      },
+
+      /**
+       * 驗證數字輸入（適用價格、金額等表單）
+       * @param {string} value - 輸入值
+       * @param {boolean} allowZero - 是否允許0（預設不允許）
+       * @returns {boolean} 是否有效
+       */
+      validateNumber(value, allowZero = false) {
+        const trimmed = value.trim();
+        // 驗證是否為純數字
+        if (!/^\d+$/.test(trimmed)) return false;
+        // 驗證是否大於0（如果不允許0）
+        if (!allowZero && Number(trimmed) <= 0) return false;
+        return true;
+      },
+
+      /**
+       * 顯示提示訊息（審核頁專用）
+       * @param {string} message - 提示內容
+       * @param {string} type - 類型 success/error/warning
+       */
+      showMessage(message, type = 'success') {
+        // 移除已存在的提示
+        const oldAlert = document.querySelector('.utils-alert');
+        if (oldAlert) oldAlert.remove();
+        
+        // 創建提示元素
+        const alertEl = document.createElement('div');
+        alertEl.className = 'utils-alert';
+        
+        // 設置不同類型的樣式
+        const styles = {
+          success: { bg: '#f0fdf4', color: '#065f46', icon: 'fa-check-circle' },
+          error: { bg: '#fee2e2', color: '#991b1b', icon: 'fa-times-circle' },
+          warning: { bg: '#fffbeb', color: '#92400e', icon: 'fa-exclamation-circle' }
+        };
+        const config = styles[type] || styles.success;
+        
+        alertEl.style.background = config.bg;
+        alertEl.style.color = config.color;
+        alertEl.innerHTML = `
+          <i class="fa ${config.icon} mr-2"></i>
+          <span>${message}</span>
+        `;
+        
+        // 添加到頁面並自動移除
+        document.body.appendChild(alertEl);
+        setTimeout(() => {
+          alertEl.style.animation = 'slideIn 0.3s ease reverse forwards';
+          setTimeout(() => alertEl.remove(), 300);
+        }, 3000);
+      },
+
+      // ========== 本地存儲管理（帶過期機制） ==========
+      Storage: {
+        /**
+         * 儲存數據到localStorage（自動序列化+設置過期）
+         * @param {string} key - 儲存鍵名
+         * @param {any} data - 要儲存的數據
+         * @param {number} expireHours - 過期小時（預設24小時）
+         */
+        set(key, data, expireHours = 24) {
+          try {
+            const value = JSON.stringify(data);
+            localStorage.setItem(key, value);
+            // 設置過期時間戳
+            if (expireHours) {
+              const expireTime = Date.now() + expireHours * 60 * 60 * 1000;
+              localStorage.setItem(`${key}_expire`, expireTime);
+            }
+          } catch (e) {
+            console.error('[Storage] 儲存失敗:', e);
+            Utils.showMessage('本地存儲空間不足，無法保存數據！', 'error');
+          }
+        },
+
+        /**
+         * 從localStorage獲取數據（自動檢查過期）
+         * @param {string} key - 儲存鍵名
+         * @returns {any|null} 儲存的數據，過期/不存在返回null
+         */
+        get(key) {
+          try {
+            const expireTime = localStorage.getItem(`${key}_expire`);
+            // 檢查是否過期
+            if (expireTime && Date.now() > Number(expireTime)) {
+              this.remove(key);
+              return null;
+            }
+            // 解析並返回數據
+            return Utils.safeParseJSON(localStorage.getItem(key));
+          } catch (e) {
+            console.error('[Storage] 讀取失敗:', e);
+            return null;
+          }
+        },
+
+        /**
+         * 移除localStorage中的數據（包含過期標記）
+         * @param {string} key - 儲存鍵名
+         */
+        remove(key) {
+          localStorage.removeItem(key);
+          localStorage.removeItem(`${key}_expire`);
+        },
+
+        /**
+         * 清空所有車隊管理系統相關存儲
+         */
+        clearAllFleetData() {
+          const keys = Object.keys(localStorage);
+          keys.forEach(key => {
+            if (key.includes('fleet') || key.includes('admin') || key.includes('price') || key.includes('finance') || key.includes('driver')) {
+              this.remove(key);
+            }
+          });
+        }
+      },
+
+      // ========== 登錄狀態管理 ==========
+      Auth: {
+        // 登錄狀態相關鍵名（與業務代碼統一）
+        KEYS: {
+          LOGGED_IN: 'loggedInFleetAdmin',
+          BACKUP: 'currentFleetAdmin',
+          EXPIRE: 'adminExpireTime'
+        },
+
+        /**
+         * 檢查登錄狀態是否有效（核心穩定性方法）
+         * @returns {boolean} 是否登錄有效
+         */
+        checkLoginStatus() {
+          // 1. 獲取登錄數據（優先主鍵，後備份鍵）
+          let adminData = Utils.Storage.get(Utils.Auth.KEYS.LOGGED_IN);
+          if (!adminData) {
+            adminData = Utils.Storage.get(Utils.Auth.KEYS.BACKUP);
+          }
+
+          // 2. 驗證登錄數據是否有效
+          const hasValidAccount = adminData && (
+            adminData.帳號 || adminData.username || adminData.account || adminData.phone
+          );
+
+          if (!hasValidAccount) {
+            // 登錄無效：清除殘留數據
+            Utils.Storage.clearAllFleetData();
+            return false;
+          }
+
+          // 3. 自動續期（每次檢查都延長24小時過期）
+          Utils.Storage.set(Utils.Auth.KEYS.LOGGED_IN, adminData, 24);
+          return true;
+        },
+
+        /**
+         * 強制跳轉到登入頁（登錄無效時調用）
+         */
+        redirectToLogin() {
+          Utils.showMessage('登錄已過期或未登錄，請重新登入！', 'warning');
+          setTimeout(() => {
+            window.location.href = 'manager-login.html';
+          }, 1500);
+        },
+
+        /**
+         * 退出登錄（清除所有登錄狀態）
+         */
+        logout() {
+          Utils.Storage.clearAllFleetData();
+          window.location.href = 'manager-login.html';
+        }
+      },
+
+      // ========== UI增強方法 ==========
+      /**
+       * 顯示加載狀態（適用表格/按鈕等加載場景）
+       * @param {HTMLElement} el - 要顯示加載狀態的元素
+       * @param {string} text - 加載提示文字（預設：加載中...）
+       */
+      showLoading(el, text = '加載中...') {
+        if (!el) return;
+        el.innerHTML = `
+          <div style="text-align: center; padding: 20px; color: #666;">
+            <i class="fa fa-spinner fa-spin mr-2"></i>${text}
+          </div>
+        `;
+      },
+
+      /**
+       * 顯示空數據提示（適用表格）
+       * @param {HTMLElement} el - 要顯示提示的元素
+       * @param {string} text - 空數據提示文字
+       * @param {number} colspan - 表格列數（適用td colspan）
+       */
+      showEmptyData(el, text = '暫無數據', colspan = 1) {
+        if (!el) return;
+        if (el.tagName === 'TBODY') {
+          el.innerHTML = `
+            <tr>
+              <td colspan="${colspan}" style="padding: 30px; text-align: center; color: #666;">
+                ${text}
+              </td>
+            </tr>
+          `;
+        } else {
+          el.innerHTML = `
+            <div style="padding: 30px; text-align: center; color: #666;">
+              ${text}
+            </div>
+          `;
+        }
+      },
+
+      /**
+       * 表單數字驗證（批量驗證輸入框）
+       * @param {NodeList} inputs - 要驗證的輸入框集合
+       * @returns {boolean} 是否全部驗證通過
+       */
+      validateFormNumbers(inputs) {
+        let isValid = true;
+        inputs.forEach(input => {
+          const label = input.previousElementSibling?.textContent || input.name || '該項';
+          const value = input.value;
+
+          if (!Utils.validateNumber(value)) {
+            Utils.showMessage(`${label}只能填大於0的數字！`, 'error');
+            input.focus();
+            isValid = false;
+            return false; // 中斷forEach
+          }
+        });
+        return isValid;
+      },
+
+      // ========== 審核頁專用方法 ==========
+      /**
+       * 記錄審核狀態到本地存儲
+       * @param {object} driverData - 司機註冊數據
+       */
+      recordAuditStatus(driverData) {
+        const auditRecord = {
+          status: 'pending',
+          submitTime: new Date().toLocaleString('zh-TW'),
+          driverInfo: driverData,
+          notifyMethod: 'line'
+        };
+        // 儲存審核記錄（7天過期）
+        Utils.Storage.set('driver_audit_record', auditRecord, 24 * 7);
+        console.log('審核記錄已保存:', auditRecord);
+      },
+
+      /**
+       * 安全跳轉頁面（審核頁返回首頁專用）
+       * @param {string} url - 目標URL
+       */
+      safeNavigate(url) {
+        try {
+          // 顯示加載狀態
+          const btn = document.querySelector('button');
+          if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>返回中...';
+          }
+          // 延遲跳轉提升體驗
+          setTimeout(() => {
+            window.location.href = url;
+          }, 500);
+        } catch (e) {
+          console.error('跳轉失敗:', e);
+          Utils.showMessage('頁面跳轉失敗，請手動返回', 'error');
+          // 恢復按鈕狀態
+          const btn = document.querySelector('button');
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '返回首頁';
+          }
+        }
+      }
+    };
+
+    // ========== 審核頁專用初始化 ==========
+    document.addEventListener('DOMContentLoaded', function() {
+      // 1. 獲取並顯示註冊數據（如果有）
+      const driverData = Utils.Storage.get('driver_regist_data');
+      if (driverData) {
+        // 記錄審核狀態
+        Utils.recordAuditStatus(driverData);
+        // 顯示提交成功提示
+        Utils.showMessage('您的註冊資料已成功提交，進入審核流程！', 'success');
+      }
+
+      // 2. 綁定返回首頁按鈕事件（增強版）
+      const backBtn = document.querySelector('button');
+      if (backBtn) {
+        backBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          // 使用工具類安全跳轉
+          Utils.safeNavigate('../driver.html');
+        });
+      }
+
+      // 3. 監聽頁面離開事件（可選）
+      window.addEventListener('beforeunload', function() {
+        console.log('用戶離開審核頁');
+      });
+    });
+  </script>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen py-8 px-4">
   <div class="audit-card mx-auto">
@@ -23,8 +385,8 @@
       您的司機註冊資料已提交，後台管理員將於1-3個工作天內完成審核<br>
       審核結果將透過您填寫的Line ID通知您
     </p>
-    <!-- 核心修改：路徑改為 ../driver.html（返回上級目錄的driver.html） -->
-    <button onclick="window.location.href='../driver.html'" class="px-6 py-3 bg-gray-100 text-gray-800 rounded-lg font-medium hover:bg-gray-200 transition">
+    <!-- 增強版返回按鈕（由工具類處理點擊事件） -->
+    <button class="px-6 py-3 bg-gray-100 text-gray-800 rounded-lg font-medium hover:bg-gray-200 transition">
       返回首頁
     </button>
   </div>

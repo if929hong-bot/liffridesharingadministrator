@@ -32,10 +32,10 @@
     const db = getDatabase(app);
 
     // 暴露到全局
-    window.db = db;
-    window.ref = ref;
-    window.onChildAdded = onChildAdded;
-    window.update = update;
+    window.firebaseDB = db;
+    window.firebaseRef = ref;
+    window.firebaseOnChildAdded = onChildAdded;
+    window.firebaseUpdate = update;
   </script>
 
   <script>
@@ -58,10 +58,602 @@
       .btn-accept {
         @apply bg-primary text-white px-3 py-1 rounded text-sm hover:bg-primary/90 transition-all;
       }
+      /* Utils工具類樣式 */
+      .utils-alert {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        max-width: 300px;
+        width: 100%;
+        border-radius: 8px;
+        padding: 12px 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        animation: slideIn 0.3s ease forwards;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+      .utils-alert.success {
+        background: #f0fdf4;
+        color: #065f46;
+      }
+      .utils-alert.error {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+      .utils-alert.warning {
+        background: #fffbeb;
+        color: #92400e;
+      }
+      .loading-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(255,255,255,0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9998;
+      }
+      .loading-spinner {
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #22c55e;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      .btn-loading {
+        position: relative;
+        pointer-events: none;
+        opacity: 0.8;
+      }
+      .btn-loading::after {
+        content: '';
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        border: 2px solid #fff;
+        border-top: 2px solid transparent;
+        border-radius: 50%;
+        right: 0.8rem;
+        top: 50%;
+        transform: translateY(-50%);
+        animation: spin 1s linear infinite;
+      }
     }
   </style>
+
+  <script>
+    /**
+     * 全局工具類 - 提升網站穩定性、統一處理通用邏輯
+     * 適用於所有車隊管理系統頁面（訂單列表/訂單詳情/計費頁/司機頁）
+     */
+    const Utils = {
+      // ========== 基礎工具方法 ==========
+      /**
+       * 安全解析JSON（避免解析失敗導致頁面崩潰）
+       * @param {string} str - 要解析的JSON字串
+       * @returns {any|null} 解析後的數據，失敗返回null
+       */
+      safeParseJSON(str) {
+        try {
+          return str && str !== 'null' && str !== 'undefined' ? JSON.parse(str) : null;
+        } catch (e) {
+          console.error('JSON解析失敗:', e, '原始字串:', str);
+          return null;
+        }
+      },
+
+      /**
+       * 安全獲取DOM元素（避免操作空元素報錯）
+       * @param {string} id - 元素ID
+       * @returns {HTMLElement|null} 元素對象或null
+       */
+      safeGetElement(id) {
+        const el = document.getElementById(id);
+        if (!el) console.warn(`[Utils] 元素#${id}不存在`);
+        return el;
+      },
+
+      /**
+       * 驗證數字輸入（適用價格、金額等表單）
+       * @param {string} value - 輸入值
+       * @param {boolean} allowZero - 是否允許0（預設不允許）
+       * @returns {boolean} 是否有效
+       */
+      validateNumber(value, allowZero = false) {
+        const trimmed = value.trim();
+        // 驗證是否為純數字
+        if (!/^\d+$/.test(trimmed)) return false;
+        // 驗證是否大於0（如果不允許0）
+        if (!allowZero && Number(trimmed) <= 0) return false;
+        return true;
+      },
+
+      /**
+       * 顯示統一提示訊息（取代alert，提升體驗）
+       * @param {string} message - 提示內容
+       * @param {string} type - 類型 success/error/warning
+       * @param {number} duration - 自動關閉時間（秒，預設3秒）
+       */
+      showMessage(message, type = 'success', duration = 3) {
+        // 移除已存在的提示
+        const oldAlert = document.querySelector('.utils-alert');
+        if (oldAlert) oldAlert.remove();
+        
+        // 創建提示元素
+        const alertEl = document.createElement('div');
+        alertEl.className = `utils-alert ${type}`;
+        
+        // 設置圖標
+        const iconMap = {
+          success: '<i class="fa fa-check-circle"></i>',
+          error: '<i class="fa fa-times-circle"></i>',
+          warning: '<i class="fa fa-exclamation-circle"></i>'
+        };
+        
+        alertEl.innerHTML = `
+          ${iconMap[type] || iconMap.success}
+          <span>${message}</span>
+        `;
+        
+        // 添加到頁面
+        document.body.appendChild(alertEl);
+        
+        // 自動移除
+        if (duration > 0) {
+          setTimeout(() => {
+            alertEl.style.animation = 'slideIn 0.3s ease reverse forwards';
+            setTimeout(() => alertEl.remove(), 300);
+          }, duration * 1000);
+        }
+        
+        return alertEl;
+      },
+
+      // ========== 本地存儲管理（帶過期機制） ==========
+      Storage: {
+        /**
+         * 儲存數據到localStorage（自動序列化+設置過期）
+         * @param {string} key - 儲存鍵名
+         * @param {any} data - 要儲存的數據
+         * @param {number} expireHours - 過期小時（預設24小時）
+         */
+        set(key, data, expireHours = 24) {
+          try {
+            const value = JSON.stringify(data);
+            localStorage.setItem(key, value);
+            // 設置過期時間戳
+            if (expireHours) {
+              const expireTime = Date.now() + expireHours * 60 * 60 * 1000;
+              localStorage.setItem(`${key}_expire`, expireTime);
+            }
+          } catch (e) {
+            console.error('[Storage] 儲存失敗:', e);
+            Utils.showMessage('本地存儲空間不足，無法保存數據！', 'error');
+          }
+        },
+
+        /**
+         * 從localStorage獲取數據（自動檢查過期）
+         * @param {string} key - 儲存鍵名
+         * @returns {any|null} 儲存的數據，過期/不存在返回null
+         */
+        get(key) {
+          try {
+            const expireTime = localStorage.getItem(`${key}_expire`);
+            // 檢查是否過期
+            if (expireTime && Date.now() > Number(expireTime)) {
+              this.remove(key);
+              return null;
+            }
+            // 解析並返回數據
+            return Utils.safeParseJSON(localStorage.getItem(key));
+          } catch (e) {
+            console.error('[Storage] 讀取失敗:', e);
+            return null;
+          }
+        },
+
+        /**
+         * 移除localStorage中的數據（包含過期標記）
+         * @param {string} key - 儲存鍵名
+         */
+        remove(key) {
+          localStorage.removeItem(key);
+          localStorage.removeItem(`${key}_expire`);
+        },
+
+        /**
+         * 清空所有車隊管理系統相關存儲
+         */
+        clearAllFleetData() {
+          const keys = Object.keys(localStorage);
+          keys.forEach(key => {
+            if (key.includes('fleet') || key.includes('admin') || key.includes('price') || key.includes('finance') || key.includes('driver')) {
+              this.remove(key);
+            }
+          });
+        }
+      },
+
+      // ========== 登錄狀態管理 ==========
+      Auth: {
+        // 司機登錄狀態相關鍵名
+        DRIVER_KEYS: {
+          PASSED_LIST: 'driverPassedList',
+          LOGGED_IN: 'driverLoggedIn',
+          EXPIRE: 'driverExpireTime'
+        },
+
+        /**
+         * 檢查司機登錄狀態是否有效
+         * @returns {boolean} 是否登錄有效
+         */
+        checkDriverLoginStatus() {
+          // 獲取司機登錄數據
+          const driverData = Utils.Storage.get(Utils.Auth.DRIVER_KEYS.LOGGED_IN);
+          
+          // 驗證登錄數據是否有效
+          const hasValidData = driverData && driverData.phone && driverData.password;
+
+          if (!hasValidData) {
+            return false;
+          }
+
+          // 自動續期（每次檢查都延長24小時過期）
+          Utils.Storage.set(Utils.Auth.DRIVER_KEYS.LOGGED_IN, driverData, 24);
+          return true;
+        },
+
+        /**
+         * 強制跳轉到司機登入頁
+         */
+        redirectToDriverLogin() {
+          Utils.showMessage('請先登錄司機帳號！', 'warning');
+          setTimeout(() => {
+            window.location.href = 'driver-login.html';
+          }, 1000);
+        },
+
+        /**
+         * 司機退出登錄
+         */
+        driverLogout() {
+          Utils.Storage.remove(Utils.Auth.DRIVER_KEYS.LOGGED_IN);
+          window.location.href = 'driver-login.html';
+        }
+      },
+
+      // ========== UI增強方法 ==========
+      /**
+       * 顯示加載狀態（適用按鈕/頁面加載場景）
+       * @param {HTMLElement} el - 要顯示加載狀態的元素（可選）
+       * @param {string} text - 加載提示文字（預設：處理中...）
+       */
+      showLoading(el, text = '處理中...') {
+        // 頁面級加載
+        if (!el) {
+          const loadingEl = document.createElement('div');
+          loadingEl.className = 'loading-overlay';
+          loadingEl.innerHTML = `
+            <div class="flex flex-col items-center gap-2">
+              <div class="loading-spinner"></div>
+              <span class="text-text-dark text-sm">${text}</span>
+            </div>
+          `;
+          loadingEl.id = 'page-loading';
+          document.body.appendChild(loadingEl);
+          return;
+        }
+
+        // 元素級加載
+        if (!el) return;
+        el.disabled = true;
+        el.classList.add('btn-loading');
+        const originalText = el.innerHTML;
+        el.setAttribute('data-original-text', originalText);
+        el.innerHTML = text;
+      },
+
+      /**
+       * 隱藏加載狀態
+       * @param {HTMLElement} el - 要還原的元素（可選）
+       * @param {string} restoreText - 還原的按鈕文字（可選）
+       */
+      hideLoading(el, restoreText = '') {
+        // 移除頁面級加載
+        const pageLoading = document.getElementById('page-loading');
+        if (pageLoading) pageLoading.remove();
+
+        // 還原元素級加載
+        if (el) {
+          el.disabled = false;
+          el.classList.remove('btn-loading');
+          const originalText = el.getAttribute('data-original-text');
+          if (originalText) el.innerHTML = originalText;
+          else if (restoreText) el.innerHTML = restoreText;
+        }
+      },
+
+      /**
+       * 安全跳轉頁面（帶加載狀態和錯誤處理）
+       * @param {string} url - 目標URL
+       * @param {string} message - 跳轉前提示訊息
+       */
+      safeNavigate(url, message = '') {
+        try {
+          // 顯示提示
+          if (message) Utils.showMessage(message, 'success');
+          
+          // 顯示頁面加載
+          Utils.showLoading(null, '跳轉中...');
+          
+          // 延遲跳轉提升體驗
+          setTimeout(() => {
+            window.location.href = url;
+          }, 500);
+        } catch (e) {
+          console.error('跳轉失敗:', e);
+          Utils.hideLoading();
+          Utils.showMessage('頁面跳轉失敗，請手動操作', 'error');
+        }
+      },
+
+      // ========== Firebase訂單管理專用方法 ==========
+      FirebaseOrder: {
+        /**
+         * 安全更新Firebase訂單狀態
+         * @param {string} orderKey - 訂單唯一鍵
+         * @param {object} updateData - 要更新的數據
+         * @returns {boolean} 是否更新成功
+         */
+        async updateOrderStatus(orderKey, updateData) {
+          try {
+            if (!window.firebaseDB || !window.firebaseRef || !window.firebaseUpdate) {
+              Utils.showMessage('Firebase初始化失敗，無法更新訂單', 'error');
+              return false;
+            }
+
+            if (!orderKey) {
+              Utils.showMessage('訂單ID無效，無法更新狀態', 'error');
+              return false;
+            }
+
+            // 更新Firebase訂單狀態
+            await window.firebaseUpdate(
+              window.firebaseRef(window.firebaseDB, `rides/${orderKey}`), 
+              updateData
+            );
+            
+            return true;
+          } catch (err) {
+            console.error('Firebase訂單更新失敗:', err);
+            Utils.showMessage(`訂單更新失敗：${err.message || '網絡錯誤，請稍後重試'}`, 'error');
+            return false;
+          }
+        },
+
+        /**
+         * 創建訂單卡片（統一樣式和結構）
+         * @param {object} order - 訂單數據
+         * @param {string} orderKey - 訂單唯一鍵
+         * @returns {HTMLElement} 訂單卡片元素
+         */
+        createOrderCard(order, orderKey) {
+          try {
+            // 創建訂單卡片
+            const orderCard = document.createElement('div');
+            orderCard.className = 'order-card';
+            orderCard.dataset.orderKey = orderKey;
+            
+            // 處理訂單狀態樣式
+            const statusConfig = {
+              'pending': { class: 'bg-yellow-100 text-yellow-800', text: '待接單' },
+              '已接單': { class: 'bg-green-100 text-green-800', text: '已接單' },
+              '已完成': { class: 'bg-blue-100 text-blue-800', text: '已完成' },
+              '已取消': { class: 'bg-red-100 text-red-800', text: '已取消' },
+              default: { class: 'bg-gray-100 text-gray-800', text: '未知狀態' }
+            };
+            
+            const statusInfo = statusConfig[order.status] || statusConfig.default;
+            
+            // 構建訂單卡片內容
+            orderCard.innerHTML = `
+              <div class="flex justify-between items-center mb-2">
+                <h3 class="font-medium">訂單編號：${order.orderId || '未知'}</h3>
+                <span class="text-xs bg-${statusInfo.class.split(' ')[1]} text-${statusInfo.class.split(' ')[2]} px-2 py-1 rounded">${statusInfo.text}</span>
+              </div>
+              <table class="w-full text-sm mb-3">
+                <tr class="border-b border-gray-100 pb-2 mb-2">
+                  <td class="text-gray-500 w-24">乘客姓名：</td>
+                  <td>${order.name || '未知'}</td>
+                </tr>
+                <tr class="border-b border-gray-100 pb-2 mb-2">
+                  <td class="text-gray-500">聯絡電話：</td>
+                  <td>${order.phone || '未知'}</td>
+                </tr>
+                <tr class="border-b border-gray-100 pb-2 mb-2">
+                  <td class="text-gray-500">上車地點：</td>
+                  <td>${order.pickup || '未知'}</td>
+                </tr>
+                <tr class="border-b border-gray-100 pb-2 mb-2">
+                  <td class="text-gray-500">下車地點：</td>
+                  <td>${order.dropoff || '未知'}</td>
+                </tr>
+                <tr class="border-b border-gray-100 pb-2 mb-2">
+                  <td class="text-gray-500">備註：</td>
+                  <td>${order.remark || '無'}</td>
+                </tr>
+                <tr>
+                  <td class="text-gray-500">提交時間：</td>
+                  <td>${order.createTime || '未知'}</td>
+                </tr>
+              </table>
+              ${order.status !== '已接單' ? `
+                <button onclick="acceptOrder('${orderKey}')" class="btn-accept">
+                  接單
+                </button>
+              ` : ''}
+            `;
+            
+            return orderCard;
+          } catch (e) {
+            console.error('創建訂單卡片失敗:', e);
+            Utils.showMessage('訂單卡片創建失敗', 'error');
+            return null;
+          }
+        },
+
+        /**
+         * 更新頁面訂單狀態顯示
+         * @param {string} orderKey - 訂單唯一鍵
+         * @param {string} newStatus - 新狀態
+         */
+        updateOrderCardDisplay(orderKey, newStatus) {
+          try {
+            // 找到對應訂單卡片
+            const orderCard = document.querySelector(`[data-order-key="${orderKey}"]`);
+            if (!orderCard) {
+              console.warn(`訂單卡片${orderKey}不存在`);
+              return;
+            }
+
+            // 更新狀態顯示
+            const statusSpan = orderCard.querySelector('span');
+            if (statusSpan) {
+              const statusConfig = {
+                '已接單': { class: 'text-xs bg-green-100 text-green-800 px-2 py-1 rounded', text: '已接單' },
+                '已完成': { class: 'text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded', text: '已完成' },
+                '已取消': { class: 'text-xs bg-red-100 text-red-800 px-2 py-1 rounded', text: '已取消' },
+                default: { class: 'text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded', text: newStatus }
+              };
+              
+              const statusInfo = statusConfig[newStatus] || statusConfig.default;
+              statusSpan.className = statusInfo.class;
+              statusSpan.textContent = statusInfo.text;
+            }
+
+            // 如果是已接單，移除接單按鈕
+            if (newStatus === '已接單') {
+              const acceptBtn = orderCard.querySelector('.btn-accept');
+              if (acceptBtn) acceptBtn.remove();
+            }
+          } catch (e) {
+            console.error('更新訂單顯示失敗:', e);
+            Utils.showMessage('訂單狀態顯示更新失敗', 'warning');
+          }
+        }
+      }
+    };
+
+    // ========== 頁面初始化 ==========
+    document.addEventListener('DOMContentLoaded', function() {
+      // 1. 驗證司機登錄狀態
+      if (!Utils.Auth.checkDriverLoginStatus()) {
+        Utils.Auth.redirectToDriverLogin();
+        return;
+      }
+
+      // 2. 初始化Firebase訂單監聽
+      initFirebaseOrderListener();
+    });
+
+    // ========== Firebase訂單監聽 ==========
+    function initFirebaseOrderListener() {
+      try {
+        if (!window.firebaseDB || !window.firebaseRef || !window.firebaseOnChildAdded) {
+          Utils.showMessage('Firebase加載失敗，無法監聽訂單', 'error');
+          return;
+        }
+
+        // 實時監聽訂單變化
+        window.firebaseOnChildAdded(window.firebaseRef(window.firebaseDB, 'rides'), (snapshot) => {
+          try {
+            const order = snapshot.val();
+            const orderKey = snapshot.key;
+            const orderList = Utils.safeGetElement('order-list');
+            
+            if (!orderList) return;
+            
+            // 清空「等待新訂單」提示
+            if (orderList.innerHTML.includes('等待新訂單')) {
+              orderList.innerHTML = '';
+            }
+
+            // 檢查是否已存在相同訂單（避免重複）
+            const existingCard = document.querySelector(`[data-order-key="${orderKey}"]`);
+            if (existingCard) {
+              console.log(`訂單${orderKey}已存在，跳過創建`);
+              return;
+            }
+
+            // 創建訂單卡片
+            const orderCard = Utils.FirebaseOrder.createOrderCard(order, orderKey);
+            if (!orderCard) return;
+            
+            // 新增訂單置頂
+            orderList.insertBefore(orderCard, orderList.firstChild);
+            
+            // 顯示新訂單提示
+            Utils.showMessage('收到新訂單！', 'success', 2);
+          } catch (e) {
+            console.error('處理訂單快照失敗:', e);
+            Utils.showMessage('處理新訂單失敗', 'error');
+          }
+        });
+      } catch (e) {
+        console.error('初始化訂單監聽失敗:', e);
+        Utils.showMessage('訂單監聽初始化失敗，請刷新頁面', 'error');
+      }
+    }
+
+    // ========== 接單功能（全局暴露） ==========
+    window.acceptOrder = async function(orderKey) {
+      // 確認接單
+      if (!confirm('確認接單？')) return;
+
+      // 找到接單按鈕並顯示加載狀態
+      const acceptBtn = document.querySelector(`button[onclick="acceptOrder('${orderKey}')"]`);
+      if (acceptBtn) Utils.showLoading(acceptBtn, '處理中...');
+
+      try {
+        // 更新Firebase訂單狀態
+        const updateSuccess = await Utils.FirebaseOrder.updateOrderStatus(
+          orderKey, 
+          { status: '已接單', acceptTime: new Date().toLocaleString('zh-TW') }
+        );
+        
+        if (updateSuccess) {
+          // 顯示成功提示
+          Utils.showMessage('接單成功！', 'success');
+          
+          // 更新頁面訂單顯示
+          Utils.FirebaseOrder.updateOrderCardDisplay(orderKey, '已接單');
+        }
+      } catch (err) {
+        console.error('接單處理異常:', err);
+        Utils.showMessage('接單過程異常，請稍後重試', 'error');
+      } finally {
+        // 隱藏加載狀態
+        if (acceptBtn) Utils.hideLoading(acceptBtn, '接單');
+      }
+    }
+  </script>
 </head>
 <body class="bg-gray-50 min-h-screen p-4">
+  <!-- 引入Font Awesome圖標 -->
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
   <div class="container mx-auto max-w-3xl">
     <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">司機訂單管理</h1>
 
@@ -70,81 +662,5 @@
       <p class="text-center text-gray-500">等待新訂單...</p>
     </div>
   </div>
-
-  <script>
-    // 實時監聽訂單變化
-    onChildAdded(ref(window.db, 'rides'), (snapshot) => {
-      const order = snapshot.val();
-      const orderKey = snapshot.key;
-      const orderList = document.getElementById('order-list');
-      
-      // 清空「等待新訂單」提示
-      if (orderList.innerHTML.includes('等待新訂單')) {
-        orderList.innerHTML = '';
-      }
-
-      // 創建訂單卡片
-      const orderCard = document.createElement('div');
-      orderCard.className = 'order-card';
-      orderCard.innerHTML = `
-        <div class="flex justify-between items-center mb-2">
-          <h3 class="font-medium">訂單編號：${order.orderId}</h3>
-          <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">${order.status}</span>
-        </div>
-        <table class="w-full text-sm mb-3">
-          <tr class="border-b border-gray-100 pb-2 mb-2">
-            <td class="text-gray-500 w-24">乘客姓名：</td>
-            <td>${order.name}</td>
-          </tr>
-          <tr class="border-b border-gray-100 pb-2 mb-2">
-            <td class="text-gray-500">聯絡電話：</td>
-            <td>${order.phone}</td>
-          </tr>
-          <tr class="border-b border-gray-100 pb-2 mb-2">
-            <td class="text-gray-500">上車地點：</td>
-            <td>${order.pickup}</td>
-          </tr>
-          <tr class="border-b border-gray-100 pb-2 mb-2">
-            <td class="text-gray-500">下車地點：</td>
-            <td>${order.dropoff}</td>
-          </tr>
-          <tr class="border-b border-gray-100 pb-2 mb-2">
-            <td class="text-gray-500">備註：</td>
-            <td>${order.remark || '無'}</td>
-          </tr>
-          <tr>
-            <td class="text-gray-500">提交時間：</td>
-            <td>${order.createTime}</td>
-          </tr>
-        </table>
-        <button onclick="acceptOrder('${orderKey}')" class="btn-accept">
-          接單
-        </button>
-      `;
-      
-      // 新增訂單置頂
-      orderList.insertBefore(orderCard, orderList.firstChild);
-    });
-
-    // 接單功能（更新訂單狀態）
-    window.acceptOrder = async function(orderKey) {
-      if (confirm('確認接單？')) {
-        try {
-          // 更新Firebase訂單狀態
-          await update(ref(window.db, `rides/${orderKey}`), { status: '已接單' });
-          
-          alert('接單成功！');
-          // 更新頁面顯示
-          const orderCard = document.querySelector(`button[onclick="acceptOrder('${orderKey}')"]`).closest('.order-card');
-          const statusSpan = orderCard.querySelector('span');
-          statusSpan.className = 'text-xs bg-green-100 text-green-800 px-2 py-1 rounded';
-          statusSpan.textContent = '已接單';
-        } catch (err) {
-          console.error('接單失敗:', err);
-          alert('接單失敗，請稍後重試');
-        }
-      }
-    }
-  </script>
 </body>
 </html>

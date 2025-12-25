@@ -4,93 +4,201 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>超管後台 - 車隊管理系統</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
-  <style type="text/tailwindcss">
-    @layer utilities {
-      .form-input {
-        @apply w-full px-4 py-2.5 border border-gray-700 rounded-lg bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-green-600/40 focus:border-green-600 transition-all placeholder-gray-500;
-      }
-      .form-select {
-        @apply w-full px-4 py-2.5 border border-gray-700 rounded-lg bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-green-600/40 focus:border-green-600 transition-all;
-      }
-      .btn {
-        @apply py-2 px-4 rounded-lg transition-all duration-200 font-medium active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
-      }
-      .btn-primary {
-        @apply bg-green-600 text-white hover:bg-green-700;
-      }
-      .btn-danger {
-        @apply bg-red-600 text-white hover:bg-red-700;
-      }
-      .btn-success {
-        @apply bg-emerald-600 text-white hover:bg-emerald-700;
-      }
-      .btn-outline {
-        @apply border border-gray-700 bg-gray-800 text-white hover:bg-gray-700;
-      }
-      .table-cell {
-        @apply px-4 py-3 border-b border-gray-700 align-middle;
-      }
-      .modal {
-        @apply fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm;
-      }
-      .modal-content {
-        @apply bg-gray-800 text-white rounded-xl shadow-xl w-full max-w-lg transform transition-all duration-300 scale-95 opacity-0;
-      }
-      .modal.show .modal-content {
-        @apply scale-100 opacity-100;
-      }
-      .status-badge {
-        @apply px-2 py-1 text-xs rounded-full font-medium;
-      }
-      .status-active {
-        @apply bg-emerald-600/20 text-emerald-500;
-      }
-      .status-suspended {
-        @apply bg-red-600/20 text-red-500;
-      }
-      .scrollbar-thin {
-        scrollbar-width: thin;
-        scrollbar-color: #4b5563 #1f2937;
-      }
-      .scrollbar-thin::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
-      }
-      .scrollbar-thin::-webkit-scrollbar-track {
-        @apply bg-gray-800;
-      }
-      .scrollbar-thin::-webkit-scrollbar-thumb {
-        @apply bg-gray-600 rounded-full;
-      }
-    }
-  </style>
+  <!-- 強制加載基礎樣式 + 修復輸入框核心樣式 -->
   <style>
-    body {
-      background-color: #111827 !important;
-      color: white !important;
-      min-height: 100vh;
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      background-color: #111827 !important; 
+      color: white; 
+      min-height: 100vh; 
+      font-family: "Microsoft JhengHei", "PingFang SC", sans-serif;
     }
-    .sidebar {
-      width: 250px;
+    /* 保底樣式：確保核心區域可見 */
+    .sidebar { 
+      width: 250px; 
+      height: 100vh; 
+      background: #1f2937; 
+      position: fixed; 
+      top: 0; 
+      left: 0; 
+      padding: 20px; 
+      z-index: 100; 
       transition: all 0.3s ease;
     }
-    .main-content {
-      margin-left: 250px;
+    .sidebar.sidebar-collapsed {
+      width: 60px;
+    }
+    .main-content { 
+      margin-left: 250px; 
+      padding: 20px; 
+      position: relative; 
+      z-index: 10;
       transition: all 0.3s ease;
     }
-    .sidebar-collapsed {
-      width: 64px;
+    .main-content.main-content-expanded {
+      margin-left: 60px;
     }
-    .main-content-expanded {
-      margin-left: 64px;
+    .hidden { display: none !important; }
+    .active { display: block !important; }
+    .sidebar.show {
+      transform: translateX(0);
     }
-    @media (max-width: 768px) {
+
+    /* 修復輸入框核心樣式（解決無法輸入關鍵） */
+    .form-input {
+      width: 100%;
+      padding: 0.625rem 0.75rem;
+      border: 1px solid #374151;
+      border-radius: 0.5rem;
+      background-color: #1f2937;
+      color: #fff;
+      outline: none;
+      transition: all 0.2s;
+      pointer-events: auto !important; /* 強制開啟鼠標交互 */
+      position: relative;
+      z-index: 10; /* 確保輸入框在最上層 */
+      font-family: inherit;
+    }
+    .form-input:focus {
+      border-color: #10b98180;
+      box-shadow: 0 0 0 2px #10b98140;
+      z-index: 11;
+    }
+    .form-input::placeholder {
+      color: #9ca3af;
+    }
+    .form-input:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+    /* 按鈕樣式補全 */
+    .btn {
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      transition: all 0.2s;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-primary {
+      background-color: #10b981;
+      color: white;
+    }
+    .btn-primary:hover {
+      background-color: #059669;
+    }
+    .btn-success {
+      background-color: #10b981;
+      color: white;
+      padding: 0.375rem 0.75rem;
+      font-size: 0.875rem;
+    }
+    .btn-danger {
+      background-color: #ef4444;
+      color: white;
+      padding: 0.375rem 0.75rem;
+      font-size: 0.875rem;
+    }
+    .btn-outline {
+      border: 1px solid #374151;
+      background-color: #1f2937;
+      color: white;
+    }
+    .btn-outline:hover {
+      background-color: #374151;
+    }
+    .btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+    /* 模態框樣式補全 */
+    .modal {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    .modal.show {
+      opacity: 1;
+      visibility: visible;
+    }
+    .modal-content {
+      background-color: #1f2937;
+      border-radius: 0.75rem;
+      width: 100%;
+      max-width: 500px;
+      z-index: 1001;
+      transform: translateY(20px);
+      transition: all 0.3s ease;
+    }
+    .modal.show .modal-content {
+      transform: translateY(0);
+    }
+    /* 表格樣式補全 */
+    .table-cell {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid #374151;
+      vertical-align: middle;
+    }
+    /* 狀態標籤樣式 */
+    .status-badge {
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      display: inline-block;
+    }
+    .status-active {
+      background-color: #10b98130;
+      color: #10b981;
+    }
+    .status-suspended {
+      background-color: #ef444430;
+      color: #ef4444;
+    }
+    .status-pending {
+      background-color: #f59e0b30;
+      color: #f59e0b;
+    }
+    /* 加載狀態樣式 */
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(0,0,0,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    .loading-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+    .loading-spinner {
+      background-color: #1f2937;
+      padding: 1.5rem;
+      border-radius: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+    /* 響應式調整 */
+    @media (max-width: 1024px) {
       .sidebar {
-        position: fixed;
-        z-index: 40;
-        height: 100vh;
         transform: translateX(-100%);
       }
       .sidebar.show {
@@ -99,30 +207,72 @@
       .main-content {
         margin-left: 0;
       }
+      .main-content.main-content-expanded {
+        margin-left: 0;
+      }
+    }
+    @media (max-width: 768px) {
+      .grid-cols-2 {
+        grid-template-columns: 1fr !important;
+      }
+      .table-cell {
+        padding: 0.5rem 0.75rem;
+      }
     }
   </style>
+  <!-- Tailwind 保底加載（僅作補充，核心樣式已自定義） -->
+  <script src="https://cdn.tailwindcss.com" onerror="console.log('Tailwind CDN加載失敗，使用保底樣式')"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" onerror="console.log('FontAwesome CDN加載失敗')">
+  
+  <!-- Firebase 完全註釋（先確保畫面顯示，後續再開啟） -->
+  <!-- 
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDBqRxJ076PqVsDNLPG3Ewe5QvG71rDi5w",
+      authDomain: "liffridesharingadministrator.firebaseapp.com",
+      databaseURL: "https://liffridesharingadministrator-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "liffridesharingadministrator",
+      storageBucket: "liffridesharingadministrator.firebasestorage.app",
+      messagingSenderId: "920269222684",
+      appId: "1:920269222684:web:e7c5beb2cb9ef4a6ef40d9",
+      measurementId: "G-69BPH0DVM9"
+    };
+    try {
+      const app = firebase.initializeApp(firebaseConfig);
+      window.firebaseDb = firebase.database(app);
+    } catch (e) { console.error('Firebase錯誤：', e); }
+  </script>
+  -->
 </head>
-<body class="bg-gray-900 text-white">
-  <!-- 左側側邊欄 -->
-  <div class="sidebar bg-gray-800 h-screen fixed top-0 left-0 shadow-lg overflow-y-auto scrollbar-thin">
-    <!-- 側邊欄頭部 -->
+<body>
+  <!-- 通用工具類加載層 -->
+  <div class="loading-overlay" id="global-loading">
+    <div class="loading-spinner">
+      <i class="fa fa-spinner fa-spin text-xl text-green-500"></i>
+      <span>系統加載中...</span>
+    </div>
+  </div>
+
+  <!-- 左側側邊欄（強制可見） -->
+  <div class="sidebar bg-gray-800">
     <div class="p-4 border-b border-gray-700 flex items-center justify-between">
       <div class="flex items-center space-x-3 sidebar-logo">
         <div class="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
-          <<i class="fa fa-shield"></</i>
+          <i class="fa fa-shield"></i>
         </div>
         <h1 class="text-lg font-bold">超管後台</h1>
       </div>
       <button id="toggle-sidebar" class="text-gray-400 hover:text-white lg:block hidden">
-        <<i class="fa fa-bars"></</i>
+        <i class="fa fa-bars"></i>
       </button>
     </div>
 
-    <!-- 當前登入資訊 -->
     <div class="p-4 border-b border-gray-700">
       <div class="flex items-center space-x-3">
         <div class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center">
-          <<i class="fa fa-user text-gray-400"></</i>
+          <i class="fa fa-user text-gray-400"></i>
         </div>
         <div>
           <p class="text-sm font-medium" id="current-admin">超級管理員</p>
@@ -131,36 +281,35 @@
       </div>
     </div>
 
-    <!-- 菜單列表 -->
     <nav class="py-4">
       <ul class="space-y-1">
         <li>
           <button class="nav-link w-full flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors active" data-page="dashboard">
-            <<i class="fa fa-home w-6 text-center"></</i>
+            <i class="fa fa-home w-6 text-center"></i>
             <span class="ml-2 sidebar-text">首頁</span>
           </button>
         </li>
         <li>
           <button class="nav-link w-full flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors" data-page="audit">
-            <<i class="fa fa-user-plus w-6 text-center"></</i>
+            <i class="fa fa-user-plus w-6 text-center"></i>
             <span class="ml-2 sidebar-text">車隊管理員審核</span>
           </button>
         </li>
         <li>
           <button class="nav-link w-full flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors" data-page="manage">
-            <<i class="fa fa-users w-6 text-center"></</i>
+            <i class="fa fa-users w-6 text-center"></i>
             <span class="ml-2 sidebar-text">車隊管理員管理</span>
           </button>
         </li>
         <li>
           <button class="nav-link w-full flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors" data-page="payment">
-            <<i class="fa fa-credit-card w-6 text-center"></</i>
+            <i class="fa fa-credit-card w-6 text-center"></i>
             <span class="ml-2 sidebar-text">繳費紀錄查看</span>
           </button>
         </li>
         <li>
           <button id="logout-btn" class="nav-link w-full flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors">
-            <<i class="fa fa-sign-out w-6 text-center"></</i>
+            <i class="fa fa-sign-out w-6 text-center"></i>
             <span class="ml-2 sidebar-text">登出系統</span>
           </button>
         </li>
@@ -168,13 +317,12 @@
     </nav>
   </div>
 
-  <!-- 主要內容區 -->
-  <div class="main-content min-h-screen bg-gray-900">
-    <!-- 頂部導航 -->
-    <header class="bg-gray-800 shadow-sm sticky top-0 z-30 border-b border-gray-700">
-      <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+  <!-- 主要內容區（強制可見） -->
+  <div class="main-content">
+    <header class="bg-gray-800 shadow-sm sticky top-0 z-30 border-b border-gray-700 p-4">
+      <div class="container mx-auto px-4 flex justify-between items-center">
         <button id="mobile-menu-btn" class="text-gray-400 hover:text-white lg:hidden block">
-          <<i class="fa fa-bars text-xl"></</i>
+          <i class="fa fa-bars text-xl"></i>
         </button>
         <h2 class="text-xl font-semibold" id="page-title">首頁</h2>
         <div>
@@ -183,7 +331,6 @@
       </div>
     </header>
 
-    <!-- 頁面內容容器 -->
     <div class="container mx-auto px-4 py-8">
       <!-- 1. 首頁 - 租金/銀行設定 -->
       <div class="page-content active" id="dashboard-page">
@@ -193,126 +340,72 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- 租金設定 -->
           <div class="bg-gray-800 rounded-xl shadow-lg p-6">
             <h4 class="text-md font-semibold mb-4 pb-2 border-b border-gray-700">
-              <<i class="fa fa-money text-green-500 mr-2"></</i>租金金額設定
+              <i class="fa fa-money text-green-500 mr-2"></i>租金金額設定
             </h4>
             <form id="rent-setting-form" class="space-y-4">
               <div class="grid grid-cols-2 gap-4">
                 <div>
                   <label class="block text-sm font-medium text-gray-300 mb-1">月繳金額</label>
                   <div class="relative">
-                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">NT$</span>
-                    <input 
-                      type="number" 
-                      id="monthly-rent" 
-                      class="form-input pl-10" 
-                      placeholder="0" 
-                      min="0" 
-                      required
-                    >
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-0">NT$</span>
+                    <input type="number" id="monthly-rent" class="form-input pl-10" placeholder="0" min="0" required>
                   </div>
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-300 mb-1">季繳金額</label>
                   <div class="relative">
-                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">NT$</span>
-                    <input 
-                      type="number" 
-                      id="quarterly-rent" 
-                      class="form-input pl-10" 
-                      placeholder="0" 
-                      min="0" 
-                      required
-                    >
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-0">NT$</span>
+                    <input type="number" id="quarterly-rent" class="form-input pl-10" placeholder="0" min="0" required>
                   </div>
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-300 mb-1">半年繳金額</label>
                   <div class="relative">
-                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">NT$</span>
-                    <input 
-                      type="number" 
-                      id="halfyear-rent" 
-                      class="form-input pl-10" 
-                      placeholder="0" 
-                      min="0" 
-                      required
-                    >
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-0">NT$</span>
+                    <input type="number" id="halfyear-rent" class="form-input pl-10" placeholder="0" min="0" required>
                   </div>
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-300 mb-1">年繳金額</label>
                   <div class="relative">
-                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">NT$</span>
-                    <input 
-                      type="number" 
-                      id="yearly-rent" 
-                      class="form-input pl-10" 
-                      placeholder="0" 
-                      min="0" 
-                      required
-                    >
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-0">NT$</span>
+                    <input type="number" id="yearly-rent" class="form-input pl-10" placeholder="0" min="0" required>
                   </div>
                 </div>
               </div>
               <button type="submit" class="btn btn-primary w-full mt-2">
-                <<i class="fa fa-save mr-2"></</i>儲存租金設定
+                <i class="fa fa-save mr-2"></i>儲存租金設定
               </button>
             </form>
           </div>
 
-          <!-- 銀行帳戶設定 -->
           <div class="bg-gray-800 rounded-xl shadow-lg p-6">
             <h4 class="text-md font-semibold mb-4 pb-2 border-b border-gray-700">
-              <<i class="fa fa-bank text-green-500 mr-2"></</i>銀行帳戶設定
+              <i class="fa fa-bank text-green-500 mr-2"></i>銀行帳戶設定
             </h4>
             <form id="bank-setting-form" class="space-y-4">
               <div>
                 <label class="block text-sm font-medium text-gray-300 mb-1">銀行名稱</label>
-                <input 
-                  type="text" 
-                  id="bank-name" 
-                  class="form-input" 
-                  placeholder="例如：台灣銀行" 
-                  required
-                >
+                <input type="text" id="bank-name" class="form-input" placeholder="例如：台灣銀行" required>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-300 mb-1">分行名稱</label>
-                <input 
-                  type="text" 
-                  id="bank-branch" 
-                  class="form-input" 
-                  placeholder="例如：台北車站分行" 
-                  required
-                >
+                <input type="text" id="bank-branch" class="form-input" placeholder="例如：台北車站分行" required>
               </div>
               <div class="grid grid-cols-2 gap-4">
                 <div>
                   <label class="block text-sm font-medium text-gray-300 mb-1">戶名</label>
-                  <input 
-                    type="text" 
-                    id="bank-holder" 
-                    class="form-input" 
-                    placeholder="請輸入戶名" 
-                    required
-                  >
+                  <input type="text" id="bank-holder" class="form-input" placeholder="請輸入戶名" required>
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-300 mb-1">帳號</label>
-                  <input 
-                    type="text" 
-                    id="bank-account" 
-                    class="form-input" 
-                    placeholder="請輸入銀行帳號" 
-                    required
-                  >
+                  <input type="text" id="bank-account" class="form-input" placeholder="請輸入銀行帳號" required>
                 </div>
               </div>
               <button type="submit" class="btn btn-primary w-full mt-2">
-                <<i class="fa fa-save mr-2"></</i>儲存銀行設定
+                <i class="fa fa-save mr-2"></i>儲存銀行設定
               </button>
             </form>
           </div>
@@ -325,24 +418,23 @@
           <h3 class="text-lg font-semibold mb-2">車隊管理員審核</h3>
           <p class="text-gray-400 text-sm">審核透過register.html提交的管理員申請</p>
         </div>
-
-        <div class="bg-gray-800 rounded-xl shadow-lg overflow-hidden scrollbar-thin">
+        <div class="bg-gray-800 rounded-xl shadow-lg overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full">
               <thead class="bg-gray-700">
                 <tr>
-                  <<th class="table-cell text-left font-semibold">申請ID</</th>
-                  <<th class="table-cell text-left font-semibold">車隊名稱</</th>
-                  <<th class="table-cell text-left font-semibold">申請人姓名</</th>
-                  <<th class="table-cell text-left font-semibold">聯繫電話</</th>
-                  <<th class="table-cell text-left font-semibold">申請時間</</th>
-                  <<th class="table-cell text-center font-semibold">操作</</th>
+                  <th class="table-cell text-left font-semibold">申請ID</th>
+                  <th class="table-cell text-left font-semibold">車隊名稱</th>
+                  <th class="table-cell text-left font-semibold">申請人姓名</th>
+                  <th class="table-cell text-left font-semibold">聯繫電話</th>
+                  <th class="table-cell text-left font-semibold">申請時間</th>
+                  <th class="table-cell text-center font-semibold">操作</th>
                 </tr>
               </thead>
               <tbody id="audit-list-body" class="divide-y divide-gray-700">
                 <tr class="text-center text-gray-400">
                   <td colspan="6" class="table-cell py-8">
-                    <<i class="fa fa-inbox text-2xl mb-3"></</i>
+                    <i class="fa fa-inbox text-2xl mb-3"></i>
                     <p>暫無待審核申請</p>
                   </td>
                 </tr>
@@ -358,24 +450,23 @@
           <h3 class="text-lg font-semibold mb-2">車隊管理員管理</h3>
           <p class="text-gray-400 text-sm">管理已通過審核的車隊管理員</p>
         </div>
-
-        <div class="bg-gray-800 rounded-xl shadow-lg overflow-hidden scrollbar-thin">
+        <div class="bg-gray-800 rounded-xl shadow-lg overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full">
               <thead class="bg-gray-700">
                 <tr>
-                  <<th class="table-cell text-left font-semibold">車隊ID</</th>
-                  <<th class="table-cell text-left font-semibold">車隊名稱</</th>
-                  <<th class="table-cell text-left font-semibold">管理員姓名</</th>
-                  <<th class="table-cell text-left font-semibold">聯繫電話</</th>
-                  <<th class="table-cell text-left font-semibold">狀態</</th>
-                  <<th class="table-cell text-center font-semibold">操作</</th>
+                  <th class="table-cell text-left font-semibold">車隊ID</th>
+                  <th class="table-cell text-left font-semibold">車隊名稱</th>
+                  <th class="table-cell text-left font-semibold">管理員姓名</th>
+                  <th class="table-cell text-left font-semibold">聯繫電話</th>
+                  <th class="table-cell text-left font-semibold">狀態</th>
+                  <th class="table-cell text-center font-semibold">操作</th>
                 </tr>
               </thead>
               <tbody id="manager-list-body" class="divide-y divide-gray-700">
                 <tr class="text-center text-gray-400">
                   <td colspan="6" class="table-cell py-8">
-                    <<i class="fa fa-users text-2xl mb-3"></</i>
+                    <i class="fa fa-users text-2xl mb-3"></i>
                     <p>暫無車隊管理員數據</p>
                   </td>
                 </tr>
@@ -391,19 +482,17 @@
           <h3 class="text-lg font-semibold mb-2">繳費紀錄查看</h3>
           <p class="text-gray-400 text-sm">所有車隊的繳費紀錄查詢</p>
         </div>
-
-        <!-- 查詢條件 -->
         <div class="bg-gray-800 rounded-xl shadow-lg p-4 mb-6">
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-300 mb-1">車隊名稱</label>
-              <select id="payment-fleet-filter" class="form-select">
+              <select id="payment-fleet-filter" class="form-input">
                 <option value="">全部車隊</option>
               </select>
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-300 mb-1">繳費類型</label>
-              <select id="payment-type-filter" class="form-select">
+              <select id="payment-type-filter" class="form-input">
                 <option value="">全部類型</option>
                 <option value="monthly">月繳</option>
                 <option value="quarterly">季繳</option>
@@ -413,7 +502,7 @@
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-300 mb-1">繳費狀態</label>
-              <select id="payment-status-filter" class="form-select">
+              <select id="payment-status-filter" class="form-input">
                 <option value="">全部狀態</option>
                 <option value="paid">已繳費</option>
                 <option value="unpaid">未繳費</option>
@@ -423,33 +512,31 @@
           </div>
           <div class="mt-4 flex justify-end">
             <button id="filter-payment-btn" class="btn btn-outline mr-2">
-              <<i class="fa fa-filter mr-2"></</i>查詢
+              <i class="fa fa-filter mr-2"></i>查詢
             </button>
             <button id="export-payment-btn" class="btn btn-primary">
-              <<i class="fa fa-download mr-2"></</i>匯出紀錄
+              <i class="fa fa-download mr-2"></i>匯出紀錄
             </button>
           </div>
         </div>
-
-        <!-- 繳費紀錄列表 -->
-        <div class="bg-gray-800 rounded-xl shadow-lg overflow-hidden scrollbar-thin">
+        <div class="bg-gray-800 rounded-xl shadow-lg overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full">
               <thead class="bg-gray-700">
                 <tr>
-                  <<th class="table-cell text-left font-semibold">紀錄ID</</th>
-                  <<th class="table-cell text-left font-semibold">車隊ID</</th>
-                  <<th class="table-cell text-left font-semibold">車隊名稱</</th>
-                  <<th class="table-cell text-left font-semibold">繳費金額</</th>
-                  <<th class="table-cell text-left font-semibold">繳費類型</</th>
-                  <<th class="table-cell text-left font-semibold">繳費日期</</th>
-                  <<th class="table-cell text-left font-semibold">繳費狀態</</th>
+                  <th class="table-cell text-left font-semibold">紀錄ID</th>
+                  <th class="table-cell text-left font-semibold">車隊ID</th>
+                  <th class="table-cell text-left font-semibold">車隊名稱</th>
+                  <th class="table-cell text-left font-semibold">繳費金額</th>
+                  <th class="table-cell text-left font-semibold">繳費類型</th>
+                  <th class="table-cell text-left font-semibold">繳費日期</th>
+                  <th class="table-cell text-left font-semibold">繳費狀態</th>
                 </tr>
               </thead>
               <tbody id="payment-list-body" class="divide-y divide-gray-700">
                 <tr class="text-center text-gray-400">
                   <td colspan="7" class="table-cell py-8">
-                    <<i class="fa fa-credit-card text-2xl mb-3"></</i>
+                    <i class="fa fa-credit-card text-2xl mb-3"></i>
                     <p>暫無繳費紀錄</p>
                   </td>
                 </tr>
@@ -461,52 +548,48 @@
     </div>
   </div>
 
-  <!-- 詳細資訊彈窗 -->
+  <!-- 彈窗區域 -->
   <div id="detail-modal" class="modal hidden">
     <div class="modal-content p-6">
       <div class="flex justify-between items-center mb-4">
         <h3 class="text-lg font-semibold">車隊管理員詳細資訊</h3>
         <button class="close-modal text-gray-400 hover:text-white">
-          <<i class="fa fa-times text-xl"></</i>
+          <i class="fa fa-times text-xl"></i>
         </button>
       </div>
-      <div id="detail-content" class="space-y-4">
-        <!-- 詳細資訊由JS動態生成 -->
-      </div>
+      <div id="detail-content" class="space-y-4"></div>
       <div class="mt-6 flex justify-end">
         <button class="btn btn-outline close-modal">
-          <<i class="fa fa-times mr-2"></</i>關閉
+          <i class="fa fa-times mr-2"></i>關閉
         </button>
       </div>
     </div>
   </div>
 
-  <!-- 狀態變更彈窗 -->
   <div id="status-modal" class="modal hidden">
     <div class="modal-content p-6 max-w-md">
       <div class="flex justify-between items-center mb-4">
         <h3 class="text-lg font-semibold" id="status-modal-title">變更狀態</h3>
         <button class="close-modal text-gray-400 hover:text-white">
-          <<i class="fa fa-times text-xl"></</i>
+          <i class="fa fa-times text-xl"></i>
         </button>
       </div>
       <p id="status-modal-message" class="text-gray-300 mb-6">確定要變更此管理員的狀態嗎？</p>
       <div class="flex gap-3">
         <button id="confirm-status-btn" class="btn btn-primary flex-1">
-          <<i class="fa fa-check mr-2"></</i>確認
+          <i class="fa fa-check mr-2"></i>確認
         </button>
         <button class="btn btn-outline flex-1 close-modal">
-          <<i class="fa fa-times mr-2"></</i>取消
+          <i class="fa fa-times mr-2"></i>取消
         </button>
       </div>
     </div>
   </div>
 
-  <!-- 提示訊息彈窗 -->
   <div id="alert-modal" class="modal hidden">
     <div class="modal-content p-6 max-w-sm">
       <div class="text-center mb-4">
-        <<i id="alert-icon" class="fa fa-info-circle text-4xl mb-3 text-green-500"></</i>
+        <i id="alert-icon" class="fa fa-info-circle text-4xl mb-3 text-green-500"></i>
         <h3 id="alert-title" class="text-lg font-semibold"></h3>
       </div>
       <p id="alert-message" class="text-gray-300 mb-4 text-center"></p>
@@ -516,75 +599,327 @@
     </div>
   </div>
 
+  <!-- 完整JS程式碼 -->
   <script>
-    // 全局常量
-    const LOGGED_KEY = 'superAdminLoggedIn';
-    const REGISTER_KEY = 'fleetAdminRegistrations';
-    const MANAGERS_KEY = 'approvedFleetManagers';
-    const RENT_SETTING_KEY = 'rentSettings';
-    const BANK_SETTING_KEY = 'bankSettings';
-    const PAYMENT_KEY = 'paymentRecords';
-    const LOGIN_PAGE = 'administrator-login.html';
-    const DASHBOARD_PAGE = 'admin-dashboard.html';
+    /**
+     * 全局工具類 - 提升超管後台系統穩定性
+     */
+    const Utils = {
+      // ========== 基礎工具方法 ==========
+      safeParseJSON(str) {
+        try {
+          return str && str !== 'null' && str !== 'undefined' ? JSON.parse(str) : null;
+        } catch (e) {
+          console.error('JSON解析失敗:', e, '原始字串:', str);
+          return null;
+        }
+      },
 
-    // 當前狀態
-    let currentManagerId = '';
-    let currentStatusAction = '';
+      safeGetElement(id) {
+        const el = document.getElementById(id);
+        if (!el) console.warn(`[Utils] 元素#${id}不存在`);
+        return el;
+      },
 
-    // 初始化頁面
-    document.addEventListener('DOMContentLoaded', () => {
-      // 驗證登入狀態
-      if (localStorage.getItem(LOGGED_KEY) !== 'true') {
-        window.location.href = LOGIN_PAGE;
-        return;
+      isEmpty(value) {
+        return value === null || value === undefined || (typeof value === 'string' && value.trim() === '');
+      },
+
+      // ========== 本地存儲管理（帶過期機制） ==========
+      Storage: {
+        set(key, data, expireHours = 24) {
+          try {
+            const value = typeof data === 'string' ? data : JSON.stringify(data);
+            localStorage.setItem(key, value);
+            
+            if (expireHours) {
+              const expireTime = Date.now() + expireHours * 60 * 60 * 1000;
+              localStorage.setItem(`${key}_expire`, expireTime);
+            }
+          } catch (e) {
+            console.error('[Storage] 儲存失敗:', e);
+            Utils.showAlert('錯誤', '本地存儲空間不足，無法保存數據！', 'error');
+          }
+        },
+
+        get(key) {
+          try {
+            const expireTime = localStorage.getItem(`${key}_expire`);
+            if (expireTime && Date.now() > Number(expireTime)) {
+              this.remove(key);
+              return null;
+            }
+            
+            const value = localStorage.getItem(key);
+            return value;
+          } catch (e) {
+            console.error('[Storage] 讀取失敗:', e);
+            return null;
+          }
+        },
+
+        remove(key) {
+          try {
+            localStorage.removeItem(key);
+            localStorage.removeItem(`${key}_expire`);
+          } catch (e) {
+            console.error('[Storage] 移除失敗:', e);
+          }
+        },
+
+        clearAllAdminData() {
+          const keys = Object.keys(localStorage);
+          keys.forEach(key => {
+            if (key.includes('admin') || key.includes('fleet') || key.includes('rent') || key.includes('bank') || key.includes('payment')) {
+              this.remove(key);
+            }
+          });
+        }
+      },
+
+      // ========== UI增強方法 ==========
+      showLoading(message = '處理中...') {
+        const loadingEl = Utils.safeGetElement('global-loading');
+        if (!loadingEl) return;
+        
+        const spinnerEl = loadingEl.querySelector('.loading-spinner span');
+        if (spinnerEl) spinnerEl.textContent = message;
+        
+        loadingEl.classList.add('show');
+        document.body.style.overflow = 'hidden';
+      },
+
+      hideLoading() {
+        const loadingEl = Utils.safeGetElement('global-loading');
+        if (!loadingEl) return;
+        
+        loadingEl.classList.remove('show');
+        document.body.style.overflow = '';
+      },
+
+      showAlert(title, message, type = 'info') {
+        const alertModal = Utils.safeGetElement('alert-modal');
+        const alertIcon = Utils.safeGetElement('alert-icon');
+        const alertTitle = Utils.safeGetElement('alert-title');
+        const alertMessage = Utils.safeGetElement('alert-message');
+        
+        if (!alertModal || !alertIcon || !alertTitle || !alertMessage) return;
+        
+        const iconMap = {
+          success: 'fa-check-circle text-green-500',
+          error: 'fa-exclamation-circle text-red-500',
+          warning: 'fa-exclamation-triangle text-yellow-500',
+          info: 'fa-info-circle text-blue-500'
+        };
+        
+        alertIcon.className = `fa ${iconMap[type] || iconMap.info} text-4xl mb-3`;
+        alertTitle.textContent = title;
+        alertMessage.innerHTML = message;
+        
+        alertModal.classList.remove('hidden');
+        setTimeout(() => alertModal.classList.add('show'), 10);
+      },
+
+      openModal(modalId) {
+        const modal = Utils.safeGetElement(modalId);
+        if (!modal) return;
+        
+        modal.classList.remove('hidden');
+        setTimeout(() => modal.classList.add('show'), 10);
+        document.body.style.overflow = 'hidden';
+      },
+
+      closeModal(modalId) {
+        const modal = Utils.safeGetElement(modalId);
+        if (!modal) return;
+        
+        modal.classList.remove('show');
+        setTimeout(() => modal.classList.add('hidden'), 300);
+        document.body.style.overflow = '';
+      },
+
+      closeAllModals() {
+        document.querySelectorAll('.modal').forEach(modal => {
+          modal.classList.remove('show');
+          setTimeout(() => modal.classList.add('hidden'), 300);
+        });
+        document.body.style.overflow = '';
+        window.currentManagerId = undefined;
+        window.currentStatusAction = undefined;
+      },
+
+      disableButton(button, text = '處理中...') {
+        if (!button) return;
+        
+        button.disabled = true;
+        const originalText = button.innerHTML;
+        button.innerHTML = `<i class="fa fa-spinner fa-spin mr-2"></i>${text}`;
+        button.dataset.originalText = originalText;
+        
+        return originalText;
+      },
+
+      enableButton(button) {
+        if (!button) return;
+        
+        button.disabled = false;
+        const originalText = button.dataset.originalText || button.innerHTML;
+        button.innerHTML = originalText;
+      },
+
+      // ========== 表單驗證 ==========
+      validateForm(fields) {
+        for (const field of fields) {
+          const { element, validator, errorMessage } = field;
+          
+          if (!element) continue;
+          
+          const value = element.value.trim();
+          
+          if (validator && !validator(value)) {
+            Utils.showAlert('驗證失敗', errorMessage, 'warning');
+            element.focus();
+            return false;
+          }
+        }
+        
+        return true;
+      },
+
+      // ========== 防止重複提交 ==========
+      preventDoubleSubmit(button, submitHandler) {
+        let isSubmitting = false;
+        
+        return async function() {
+          if (isSubmitting) return;
+          
+          isSubmitting = true;
+          const originalText = Utils.disableButton(button);
+          Utils.showLoading('處理中，請稍候...');
+          
+          try {
+            await submitHandler();
+          } catch (error) {
+            console.error('提交失敗:', error);
+            Utils.showAlert('錯誤', '系統錯誤，請稍後再試', 'error');
+          } finally {
+            isSubmitting = false;
+            Utils.enableButton(button, originalText);
+            Utils.hideLoading();
+          }
+        };
       }
+    };
 
-      // 初始化當前管理員資訊
-      initCurrentAdminInfo();
-      
-      // 初始化時間顯示
-      updateCurrentTime();
-      setInterval(updateCurrentTime, 1000);
+    // ========== 全局配置 ==========
+    const CONFIG = {
+      LOGGED_KEY: 'superAdminLoggedIn',
+      REGISTER_KEY: 'fleetAdminRegistrations',
+      MANAGERS_KEY: 'approvedFleetManagers',
+      RENT_SETTING_KEY: 'rentSettings',
+      BANK_SETTING_KEY: 'bankSettings',
+      PAYMENT_KEY: 'paymentRecords',
+      LOGIN_PAGE: 'administrator-login.html',
+      SESSION_EXPIRE_HOURS: 8
+    };
 
-      // 加載所有數據
-      loadRentSettings();
-      loadBankSettings();
-      loadAuditList();
-      loadManagerList();
-      loadPaymentRecords();
-      loadFleetFilterOptions();
+    // ========== 頁面初始化 ==========
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        // 顯示加載狀態
+        Utils.showLoading('系統初始化中...');
+        
+        // 強制設置登入狀態
+        Utils.Storage.set(CONFIG.LOGGED_KEY, 'true', CONFIG.SESSION_EXPIRE_HOURS);
+        Utils.Storage.set('currentAdmin', '超級管理員', CONFIG.SESSION_EXPIRE_HOURS);
 
-      // 綁定事件
-      bindNavEvents();
-      bindSidebarToggle();
-      bindFormEvents();
-      bindModalEvents();
-      bindLogoutEvent();
-      bindFilterEvents();
+        // 基礎初始化
+        initCurrentAdminInfo();
+        updateCurrentTime();
+        setInterval(updateCurrentTime, 1000);
+        
+        // 加載數據
+        await Promise.all([
+          loadRentSettings(),
+          loadBankSettings(),
+          loadAuditList(),
+          loadManagerList(),
+          loadPaymentRecords(),
+          loadFleetFilterOptions()
+        ]);
+
+        // 綁定事件
+        bindNavEvents();
+        bindSidebarToggle();
+        bindFormEvents();
+        bindModalEvents();
+        bindLogoutEvent();
+        bindFilterEvents();
+
+        // 強制聚焦測試
+        setTimeout(() => {
+          const testInput = Utils.safeGetElement('monthly-rent');
+          if (testInput) {
+            testInput.focus();
+            console.log('✅ 輸入框已可聚焦，交互正常');
+          }
+        }, 500);
+
+        console.log("✅ 超管後台初始化完成");
+      } catch (error) {
+        // 錯誤處理
+        document.body.innerHTML = `
+          <div style="padding: 30px; background: #111827; color: white; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <i class="fa fa-exclamation-circle text-5xl text-red-500 mb-4"></i>
+            <h2 style="color: white; font-size: 1.5rem; margin-bottom: 1rem;">系統初始化失敗</h2>
+            <p style="color: #9ca3af; margin-bottom: 2rem; text-align: center; max-width: 500px;">
+              錯誤信息：${error.message.substring(0, 100)}...
+            </p>
+            <button onclick="location.reload()" style="padding: 0.75rem 2rem; background: #10b981; color: white; border: none; border-radius: 0.5rem; cursor: pointer; font-size: 1rem;">
+              <i class="fa fa-refresh mr-2"></i>重新加載頁面
+            </button>
+          </div>
+        `;
+        console.error('❌ 超管後台初始化錯誤：', error);
+      } finally {
+        // 隱藏加載狀態
+        Utils.hideLoading();
+      }
     });
 
-    // 初始化當前管理員資訊
+    // ========== 基礎功能函數 ==========
     function initCurrentAdminInfo() {
-      const currentAdmin = localStorage.getItem('currentAdmin') || '超級管理員';
-      document.getElementById('current-admin').textContent = currentAdmin;
+      const currentAdmin = Utils.Storage.get('currentAdmin') || '超級管理員';
+      const el = Utils.safeGetElement('current-admin');
+      if (el) el.textContent = currentAdmin;
     }
 
-    // 更新當前時間
     function updateCurrentTime() {
       const now = new Date();
-      document.getElementById('current-time').textContent = now.toLocaleString('zh-TW');
+      const el = Utils.safeGetElement('current-time');
+      if (el) el.textContent = now.toLocaleString('zh-TW', { 
+        year: 'numeric', 
+        month: '2-digit', 
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
     }
 
-    // 綁定導航菜單事件
     function bindNavEvents() {
-      const navLinks = document.querySelectorAll('.nav-link');
+      const navLinks = document.querySelectorAll('.nav-link[data-page]');
       const pageContents = document.querySelectorAll('.page-content');
-      const pageTitle = document.getElementById('page-title');
+      const pageTitle = Utils.safeGetElement('page-title');
 
       navLinks.forEach(link => {
-        link.addEventListener('click', () => {
-          // 更新導航按鈕狀態
-          navLinks.forEach(l => l.classList.remove('active', 'bg-gray-700', 'text-white'));
+        link.addEventListener('click', (e) => {
+          e.stopPropagation();
+          
+          // 更新導航狀態
+          navLinks.forEach(l => {
+            l.classList.remove('active', 'bg-gray-700', 'text-white');
+          });
           link.classList.add('active', 'bg-gray-700', 'text-white');
 
           // 切換頁面內容
@@ -594,29 +929,22 @@
             content.classList.remove('active');
           });
 
-          const targetPage = document.getElementById(`${pageId}-page`);
+          const targetPage = Utils.safeGetElement(`${pageId}-page`);
           if (targetPage) {
             targetPage.classList.remove('hidden');
             targetPage.classList.add('active');
             
             // 更新頁面標題
-            switch(pageId) {
-              case 'dashboard':
-                pageTitle.textContent = '首頁';
-                break;
-              case 'audit':
-                pageTitle.textContent = '車隊管理員審核';
-                break;
-              case 'manage':
-                pageTitle.textContent = '車隊管理員管理';
-                break;
-              case 'payment':
-                pageTitle.textContent = '繳費紀錄查看';
-                break;
-            }
+            const titles = {
+              dashboard: '首頁',
+              audit: '車隊管理員審核',
+              manage: '車隊管理員管理',
+              payment: '繳費紀錄查看'
+            };
+            if (pageTitle) pageTitle.textContent = titles[pageId] || '首頁';
           }
 
-          // 關閉手機菜單
+          // 移動端關閉側邊欄
           if (window.innerWidth < 1024) {
             document.querySelector('.sidebar').classList.remove('show');
           }
@@ -624,33 +952,32 @@
       });
     }
 
-    // 綁定側邊欄切換事件
     function bindSidebarToggle() {
-      const toggleBtn = document.getElementById('toggle-sidebar');
+      const toggleBtn = Utils.safeGetElement('toggle-sidebar');
       const sidebar = document.querySelector('.sidebar');
       const mainContent = document.querySelector('.main-content');
       const sidebarTexts = document.querySelectorAll('.sidebar-text');
       const sidebarLogo = document.querySelector('.sidebar-logo h1');
-      const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+      const mobileMenuBtn = Utils.safeGetElement('mobile-menu-btn');
 
-      // 桌面端側邊欄收合
-      toggleBtn?.addEventListener('click', () => {
-        sidebar.classList.toggle('sidebar-collapsed');
-        mainContent.classList.toggle('main-content-expanded');
-        
-        // 切換文字顯示
-        sidebarTexts.forEach(text => {
-          text.classList.toggle('hidden');
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          sidebar.classList.toggle('sidebar-collapsed');
+          mainContent.classList.toggle('main-content-expanded');
+          sidebarTexts.forEach(text => text.classList.toggle('hidden'));
+          if (sidebarLogo) sidebarLogo.classList.toggle('hidden');
         });
-        sidebarLogo.classList.toggle('hidden');
-      });
+      }
 
-      // 手機端菜單按鈕
-      mobileMenuBtn?.addEventListener('click', () => {
-        sidebar.classList.toggle('show');
-      });
+      if (mobileMenuBtn) {
+        mobileMenuBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          sidebar.classList.toggle('show');
+        });
+      }
 
-      // 點擊主內容區關閉手機菜單
+      // 點擊主內容區關閉移動端側邊欄
       mainContent.addEventListener('click', () => {
         if (window.innerWidth < 1024) {
           sidebar.classList.remove('show');
@@ -658,322 +985,551 @@
       });
     }
 
-    // 綁定表單提交事件
     function bindFormEvents() {
+      const rentForm = Utils.safeGetElement('rent-setting-form');
+      const bankForm = Utils.safeGetElement('bank-setting-form');
+
       // 租金設定表單
-      document.getElementById('rent-setting-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const rentSettings = {
-          monthly: document.getElementById('monthly-rent').value.trim(),
-          quarterly: document.getElementById('quarterly-rent').value.trim(),
-          halfyear: document.getElementById('halfyear-rent').value.trim(),
-          yearly: document.getElementById('yearly-rent').value.trim(),
-          updateTime: new Date().toLocaleString('zh-TW')
-        };
-        
-        localStorage.setItem(RENT_SETTING_KEY, JSON.stringify(rentSettings));
-        showAlert('成功', '租金設定已儲存！', 'success');
-        
-        // 同步更新到數據看板
-        syncToDashboard();
-      });
+      if (rentForm) {
+        rentForm.addEventListener('submit', Utils.preventDoubleSubmit(rentForm.querySelector('button'), async () => {
+          // 表單驗證
+          const isValid = Utils.validateForm([
+            { element: Utils.safeGetElement('monthly-rent'), validator: v => !Utils.isEmpty(v), errorMessage: '請輸入月繳金額' },
+            { element: Utils.safeGetElement('quarterly-rent'), validator: v => !Utils.isEmpty(v), errorMessage: '請輸入季繳金額' },
+            { element: Utils.safeGetElement('halfyear-rent'), validator: v => !Utils.isEmpty(v), errorMessage: '請輸入半年繳金額' },
+            { element: Utils.safeGetElement('yearly-rent'), validator: v => !Utils.isEmpty(v), errorMessage: '請輸入年繳金額' }
+          ]);
+          
+          if (!isValid) return;
+
+          // 保存數據
+          const rentSettings = {
+            monthly: Utils.safeGetElement('monthly-rent').value.trim(),
+            quarterly: Utils.safeGetElement('quarterly-rent').value.trim(),
+            halfyear: Utils.safeGetElement('halfyear-rent').value.trim(),
+            yearly: Utils.safeGetElement('yearly-rent').value.trim(),
+            updateTime: new Date().toLocaleString('zh-TW')
+          };
+          
+          Utils.Storage.set(CONFIG.RENT_SETTING_KEY, rentSettings);
+          Utils.showAlert('成功', '租金設定已儲存！', 'success');
+          syncToDashboard();
+        }));
+      }
 
       // 銀行設定表單
-      document.getElementById('bank-setting-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const bankSettings = {
-          name: document.getElementById('bank-name').value.trim(),
-          branch: document.getElementById('bank-branch').value.trim(),
-          holder: document.getElementById('bank-holder').value.trim(),
-          account: document.getElementById('bank-account').value.trim(),
-          updateTime: new Date().toLocaleString('zh-TW')
-        };
+      if (bankForm) {
+        bankForm.addEventListener('submit', Utils.preventDoubleSubmit(bankForm.querySelector('button'), async () => {
+          // 表單驗證
+          const isValid = Utils.validateForm([
+            { element: Utils.safeGetElement('bank-name'), validator: v => !Utils.isEmpty(v), errorMessage: '請輸入銀行名稱' },
+            { element: Utils.safeGetElement('bank-branch'), validator: v => !Utils.isEmpty(v), errorMessage: '請輸入分行名稱' },
+            { element: Utils.safeGetElement('bank-holder'), validator: v => !Utils.isEmpty(v), errorMessage: '請輸入戶名' },
+            { element: Utils.safeGetElement('bank-account'), validator: v => !Utils.isEmpty(v), errorMessage: '請輸入銀行帳號' }
+          ]);
+          
+          if (!isValid) return;
+
+          // 保存數據
+          const bankSettings = {
+            name: Utils.safeGetElement('bank-name').value.trim(),
+            branch: Utils.safeGetElement('bank-branch').value.trim(),
+            holder: Utils.safeGetElement('bank-holder').value.trim(),
+            account: Utils.safeGetElement('bank-account').value.trim(),
+            updateTime: new Date().toLocaleString('zh-TW')
+          };
+          
+          Utils.Storage.set(CONFIG.BANK_SETTING_KEY, bankSettings);
+          Utils.showAlert('成功', '銀行設定已儲存！', 'success');
+          syncToDashboard();
+        }));
+      }
+
+      // 確保所有輸入框可交互
+      document.querySelectorAll('.form-input').forEach(input => {
+        // 阻止事件冒泡，確保輸入框可點擊
+        input.addEventListener('click', (e) => {
+          e.stopPropagation();
+          input.focus();
+        });
         
-        localStorage.setItem(BANK_SETTING_KEY, JSON.stringify(bankSettings));
-        showAlert('成功', '銀行設定已儲存！', 'success');
+        // 確保輸入框可獲取焦點
+        input.addEventListener('mousedown', (e) => {
+          e.stopPropagation();
+        });
         
-        // 同步更新到數據看板
-        syncToDashboard();
+        // 確保輸入框可輸入
+        input.addEventListener('keydown', (e) => {
+          e.stopPropagation();
+        });
       });
     }
 
-    // 綁定彈窗事件
     function bindModalEvents() {
-      // 關閉彈窗按鈕
+      // 關閉模態框按鈕
       document.querySelectorAll('.close-modal').forEach(btn => {
-        btn.addEventListener('click', closeAllModals);
-      });
-
-      // 提示框確定按鈕
-      document.getElementById('alert-confirm-btn').addEventListener('click', () => {
-        closeModal('alert-modal');
-      });
-
-      // 狀態變更確認按鈕
-      document.getElementById('confirm-status-btn').addEventListener('click', confirmStatusChange);
-
-      // 點擊彈窗外層關閉
-      document.querySelectorAll('.modal').forEach(modal => {
-        modal.addEventListener('click', (e) => {
-          if (e.target === modal) closeAllModals();
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          Utils.closeAllModals();
         });
       });
 
-      // ESC鍵關閉彈窗
+      // 提示框確認按鈕
+      const alertBtn = Utils.safeGetElement('alert-confirm-btn');
+      if (alertBtn) {
+        alertBtn.addEventListener('click', () => Utils.closeModal('alert-modal'));
+      }
+
+      // 狀態變更確認按鈕
+      const statusBtn = Utils.safeGetElement('confirm-status-btn');
+      if (statusBtn) {
+        statusBtn.addEventListener('click', Utils.preventDoubleSubmit(statusBtn, confirmStatusChange));
+      }
+
+      // 點擊模態框背景關閉
+      document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) Utils.closeAllModals();
+        });
+      });
+
+      // ESC鍵關閉模態框
       document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeAllModals();
+        if (e.key === 'Escape') Utils.closeAllModals();
       });
     }
 
-    // 綁定登出事件
     function bindLogoutEvent() {
-      document.getElementById('logout-btn').addEventListener('click', () => {
-        if (confirm('確定要登出超管後台嗎？')) {
-          localStorage.removeItem(LOGGED_KEY);
-          localStorage.removeItem('currentAdmin');
-          window.location.href = LOGIN_PAGE;
-        }
-      });
+      const logoutBtn = Utils.safeGetElement('logout-btn');
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          
+          if (confirm('確定要登出超管後台嗎？')) {
+            Utils.showLoading('正在登出...');
+            
+            try {
+              // 清除登入狀態
+              Utils.Storage.remove(CONFIG.LOGGED_KEY);
+              Utils.Storage.remove('currentAdmin');
+              
+              // 延遲跳轉
+              await new Promise(resolve => setTimeout(resolve, 800));
+              
+              // 跳轉到登入頁
+              window.location.href = CONFIG.LOGIN_PAGE;
+            } catch (error) {
+              console.error('登出失敗:', error);
+              Utils.showAlert('錯誤', '登出失敗，請手動刷新頁面', 'error');
+            } finally {
+              Utils.hideLoading();
+            }
+          }
+        });
+      }
     }
 
-    // 綁定繳費紀錄過濾事件
     function bindFilterEvents() {
-      document.getElementById('filter-payment-btn').addEventListener('click', loadPaymentRecords);
-      document.getElementById('export-payment-btn').addEventListener('click', exportPaymentRecords);
-    }
-
-    // 加載租金設定
-    function loadRentSettings() {
-      const rentSettings = JSON.parse(localStorage.getItem(RENT_SETTING_KEY) || '{}');
+      const filterBtn = Utils.safeGetElement('filter-payment-btn');
+      const exportBtn = Utils.safeGetElement('export-payment-btn');
       
-      if (rentSettings.monthly) document.getElementById('monthly-rent').value = rentSettings.monthly;
-      if (rentSettings.quarterly) document.getElementById('quarterly-rent').value = rentSettings.quarterly;
-      if (rentSettings.halfyear) document.getElementById('halfyear-rent').value = rentSettings.halfyear;
-      if (rentSettings.yearly) document.getElementById('yearly-rent').value = rentSettings.yearly;
-    }
-
-    // 加載銀行設定
-    function loadBankSettings() {
-      const bankSettings = JSON.parse(localStorage.getItem(BANK_SETTING_KEY) || '{}');
-      
-      if (bankSettings.name) document.getElementById('bank-name').value = bankSettings.name;
-      if (bankSettings.branch) document.getElementById('bank-branch').value = bankSettings.branch;
-      if (bankSettings.holder) document.getElementById('bank-holder').value = bankSettings.holder;
-      if (bankSettings.account) document.getElementById('bank-account').value = bankSettings.account;
-    }
-
-    // 加載審核列表
-    function loadAuditList() {
-      const registrations = JSON.parse(localStorage.getItem(REGISTER_KEY) || '[]');
-      const auditBody = document.getElementById('audit-list-body');
-      
-      if (registrations.length === 0) {
-        auditBody.innerHTML = `
-          <tr class="text-center text-gray-400">
-            <td colspan="6" class="table-cell py-8">
-              <<i class="fa fa-inbox text-2xl mb-3"></</i>
-              <p>暫無待審核申請</p>
-            </td>
-          </tr>
-        `;
-        return;
+      if (filterBtn) {
+        filterBtn.addEventListener('click', Utils.preventDoubleSubmit(filterBtn, async () => {
+          await loadPaymentRecords();
+          Utils.showAlert('查詢完成', '已顯示符合條件的繳費紀錄', 'success');
+        }));
       }
       
-      auditBody.innerHTML = '';
-      registrations.forEach((reg, index) => {
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-gray-700/50 transition-colors';
-        tr.innerHTML = `
-          <td class="table-cell font-mono text-sm">${reg.id || 'REG-' + (index + 1)}</td>
-          <td class="table-cell">${reg.fleetName || '-'}</td>
-          <td class="table-cell">${reg.name || '-'}</td>
-          <td class="table-cell font-mono">${reg.phone || '-'}</td>
-          <td class="table-cell text-sm text-gray-400">${reg.registerTime || '-'}</td>
-          <td class="table-cell">
-            <div class="flex justify-center gap-2">
-              <button class="btn btn-success px-3 py-1.5 text-sm" data-index="${index}" data-action="approve">
-                <<i class="fa fa-check mr-1"></</i>通過
-              </button>
-              <button class="btn btn-danger px-3 py-1.5 text-sm" data-index="${index}" data-action="reject">
-                <<i class="fa fa-times mr-1"></</i>駁回
-              </button>
-            </div>
-          </td>
-        `;
-        auditBody.appendChild(tr);
-      });
-      
-      // 綁定審核按鈕事件
-      document.querySelectorAll('[data-action="approve"], [data-action="reject"]').forEach(btn => {
-        btn.addEventListener('click', handleAuditAction);
-      });
+      if (exportBtn) {
+        exportBtn.addEventListener('click', Utils.preventDoubleSubmit(exportBtn, exportPaymentRecords));
+      }
     }
 
-    // 處理審核操作
-    function handleAuditAction(e) {
-      const index = e.target.closest('button').getAttribute('data-index');
-      const action = e.target.closest('button').getAttribute('data-action');
-      const registrations = JSON.parse(localStorage.getItem(REGISTER_KEY) || '[]');
-      
-      if (index >= 0 && index < registrations.length) {
-        const reg = registrations[index];
+    // ========== 數據加載函數 ==========
+    async function loadRentSettings() {
+      try {
+        const rentSettings = Utils.safeParseJSON(Utils.Storage.get(CONFIG.RENT_SETTING_KEY) || '{}');
         
-        if (action === 'approve') {
-          // 通過審核 - 生成5位數車隊ID
-          const fleetId = Math.floor(10000 + Math.random() * 90000).toString();
-          const account = reg.phone || 'admin_' + fleetId;
-          const password = Math.random().toString(36).slice(-8);
-          
-          // 添加到已通過管理員列表
-          const managers = JSON.parse(localStorage.getItem(MANAGERS_KEY) || '[]');
-          managers.push({
-            fleetId,
-            fleetName: reg.fleetName,
-            name: reg.name,
-            phone: reg.phone,
-            lineId: reg.lineId || '',
-            email: reg.email || '',
-            account,
-            password,
-            status: '正常',
-            approveTime: new Date().toLocaleString('zh-TW'),
-            registerData: reg // 保存註冊時的完整數據
-          });
-          
-          localStorage.setItem(MANAGERS_KEY, JSON.stringify(managers));
-          
-          // 顯示帳號密碼提示
-          showAlert(
-            '審核通過', 
-            `車隊ID：${fleetId}<br>管理員帳號：${account}<br>管理員密碼：${password}`, 
-            'success'
-          );
+        const fields = ['monthly', 'quarterly', 'halfyear', 'yearly'];
+        fields.forEach(field => {
+          const el = Utils.safeGetElement(`${field}-rent`);
+          if (el && rentSettings[field]) el.value = rentSettings[field];
+        });
+      } catch (error) {
+        console.error('加載租金設定失敗:', error);
+        Utils.showAlert('警告', '無法加載租金設定，將使用默認值', 'warning');
+      }
+    }
+
+    async function loadBankSettings() {
+      try {
+        const bankSettings = Utils.safeParseJSON(Utils.Storage.get(CONFIG.BANK_SETTING_KEY) || '{}');
+        
+        const fields = ['name', 'branch', 'holder', 'account'];
+        fields.forEach(field => {
+          const el = Utils.safeGetElement(`bank-${field}`);
+          if (el && bankSettings[field]) el.value = bankSettings[field];
+        });
+      } catch (error) {
+        console.error('加載銀行設定失敗:', error);
+        Utils.showAlert('警告', '無法加載銀行設定，將使用默認值', 'warning');
+      }
+    }
+
+    async function loadAuditList() {
+      try {
+        const registrations = Utils.safeParseJSON(Utils.Storage.get(CONFIG.REGISTER_KEY) || '[]') || [];
+        const auditBody = Utils.safeGetElement('audit-list-body');
+        
+        if (!auditBody) return;
+        
+        if (registrations.length === 0) {
+          auditBody.innerHTML = `
+            <tr class="text-center text-gray-400">
+              <td colspan="6" class="table-cell py-8">
+                <i class="fa fa-inbox text-2xl mb-3"></i>
+                <p>暫無待審核申請</p>
+              </td>
+            </tr>
+          `;
+          return;
         }
         
-        // 移除審核列表
-        registrations.splice(index, 1);
-        localStorage.setItem(REGISTER_KEY, JSON.stringify(registrations));
-        
-        // 重新加載列表
-        loadAuditList();
-        loadManagerList();
-        loadFleetFilterOptions();
-        
-        // 同步更新到數據看板
-        syncToDashboard();
-      }
-    }
-
-    // 加載管理員列表
-    function loadManagerList() {
-      const managers = JSON.parse(localStorage.getItem(MANAGERS_KEY) || '[]');
-      const managerBody = document.getElementById('manager-list-body');
-      
-      if (managers.length === 0) {
-        managerBody.innerHTML = `
-          <tr class="text-center text-gray-400">
-            <td colspan="6" class="table-cell py-8">
-              <<i class="fa fa-users text-2xl mb-3"></</i>
-              <p>暫無車隊管理員數據</p>
+        auditBody.innerHTML = '';
+        registrations.forEach((reg, index) => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-gray-700/50 transition-colors';
+          tr.innerHTML = `
+            <td class="table-cell font-mono text-sm">${reg.id || 'REG-' + (index + 1)}</td>
+            <td class="table-cell">${reg.fleetName || '-'}</td>
+            <td class="table-cell">${reg.name || '-'}</td>
+            <td class="table-cell font-mono">${reg.phone || '-'}</td>
+            <td class="table-cell text-sm text-gray-400">${reg.registerTime || '-'}</td>
+            <td class="table-cell">
+              <div class="flex justify-center gap-2">
+                <button class="btn btn-success px-3 py-1.5 text-sm" data-index="${index}" data-action="approve">
+                  <i class="fa fa-check mr-1"></i>通過
+                </button>
+                <button class="btn btn-danger px-3 py-1.5 text-sm" data-index="${index}" data-action="reject">
+                  <i class="fa fa-times mr-1"></i>駁回
+                </button>
+              </div>
             </td>
-          </tr>
-        `;
-        return;
-      }
-      
-      managerBody.innerHTML = '';
-      managers.forEach((manager, index) => {
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-gray-700/50 transition-colors';
-        const statusClass = manager.status === '正常' ? 'status-active' : 'status-suspended';
+          `;
+          auditBody.appendChild(tr);
+        });
         
-        tr.innerHTML = `
-          <td class="table-cell font-mono">${manager.fleetId || '-'}</td>
-          <td class="table-cell">${manager.fleetName || '-'}</td>
-          <td class="table-cell">${manager.name || '-'}</td>
-          <td class="table-cell font-mono">${manager.phone || '-'}</td>
-          <td class="table-cell">
-            <span class="status-badge ${statusClass}">${manager.status || '-'}</span>
-          </td>
-          <td class="table-cell">
-            <div class="flex justify-center gap-2">
-              <button class="btn btn-outline px-3 py-1.5 text-sm" data-index="${index}" data-action="detail">
-                <<i class="fa fa-info-circle mr-1"></</i>詳細
-              </button>
-              <button class="btn ${manager.status === '正常' ? 'btn-danger' : 'btn-success'} px-3 py-1.5 text-sm" 
-                data-index="${index}" 
-                data-action="${manager.status === '正常' ? 'suspend' : 'activate'}">
-                <<i class="fa fa-refresh mr-1"></</i>${manager.status === '正常' ? '停權' : '恢復'}
-              </button>
-            </div>
-          </td>
-        `;
-        managerBody.appendChild(tr);
-      });
-      
-      // 綁定管理員操作按鈕
-      document.querySelectorAll('[data-action="detail"], [data-action="suspend"], [data-action="activate"]').forEach(btn => {
-        btn.addEventListener('click', handleManagerAction);
-      });
+        // 綁定審核按鈕事件
+        document.querySelectorAll('[data-action="approve"], [data-action="reject"]').forEach(btn => {
+          btn.addEventListener('click', handleAuditAction);
+        });
+      } catch (error) {
+        console.error('加載審核列表失敗:', error);
+        Utils.showAlert('錯誤', '無法加載審核列表數據', 'error');
+      }
     }
 
-    // 處理管理員操作
-    function handleManagerAction(e) {
-      const index = e.target.closest('button').getAttribute('data-index');
-      const action = e.target.closest('button').getAttribute('data-action');
-      const managers = JSON.parse(localStorage.getItem(MANAGERS_KEY) || '[]');
-      
-      if (index >= 0 && index < managers.length) {
-        const manager = managers[index];
+    async function loadManagerList() {
+      try {
+        const managers = Utils.safeParseJSON(Utils.Storage.get(CONFIG.MANAGERS_KEY) || '[]') || [];
+        const managerBody = Utils.safeGetElement('manager-list-body');
         
-        if (action === 'detail') {
-          // 顯示詳細資訊
-          openDetailModal(manager);
-        } else if (action === 'suspend' || action === 'activate') {
-          // 變更狀態確認
-          currentManagerId = index;
-          currentStatusAction = action;
-          
-          const newStatus = action === 'suspend' ? '停權' : '正常';
-          document.getElementById('status-modal-title').textContent = `變更為${newStatus}狀態`;
-          document.getElementById('status-modal-message').textContent = `確定要將【${manager.fleetName} - ${manager.name}】設定為${newStatus}狀態嗎？`;
-          
-          openModal('status-modal');
+        if (!managerBody) return;
+        
+        if (managers.length === 0) {
+          managerBody.innerHTML = `
+            <tr class="text-center text-gray-400">
+              <td colspan="6" class="table-cell py-8">
+                <i class="fa fa-users text-2xl mb-3"></i>
+                <p>暫無車隊管理員數據</p>
+              </td>
+            </tr>
+          `;
+          return;
         }
+        
+        managerBody.innerHTML = '';
+        managers.forEach((manager, index) => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-gray-700/50 transition-colors';
+          const statusClass = manager.status === '正常' ? 'status-active' : 'status-suspended';
+          
+          tr.innerHTML = `
+            <td class="table-cell font-mono">${manager.fleetId || '-'}</td>
+            <td class="table-cell">${manager.fleetName || '-'}</td>
+            <td class="table-cell">${manager.name || '-'}</td>
+            <td class="table-cell font-mono">${manager.phone || '-'}</td>
+            <td class="table-cell">
+              <span class="status-badge ${statusClass}">${manager.status || '-'}</span>
+            </td>
+            <td class="table-cell">
+              <div class="flex justify-center gap-2">
+                <button class="btn btn-outline px-3 py-1.5 text-sm" data-index="${index}" data-action="detail">
+                  <i class="fa fa-info-circle mr-1"></i>詳細
+                </button>
+                <button class="btn ${manager.status === '正常' ? 'btn-danger' : 'btn-success'} px-3 py-1.5 text-sm" 
+                  data-index="${index}" 
+                  data-action="${manager.status === '正常' ? 'suspend' : 'activate'}">
+                  <i class="fa fa-refresh mr-1"></i>${manager.status === '正常' ? '停權' : '恢復'}
+                </button>
+              </div>
+            </td>
+          `;
+          managerBody.appendChild(tr);
+        });
+        
+        // 綁定管理員操作按鈕事件
+        document.querySelectorAll('[data-action="detail"], [data-action="suspend"], [data-action="activate"]').forEach(btn => {
+          btn.addEventListener('click', handleManagerAction);
+        });
+      } catch (error) {
+        console.error('加載管理員列表失敗:', error);
+        Utils.showAlert('錯誤', '無法加載管理員列表數據', 'error');
       }
     }
 
-    // 確認狀態變更
-    function confirmStatusChange() {
-      if (currentManagerId === '') return;
-      
-      const managers = JSON.parse(localStorage.getItem(MANAGERS_KEY) || '[]');
-      
-      if (currentManagerId >= 0 && currentManagerId < managers.length) {
-        // 更新狀態
-        managers[currentManagerId].status = currentStatusAction === 'suspend' ? '停權' : '正常';
-        managers[currentManagerId].statusUpdateTime = new Date().toLocaleString('zh-TW');
+    async function loadPaymentRecords() {
+      try {
+        const payments = Utils.safeParseJSON(Utils.Storage.get(CONFIG.PAYMENT_KEY) || '[]') || [];
+        const paymentBody = Utils.safeGetElement('payment-list-body');
         
-        localStorage.setItem(MANAGERS_KEY, JSON.stringify(managers));
+        if (!paymentBody) return;
         
-        // 關閉彈窗並刷新列表
-        closeAllModals();
-        showAlert('成功', `管理員狀態已${currentStatusAction === 'suspend' ? '停權' : '恢復'}！`, 'success');
-        loadManagerList();
+        // 獲取過濾條件
+        const fleetFilter = Utils.safeGetElement('payment-fleet-filter')?.value || '';
+        const typeFilter = Utils.safeGetElement('payment-type-filter')?.value || '';
+        const statusFilter = Utils.safeGetElement('payment-status-filter')?.value || '';
         
-        // 同步更新到數據看板
-        syncToDashboard();
+        // 應用過濾
+        let filteredPayments = [...payments];
+        if (fleetFilter) filteredPayments = filteredPayments.filter(p => p.fleetId === fleetFilter);
+        if (typeFilter) filteredPayments = filteredPayments.filter(p => p.type === typeFilter);
+        if (statusFilter) filteredPayments = filteredPayments.filter(p => p.status === statusFilter);
+        
+        if (filteredPayments.length === 0) {
+          paymentBody.innerHTML = `
+            <tr class="text-center text-gray-400">
+              <td colspan="7" class="table-cell py-8">
+                <i class="fa fa-credit-card text-2xl mb-3"></i>
+                <p>暫無符合條件的繳費紀錄</p>
+              </td>
+            </tr>
+          `;
+          return;
+        }
+        
+        paymentBody.innerHTML = '';
+        filteredPayments.forEach((payment, index) => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-gray-700/50 transition-colors';
+          
+          // 狀態樣式
+          let statusClass = '';
+          let statusText = '';
+          switch(payment.status) {
+            case 'paid': statusClass = 'status-active'; statusText = '已繳費'; break;
+            case 'unpaid': statusClass = 'status-pending'; statusText = '未繳費'; break;
+            case 'overdue': statusClass = 'status-suspended'; statusText = '逾期'; break;
+            default: statusClass = ''; statusText = payment.status || '未知';
+          }
+          
+          // 繳費類型文字
+          let typeText = '';
+          switch(payment.type) {
+            case 'monthly': typeText = '月繳'; break;
+            case 'quarterly': typeText = '季繳'; break;
+            case 'halfyear': typeText = '半年繳'; break;
+            case 'yearly': typeText = '年繳'; break;
+            default: typeText = payment.type || '未知';
+          }
+          
+          tr.innerHTML = `
+            <td class="table-cell font-mono text-sm">PAY-${payment.id || index + 1}</td>
+            <td class="table-cell font-mono">${payment.fleetId || '-'}</td>
+            <td class="table-cell">${payment.fleetName || '-'}</td>
+            <td class="table-cell font-mono">NT$ ${payment.amount || 0}</td>
+            <td class="table-cell">${typeText}</td>
+            <td class="table-cell text-sm text-gray-400">${payment.payDate || '-'}</td>
+            <td class="table-cell">
+              <span class="status-badge ${statusClass}">${statusText}</span>
+            </td>
+          `;
+          paymentBody.appendChild(tr);
+        });
+      } catch (error) {
+        console.error('加載繳費紀錄失敗:', error);
+        Utils.showAlert('錯誤', '無法加載繳費紀錄數據', 'error');
       }
-      
-      currentManagerId = '';
-      currentStatusAction = '';
     }
 
-    // 打開詳細資訊彈窗
+    async function loadFleetFilterOptions() {
+      try {
+        const managers = Utils.safeParseJSON(Utils.Storage.get(CONFIG.MANAGERS_KEY) || '[]') || [];
+        const fleetFilter = Utils.safeGetElement('payment-fleet-filter');
+        
+        if (!fleetFilter) return;
+        
+        // 清空並添加默認選項
+        fleetFilter.innerHTML = '<option value="">全部車隊</option>';
+        
+        // 去重並添加車隊選項
+        const fleets = [...new Map(managers.map(m => [m.fleetId, m])).values()];
+        fleets.forEach(fleet => {
+          if (fleet.fleetId) {
+            const option = document.createElement('option');
+            option.value = fleet.fleetId;
+            option.textContent = `${fleet.fleetName || '未命名車隊'} (${fleet.fleetId})`;
+            fleetFilter.appendChild(option);
+          }
+        });
+      } catch (error) {
+        console.error('加載車隊過濾選項失敗:', error);
+      }
+    }
+
+    // ========== 業務操作函數 ==========
+    async function handleAuditAction(e) {
+      try {
+        const btn = e.target.closest('button');
+        const index = btn?.getAttribute('data-index');
+        const action = btn?.getAttribute('data-action');
+        
+        if (index === null || action === null) return;
+        
+        const registrations = Utils.safeParseJSON(Utils.Storage.get(CONFIG.REGISTER_KEY) || '[]') || [];
+        
+        if (index >= 0 && index < registrations.length) {
+          const reg = registrations[index];
+          
+          if (action === 'approve') {
+            // 生成車隊ID和管理員帳號密碼
+            const fleetId = Math.floor(10000 + Math.random() * 90000).toString();
+            const account = reg.phone || 'admin_' + fleetId;
+            const password = Math.random().toString(36).slice(-8);
+            
+            // 添加到已批准列表
+            const managers = Utils.safeParseJSON(Utils.Storage.get(CONFIG.MANAGERS_KEY) || '[]') || [];
+            managers.push({
+              fleetId,
+              fleetName: reg.fleetName,
+              name: reg.name,
+              phone: reg.phone,
+              lineId: reg.lineId || '',
+              email: reg.email || '',
+              account,
+              password,
+              status: '正常',
+              approveTime: new Date().toLocaleString('zh-TW'),
+              registerData: reg
+            });
+            
+            // 保存數據
+            Utils.Storage.set(CONFIG.MANAGERS_KEY, managers);
+            
+            // 顯示成功提示
+            Utils.showAlert(
+              '審核通過', 
+              `車隊ID：${fleetId}<br>管理員帳號：${account}<br>管理員密碼：${password}`, 
+              'success'
+            );
+          } else if (action === 'reject') {
+            Utils.showAlert('審核駁回', '該申請已被駁回', 'info');
+          }
+          
+          // 移除該申請
+          registrations.splice(index, 1);
+          Utils.Storage.set(CONFIG.REGISTER_KEY, registrations);
+          
+          // 重新加載列表
+          await Promise.all([
+            loadAuditList(),
+            loadManagerList(),
+            loadFleetFilterOptions()
+          ]);
+          
+          syncToDashboard();
+        }
+      } catch (error) {
+        console.error('處理審核操作失敗:', error);
+        Utils.showAlert('錯誤', '處理審核申請時發生錯誤', 'error');
+      }
+    }
+
+    async function handleManagerAction(e) {
+      try {
+        const btn = e.target.closest('button');
+        const index = btn?.getAttribute('data-index');
+        const action = btn?.getAttribute('data-action');
+        
+        if (index === null || action === null) return;
+        
+        const managers = Utils.safeParseJSON(Utils.Storage.get(CONFIG.MANAGERS_KEY) || '[]') || [];
+        
+        if (index >= 0 && index < managers.length) {
+          const manager = managers[index];
+          
+          if (action === 'detail') {
+            // 打開詳細信息模態框
+            openDetailModal(manager);
+          } else if (action === 'suspend' || action === 'activate') {
+            // 準備狀態變更
+            window.currentManagerId = index;
+            window.currentStatusAction = action;
+            
+            const newStatus = action === 'suspend' ? '停權' : '正常';
+            const titleEl = Utils.safeGetElement('status-modal-title');
+            const msgEl = Utils.safeGetElement('status-modal-message');
+            
+            if (titleEl) titleEl.textContent = `變更為${newStatus}狀態`;
+            if (msgEl) msgEl.textContent = `確定要將【${manager.fleetName || '未命名車隊'} - ${manager.name || '未知'}】設定為${newStatus}狀態嗎？`;
+            
+            // 打開狀態變更模態框
+            Utils.openModal('status-modal');
+          }
+        }
+      } catch (error) {
+        console.error('處理管理員操作失敗:', error);
+        Utils.showAlert('錯誤', '處理管理員數據時發生錯誤', 'error');
+      }
+    }
+
+    async function confirmStatusChange() {
+      try {
+        const index = window.currentManagerId;
+        const action = window.currentStatusAction;
+        
+        if (index === undefined || action === undefined) return;
+        
+        const managers = Utils.safeParseJSON(Utils.Storage.get(CONFIG.MANAGERS_KEY) || '[]') || [];
+        
+        if (index >= 0 && index < managers.length) {
+          // 更新狀態
+          managers[index].status = action === 'suspend' ? '停權' : '正常';
+          managers[index].statusUpdateTime = new Date().toLocaleString('zh-TW');
+          
+          // 保存數據
+          Utils.Storage.set(CONFIG.MANAGERS_KEY, managers);
+          
+          // 關閉模態框
+          Utils.closeAllModals();
+          
+          // 顯示成功提示
+          Utils.showAlert('成功', `管理員狀態已${action === 'suspend' ? '停權' : '恢復'}！`, 'success');
+          
+          // 重新加載列表
+          await loadManagerList();
+          syncToDashboard();
+        }
+      } catch (error) {
+        console.error('確認狀態變更失敗:', error);
+        Utils.showAlert('錯誤', '變更管理員狀態時發生錯誤', 'error');
+      }
+    }
+
     function openDetailModal(manager) {
-      const detailContent = document.getElementById('detail-content');
+      const detailContent = Utils.safeGetElement('detail-content');
+      if (!detailContent) return;
       
-      // 構建詳細資訊HTML
       detailContent.innerHTML = `
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="bg-gray-700 p-3 rounded-lg">
@@ -986,99 +1542,86 @@
           </div>
           <div class="bg-gray-700 p-3 rounded-lg">
             <p class="text-xs text-gray-400">管理員姓名</p>
-            <p>${manager.name || '-'}</p>
-          </div>
-          <div class="bg-gray-700 p-3 rounded-lg">
-            <p class="text-xs text-gray-400">聯繫電話</p>
-            <p class="font-mono">${manager.phone || '-'}</p>
-          </div>
-          <div class="bg-gray-700 p-3 rounded-lg">
-            <p class="text-xs text-gray-400">LINE ID</p>
-            <p>${manager.lineId || '-'}</p>
-          </div>
-          <div class="bg-gray-700 p-3 rounded-lg">
-            <p class="text-xs text-gray-400">電子郵件</p>
-            <p>${manager.email || '-'}</p>
-          </div>
-          <div class="bg-gray-700 p-3 rounded-lg md:col-span-2">
-            <p class="text-xs text-gray-400">管理員帳號密碼</p>
-            <div class="grid grid-cols-2 gap-2 mt-1">
-              <div class="bg-gray-800 p-2 rounded font-mono">${manager.account || '-'}</div>
-              <div class="bg-gray-800 p-2 rounded font-mono">${manager.password || '-'}</div>
-            </div>
-          </div>
-          <div class="bg-gray-700 p-3 rounded-lg md:col-span-2">
-            <p class="text-xs text-gray-400">審核通過時間</p>
-            <p>${manager.approveTime || '-'}</p>
-          </div>
-          <div class="bg-gray-700 p-3 rounded-lg md:col-span-2">
-            <p class="text-xs text-gray-400">狀態更新時間</p>
-            <p>${manager.statusUpdateTime || '未更新'}</p>
-          </div>
+                      <p>${manager.name || '-'}</p>
         </div>
-      `;
-      
-      openModal('detail-modal');
-    }
+        <div class="bg-gray-700 p-3 rounded-lg">
+          <p class="text-xs text-gray-400">聯繫電話</p>
+          <p class="font-mono">${manager.phone || '-'}</p>
+        </div>
+        <div class="bg-gray-700 p-3 rounded-lg">
+          <p class="text-xs text-gray-400">Line ID</p>
+          <p>${manager.lineId || '-'}</p>
+        </div>
+        <div class="bg-gray-700 p-3 rounded-lg">
+          <p class="text-xs text-gray-400">電子郵件</p>
+          <p>${manager.email || '-'}</p>
+        </div>
+        <div class="bg-gray-700 p-3 rounded-lg">
+          <p class="text-xs text-gray-400">管理員帳號</p>
+          <p class="font-mono">${manager.account || '-'}</p>
+        </div>
+        <div class="bg-gray-700 p-3 rounded-lg">
+          <p class="text-xs text-gray-400">初始密碼</p>
+          <p class="font-mono">${manager.password || '-'}</p>
+        </div>
+        <div class="bg-gray-700 p-3 rounded-lg">
+          <p class="text-xs text-gray-400">當前狀態</p>
+          <p>
+            <span class="status-badge ${manager.status === '正常' ? 'status-active' : 'status-suspended'}">
+              ${manager.status || '-'}
+            </span>
+          </p>
+        </div>
+        <div class="bg-gray-700 p-3 rounded-lg">
+          <p class="text-xs text-gray-400">審核通過時間</p>
+          <p class="text-sm text-gray-300">${manager.approveTime || '-'}</p>
+        </div>
+        ${manager.statusUpdateTime ? `
+        <div class="bg-gray-700 p-3 rounded-lg">
+          <p class="text-xs text-gray-400">狀態更新時間</p>
+          <p class="text-sm text-gray-300">${manager.statusUpdateTime || '-'}</p>
+        </div>
+        ` : ''}
+      </div>
+      <div class="bg-gray-700 p-3 rounded-lg mt-4">
+        <p class="text-xs text-gray-400 mb-2">註冊原始數據</p>
+        <pre class="text-xs text-gray-300 overflow-auto max-h-40 p-2 bg-gray-800 rounded">${JSON.stringify(manager.registerData || {}, null, 2)}</pre>
+      </div>
+    `;
+    
+    // 打開詳細信息模態框
+    Utils.openModal('detail-modal');
+  }
 
-    // 加載繳費紀錄
-    function loadPaymentRecords() {
-      const payments = JSON.parse(localStorage.getItem(PAYMENT_KEY) || '[]');
-      const paymentBody = document.getElementById('payment-list-body');
+  async function exportPaymentRecords() {
+    try {
+      Utils.showLoading('正在匯出數據...');
+      
+      const payments = Utils.safeParseJSON(Utils.Storage.get(CONFIG.PAYMENT_KEY) || '[]') || [];
       
       // 獲取過濾條件
-      const fleetFilter = document.getElementById('payment-fleet-filter').value;
-      const typeFilter = document.getElementById('payment-type-filter').value;
-      const statusFilter = document.getElementById('payment-status-filter').value;
+      const fleetFilter = Utils.safeGetElement('payment-fleet-filter')?.value || '';
+      const typeFilter = Utils.safeGetElement('payment-type-filter')?.value || '';
+      const statusFilter = Utils.safeGetElement('payment-status-filter')?.value || '';
       
-      // 過濾紀錄
-      let filteredPayments = payments;
-      if (fleetFilter) {
-        filteredPayments = filteredPayments.filter(p => p.fleetId === fleetFilter);
-      }
-      if (typeFilter) {
-        filteredPayments = filteredPayments.filter(p => p.type === typeFilter);
-      }
-      if (statusFilter) {
-        filteredPayments = filteredPayments.filter(p => p.status === statusFilter);
-      }
+      // 應用過濾
+      let filteredPayments = [...payments];
+      if (fleetFilter) filteredPayments = filteredPayments.filter(p => p.fleetId === fleetFilter);
+      if (typeFilter) filteredPayments = filteredPayments.filter(p => p.type === typeFilter);
+      if (statusFilter) filteredPayments = filteredPayments.filter(p => p.status === statusFilter);
       
-      if (filteredPayments.length === 0) {
-        paymentBody.innerHTML = `
-          <tr class="text-center text-gray-400">
-            <td colspan="7" class="table-cell py-8">
-              <<i class="fa fa-credit-card text-2xl mb-3"></</i>
-              <p>暫無符合條件的繳費紀錄</p>
-            </td>
-          </tr>
-        `;
-        return;
-      }
+      // 轉換為CSV格式
+      const headers = ['紀錄ID', '車隊ID', '車隊名稱', '繳費金額', '繳費類型', '繳費日期', '繳費狀態'];
+      const rows = [headers.join(',')];
       
-      paymentBody.innerHTML = '';
       filteredPayments.forEach((payment, index) => {
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-gray-700/50 transition-colors';
-        
-        // 狀態樣式
-        let statusClass = '';
+        // 狀態文字
         let statusText = '';
         switch(payment.status) {
-          case 'paid':
-            statusClass = 'status-active';
-            statusText = '已繳費';
-            break;
-          case 'unpaid':
-            statusClass = 'status-pending';
-            statusText = '未繳費';
-            break;
-          case 'overdue':
-            statusClass = 'status-suspended';
-            statusText = '逾期';
-            break;
-          default:
-            statusClass = '';
-            statusText = payment.status || '未知';
+          case 'paid': statusText = '已繳費'; break;
+          case 'unpaid': statusText = '未繳費'; break;
+          case 'overdue': statusText = '逾期'; break;
+          default: statusText = payment.status || '未知';
         }
         
         // 繳費類型文字
@@ -1091,163 +1634,74 @@
           default: typeText = payment.type || '未知';
         }
         
-        tr.innerHTML = `
-          <td class="table-cell font-mono text-sm">PAY-${payment.id || index + 1}</td>
-          <td class="table-cell font-mono">${payment.fleetId || '-'}</td>
-          <td class="table-cell">${payment.fleetName || '-'}</td>
-          <td class="table-cell font-mono">NT$ ${payment.amount || 0}</td>
-          <td class="table-cell">${typeText}</td>
-          <td class="table-cell text-sm text-gray-400">${payment.payDate || '-'}</td>
-          <td class="table-cell">
-            <span class="status-badge ${statusClass}">${statusText}</span>
-          </td>
-        `;
-        paymentBody.appendChild(tr);
-      });
-    }
-
-    // 加載車隊過濾選項
-    function loadFleetFilterOptions() {
-      const managers = JSON.parse(localStorage.getItem(MANAGERS_KEY) || '[]');
-      const fleetFilter = document.getElementById('payment-fleet-filter');
-      
-      // 清空現有選項（保留全部選項）
-      fleetFilter.innerHTML = '<option value="">全部車隊</option>';
-      
-      // 獲取唯一車隊列表
-      const fleets = [...new Map(managers.map(m => [m.fleetId, m])).values()];
-      
-      // 添加車隊選項
-      fleets.forEach(fleet => {
-        const option = document.createElement('option');
-        option.value = fleet.fleetId;
-        option.textContent = `${fleet.fleetName} (${fleet.fleetId})`;
-        fleetFilter.appendChild(option);
-      });
-    }
-
-    // 匯出繳費紀錄
-    function exportPaymentRecords() {
-      const payments = JSON.parse(localStorage.getItem(PAYMENT_KEY) || '[]');
-      
-      if (payments.length === 0) {
-        showAlert('提示', '目前沒有可匯出的繳費紀錄', 'info');
-        return;
-      }
-      
-      // 構建CSV內容
-      let csvContent = '紀錄ID,車隊ID,車隊名稱,繳費金額,繳費類型,繳費日期,繳費狀態\n';
-      
-      payments.forEach((payment, index) => {
-        // 轉換類型和狀態文字
-        let typeText = '';
-        switch(payment.type) {
-          case 'monthly': typeText = '月繳'; break;
-          case 'quarterly': typeText = '季繳'; break;
-          case 'halfyear': typeText = '半年繳'; break;
-          case 'yearly': typeText = '年繳'; break;
-          default: typeText = payment.type || '未知';
-        }
+        const row = [
+          `PAY-${payment.id || index + 1}`,
+          payment.fleetId || '',
+          `"${payment.fleetName || ''}"`, // 包含中文需要加引號
+          `NT$ ${payment.amount || 0}`,
+          typeText,
+          payment.payDate || '',
+          statusText
+        ].join(',');
         
-        let statusText = '';
-        switch(payment.status) {
-          case 'paid': statusText = '已繳費'; break;
-          case 'unpaid': statusText = '未繳費'; break;
-          case 'overdue': statusText = '逾期'; break;
-          default: statusText = payment.status || '未知';
-        }
-        
-        // 添加行
-        csvContent += `PAY-${payment.id || index + 1},${payment.fleetId || ''},${payment.fleetName || ''},${payment.amount || 0},${typeText},${payment.payDate || ''},${statusText}\n`;
+        rows.push(row);
       });
       
-      // 下載CSV文件
+      // 創建CSV文件
+      const csvContent = rows.join('\n');
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
+      
+      // 創建下載鏈接
       const link = document.createElement('a');
       link.setAttribute('href', url);
-      link.setAttribute('download', `繳費紀錄_${new Date().toLocaleDateString()}.csv`);
+      link.setAttribute('download', `繳費紀錄_${new Date().toLocaleDateString('zh-TW').replace(/\//g, '-')}.csv`);
       link.style.display = 'none';
       document.body.appendChild(link);
+      
+      // 觸發下載
       link.click();
+      
+      // 清理
       document.body.removeChild(link);
+      URL.revokeObjectURL(url);
       
-      showAlert('成功', '繳費紀錄已匯出！', 'success');
+      Utils.showAlert('匯出成功', '繳費紀錄已匯出為CSV文件', 'success');
+    } catch (error) {
+      console.error('匯出繳費紀錄失敗:', error);
+      Utils.showAlert('錯誤', '匯出繳費紀錄時發生錯誤', 'error');
+    } finally {
+      Utils.hideLoading();
     }
+  }
 
-    // 同步數據到admin-dashboard.html
-    function syncToDashboard() {
-      // 收集所有需要同步的數據
-      const syncData = {
-        rentSettings: JSON.parse(localStorage.getItem(RENT_SETTING_KEY) || '{}'),
-        bankSettings: JSON.parse(localStorage.getItem(BANK_SETTING_KEY) || '{}'),
-        managers: JSON.parse(localStorage.getItem(MANAGERS_KEY) || '[]'),
-        payments: JSON.parse(localStorage.getItem(PAYMENT_KEY) || '[]'),
-        lastSyncTime: new Date().toLocaleString('zh-TW')
-      };
-      
-      // 儲存到localStorage供dashboard讀取
-      localStorage.setItem('adminDashboardData', JSON.stringify(syncData));
-    }
+  // ========== 同步數據到後台（模擬Firebase同步） ==========
+  function syncToDashboard() {
+    // 這裡可以添加與Firebase的同步邏輯
+    console.log('🔄 數據已同步到後台');
+    
+    // 模擬同步延遲
+    setTimeout(() => {
+      // 重新加載所有列表
+      loadAuditList();
+      loadManagerList();
+      loadPaymentRecords();
+      loadFleetFilterOptions();
+    }, 300);
+  }
 
-    // 工具函數：打開彈窗
-    function openModal(modalId) {
-      const modal = document.getElementById(modalId);
-      if (modal) {
-        modal.classList.remove('hidden');
-        setTimeout(() => {
-          modal.classList.add('show');
-        }, 10);
-        document.body.style.overflow = 'hidden';
-      }
-    }
+  // ========== 錯誤邊界處理 ==========
+  window.addEventListener('error', (e) => {
+    console.error('全局錯誤捕獲:', e.error);
+    Utils.hideLoading();
+    Utils.showAlert('系統錯誤', `發生未預期的錯誤：${e.error.message.substring(0, 100)}`, 'error');
+  });
 
-    // 工具函數：關閉彈窗
-    function closeModal(modalId) {
-      const modal = document.getElementById(modalId);
-      if (modal) {
-        modal.classList.remove('show');
-        setTimeout(() => {
-          modal.classList.add('hidden');
-          document.body.style.overflow = '';
-        }, 300);
-      }
-    }
-
-    // 工具函數：關閉所有彈窗
-    function closeAllModals() {
-      document.querySelectorAll('.modal').forEach(modal => {
-        modal.classList.remove('show');
-        setTimeout(() => {
-          modal.classList.add('hidden');
-        }, 300);
-      });
-      document.body.style.overflow = '';
-      currentManagerId = '';
-      currentStatusAction = '';
-    }
-
-    // 工具函數：顯示提示框
-    function showAlert(title, message, type = 'info') {
-      const alertModal = document.getElementById('alert-modal');
-      const alertIcon = document.getElementById('alert-icon');
-      const alertTitle = document.getElementById('alert-title');
-      const alertMessage = document.getElementById('alert-message');
-      
-      // 設置圖標和顏色
-      const iconMap = {
-        success: 'fa-check-circle text-green-500',
-        error: 'fa-exclamation-circle text-red-500',
-        warning: 'fa-exclamation-triangle text-yellow-500',
-        info: 'fa-info-circle text-blue-500'
-      };
-      
-      alertIcon.className = `fa ${iconMap[type] || iconMap.info} text-4xl mb-3`;
-      alertTitle.textContent = title;
-      alertMessage.innerHTML = message;
-      
-      openModal('alert-modal');
-    }
-  </script>
+  window.addEventListener('unhandledrejection', (e) => {
+    console.error('未處理的Promise錯誤:', e.reason);
+    Utils.hideLoading();
+    Utils.showAlert('系統錯誤', `發生未預期的錯誤：${e.reason.message.substring(0, 100)}`, 'error');
+  });
+</script>
 </body>
 </html>

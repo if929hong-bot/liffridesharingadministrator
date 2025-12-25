@@ -33,6 +33,45 @@
       justify-content: center;
       padding: 2rem;
     }
+
+    /* 加載狀態樣式（新增） */
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0.8);
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+    }
+    .loading-text {
+      color: #00C300;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+    }
+
+    /* 骨架屏樣式（新增） */
+    .skeleton {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: loading 1.5s infinite;
+      border-radius: 4px;
+    }
+    @keyframes loading {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    .skeleton-text {
+      height: 20px;
+      width: 80%;
+      margin-bottom: 8px;
+    }
+    .skeleton-value {
+      height: 28px;
+      width: 60%;
+    }
     
     /* 布局容器 */
     .app-container {
@@ -96,6 +135,7 @@
       box-shadow: 0 1px 2px rgba(0,0,0,0.05);
       padding: 24px;
       margin-bottom: 20px;
+      position: relative; /* 加載狀態需要相對定位 */
     }
     .card-title {
       font-size: 18px;
@@ -152,6 +192,7 @@
       height: 300px;
       margin-top: 16px;
       width: 100%;
+      position: relative;
     }
     .chart-subtitle {
       font-size: 16px;
@@ -178,7 +219,247 @@
       margin-bottom: 16px;
       color: #ddd;
     }
+
+    /* 響應式調整（新增） */
+    @media (max-width: 1024px) {
+      .stat-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 180px;
+      }
+      .main-content {
+        padding: 16px;
+        max-width: calc(100vw - 180px);
+      }
+      .stat-grid {
+        grid-template-columns: 1fr;
+      }
+      .chart-container {
+        height: 250px;
+      }
+    }
   </style>
+  <!-- 植入通用穩定性工具類 -->
+  <script>
+    /**
+     * 全局工具類 - 提升網站穩定性、統一處理通用邏輯
+     * 適用於所有車隊管理系統頁面
+     */
+    const Utils = {
+      // ========== 基礎工具方法 ==========
+      safeParseJSON(str) {
+        try {
+          return str && str !== 'null' && str !== 'undefined' ? JSON.parse(str) : null;
+        } catch (e) {
+          console.error('JSON解析失敗:', e, '原始字串:', str);
+          return null;
+        }
+      },
+
+      safeGetElement(id) {
+        const el = document.getElementById(id);
+        if (!el) console.warn(`[Utils] 元素#${id}不存在`);
+        return el;
+      },
+
+      validateNumber(value, allowZero = false) {
+        const trimmed = value.trim();
+        if (!/^\d+$/.test(trimmed)) return false;
+        if (!allowZero && Number(trimmed) <= 0) return false;
+        return true;
+      },
+
+      // 格式化數字（統計專用）
+      formatNumber(num) {
+        if (typeof num !== 'number' || isNaN(num)) return '-';
+        return num.toLocaleString('zh-TW');
+      },
+
+      // 格式化金額（統計專用）
+      formatAmount(amount) {
+        if (typeof amount !== 'number' || isNaN(amount)) return '-';
+        return `NT$ ${amount.toLocaleString('zh-TW')}`;
+      },
+
+      // 獲取時間範圍數據（統計專用）
+      getDateRangeData(data, period = 'today') {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        
+        // 根據時間週期過濾數據
+        return data.filter(item => {
+          if (!item.createTime) return false;
+          
+          const itemDate = new Date(item.createTime);
+          
+          switch (period) {
+            case 'today':
+              return itemDate >= today;
+            case 'week':
+              const weekAgo = new Date(today);
+              weekAgo.setDate(today.getDate() - 7);
+              return itemDate >= weekAgo;
+            case 'month':
+              const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+              return itemDate >= monthStart;
+            default:
+              return true;
+          }
+        });
+      },
+
+      // ========== 本地存儲管理（帶過期機制） ==========
+      Storage: {
+        set(key, data, expireHours = 24) {
+          try {
+            const value = JSON.stringify(data);
+            localStorage.setItem(key, value);
+            if (expireHours) {
+              const expireTime = Date.now() + expireHours * 60 * 60 * 1000;
+              localStorage.setItem(`${key}_expire`, expireTime);
+            }
+          } catch (e) {
+            console.error('[Storage] 儲存失敗:', e);
+            alert('本地存儲空間不足，無法保存數據！');
+          }
+        },
+
+        get(key) {
+          try {
+            const expireTime = localStorage.getItem(`${key}_expire`);
+            if (expireTime && Date.now() > Number(expireTime)) {
+              this.remove(key);
+              return null;
+            }
+            return Utils.safeParseJSON(localStorage.getItem(key));
+          } catch (e) {
+            console.error('[Storage] 讀取失敗:', e);
+            return null;
+          }
+        },
+
+        remove(key) {
+          localStorage.removeItem(key);
+          localStorage.removeItem(`${key}_expire`);
+        },
+
+        clearAllFleetData() {
+          const keys = Object.keys(localStorage);
+          keys.forEach(key => {
+            if (key.includes('fleet') || key.includes('admin') || key.includes('order') || key.includes('finance')) {
+              this.remove(key);
+            }
+          });
+        }
+      },
+
+      // ========== 登錄狀態管理 ==========
+      Auth: {
+        KEYS: {
+          LOGGED_IN: 'loggedInFleetAdmin',
+          BACKUP: 'currentFleetAdmin',
+          EXPIRE: 'adminExpireTime'
+        },
+
+        checkLoginStatus() {
+          let adminData = Utils.Storage.get(Utils.Auth.KEYS.LOGGED_IN);
+          if (!adminData) {
+            adminData = Utils.Storage.get(Utils.Auth.KEYS.BACKUP);
+          }
+
+          const hasValidAccount = adminData && (
+            adminData.帳號 || adminData.username || adminData.account || adminData.phone
+          );
+
+          if (!hasValidAccount) {
+            Utils.Storage.clearAllFleetData();
+            return false;
+          }
+
+          Utils.Storage.set(Utils.Auth.KEYS.LOGGED_IN, adminData, 24);
+          return true;
+        },
+
+        redirectToLogin() {
+          alert('登錄已過期或未登錄，請重新登入！');
+          window.location.href = 'manager-login.html';
+        },
+
+        logout() {
+          Utils.Storage.clearAllFleetData();
+          window.location.href = 'manager-login.html';
+        }
+      },
+
+      // ========== UI增強方法 ==========
+      showLoading(el, text = '載入統計數據中...') {
+        if (!el) return;
+        
+        // 創建加載層
+        const loadingEl = document.createElement('div');
+        loadingEl.className = 'loading-overlay';
+        loadingEl.innerHTML = `
+          <div class="loading-text">
+            <i class="fa fa-spinner fa-spin mr-2"></i>${text}
+          </div>
+        `;
+        
+        el.appendChild(loadingEl);
+        return loadingEl;
+      },
+
+      hideLoading(el) {
+        if (!el) return;
+        const loadingEl = el.querySelector('.loading-overlay');
+        if (loadingEl) loadingEl.remove();
+      },
+
+      showEmptyData(el, text = '暫無統計數據', subText = '') {
+        if (!el) return;
+        
+        el.innerHTML = `
+          <div class="empty-data">
+            <i class="fa fa-bar-chart"></i>
+            <p>${text}</p>
+            <small>${subText || '沒有找到相關統計記錄'}</small>
+          </div>
+        `;
+      },
+
+      // 顯示骨架屏（新增）
+      showSkeleton(el, type = 'stat') {
+        if (!el) return;
+        
+        if (type === 'stat') {
+          el.innerHTML = `
+            <div class="skeleton skeleton-text"></div>
+            <div class="skeleton skeleton-value"></div>
+          `;
+        } else if (type === 'chart') {
+          el.innerHTML = `
+            <div class="empty-data">
+              <i class="fa fa-circle-o-notch fa-spin text-4xl text-ddd"></i>
+              <p>正在生成圖表...</p>
+            </div>
+          `;
+        }
+      },
+
+      // 確認操作彈窗（統一風格）
+      confirmAction(message, confirmText = '確定', cancelText = '取消') {
+        return new Promise((resolve) => {
+          if (confirm(`${message}\n\n點擊「${confirmText}」確認，「${cancelText}」取消。`)) {
+            resolve(true);
+          } else {
+            resolve(false);
+          }
+        });
+      }
+    };
+  </script>
 </head>
 <body>
   <!-- 未登錄提示遮罩（未登錄時顯示） -->
@@ -208,75 +489,75 @@
       </ul>
     </div>
 
-    <!-- 主內容區 (重置所有虛擬數據為空) -->
+    <!-- 主內容區 (增強統計功能) -->
     <div class="main-content">
-      <div class="card">
+      <div class="card" id="reportCard">
         <div class="card-title">報表統計</div>
         
-        <!-- 時間週期切換 (保留結構，移除點擊事件) -->
-        <div class="period-tabs">
-          <div class="period-tab active">本日</div>
-          <div class="period-tab">本周</div>
-          <div class="period-tab">本月</div>
+        <!-- 時間週期切換 (增強交互) -->
+        <div class="period-tabs" id="periodTabs">
+          <div class="period-tab active" data-period="today">本日</div>
+          <div class="period-tab" data-period="week">本周</div>
+          <div class="period-tab" data-period="month">本月</div>
         </div>
 
-        <!-- 數據統計卡片 (重置為空數據) -->
+        <!-- 數據統計卡片 (增強動態加載) -->
         <div class="stat-grid">
           <!-- 所有訂單 -->
-          <div class="stat-card">
+          <div class="stat-card" id="totalOrdersCard">
             <div class="stat-title">所有訂單</div>
             <div class="stat-value">-</div>
           </div>
           <!-- 訂單完成數 -->
-          <div class="stat-card">
+          <div class="stat-card" id="completedOrdersCard">
             <div class="stat-title">訂單完成數</div>
             <div class="stat-value">-</div>
           </div>
           <!-- 訂單取消數 -->
-          <div class="stat-card">
+          <div class="stat-card" id="cancelledOrdersCard">
             <div class="stat-title">訂單取消數</div>
             <div class="stat-value">-</div>
           </div>
           <!-- 司機接單量 -->
-          <div class="stat-card">
+          <div class="stat-card" id="driverAcceptCard">
             <div class="stat-title">司機接單量</div>
             <div class="stat-value">-</div>
           </div>
         </div>
 
-        <!-- 收入統計 (重置為空數據) -->
+        <!-- 收入統計 (增強動態加載) -->
         <div class="mb-8">
           <div class="chart-subtitle">收入統計</div>
           <div class="stat-grid">
             <!-- 全部收入 -->
-            <div class="stat-card">
+            <div class="stat-card" id="totalIncomeCard">
               <div class="stat-title">全部收入</div>
               <div class="stat-value">-</div>
             </div>
             <!-- 現金收入 -->
-            <div class="stat-card">
+            <div class="stat-card" id="cashIncomeCard">
               <div class="stat-title">現金收入</div>
               <div class="stat-value">-</div>
             </div>
             <!-- 電子支付收入 -->
-            <div class="stat-card">
+            <div class="stat-card" id="digitalIncomeCard">
               <div class="stat-title">電子支付收入</div>
               <div class="stat-value">-</div>
             </div>
-            <!-- 收入佔比 (空圖表提示) -->
-            <div class="stat-card">
+            <!-- 收入佔比 -->
+            <div class="stat-card" id="incomeRatioCard">
               <div class="stat-title">收入佔比</div>
-              <div class="pie-chart-wrapper flex items-center justify-center">
+              <div class="pie-chart-wrapper flex items-center justify-center" id="incomeRatioChart">
                 <span class="text-sm text-gray-400">無數據</span>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- 訂單趨勢圖 (空數據提示) -->
+        <!-- 訂單趨勢圖 (增強動態加載) -->
         <div>
           <div class="chart-subtitle">訂單趨勢</div>
-          <div class="chart-container flex items-center justify-center bg-gray-50 rounded-lg">
+          <div class="chart-container" id="orderTrendChart">
             <div class="empty-data">
               <i class="fa fa-bar-chart"></i>
               <p>暫無統計數據</p>
@@ -288,48 +569,444 @@
   </div>
 
   <script>
-    // 全局常量 - 與manager-login.html同步
+    // 全局常量
     const LOGGED_IN_FLEET_KEY = 'loggedInFleetAdmin';
+    const ORDER_DATA_KEY = 'orderData';
+    const FINANCE_DATA_KEY = 'financeData';
+    
+    // 圖表實例存儲（避免重複創建）
+    let trendChartInstance = null;
+    let ratioChartInstance = null;
 
     // 頁面加載初始化
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async function() {
       try {
-        // 首先檢查登錄狀態
-        checkLoginStatus();
-        
-        // 初始化退出登入功能
+        // 1. 登錄狀態檢查（使用工具類增強）
+        if (!Utils.Auth.checkLoginStatus()) {
+          Utils.safeGetElement('unauthOverlay').classList.remove('hidden');
+          return;
+        } else {
+          Utils.safeGetElement('unauthOverlay').classList.add('hidden');
+        }
+
+        // 2. 初始化退出登入
         initLogout();
-        
-        // 移除所有圖表初始化邏輯，避免生成虛擬圖表
-        // 移除登錄狀態校驗，避免跳轉提示
+
+        // 3. 顯示骨架屏
+        showSkeletonLoading();
+
+        // 4. 加載統計數據（默認本日）
+        await loadReportData('today');
+
+        // 5. 綁定時間週期切換事件
+        bindPeriodTabs();
       } catch (error) {
         console.error('頁面初始化錯誤：', error);
+        // 顯示錯誤提示
+        showErrorState();
       }
     });
 
-    // 檢查登錄狀態
-    function checkLoginStatus() {
-      const loggedInAdmin = localStorage.getItem(LOGGED_IN_FLEET_KEY);
-      
-      // 未登錄/信息缺失 → 顯示未登錄提示
-      if (!loggedInAdmin) {
-        document.getElementById('unauthOverlay').classList.remove('hidden');
-        return;
+    // ========== 登錄與退出管理 ==========
+    function initLogout() {
+      const logoutLink = Utils.safeGetElement('logoutLink');
+      if (logoutLink) {
+        logoutLink.addEventListener('click', async function() {
+          const confirmLogout = await Utils.confirmAction('確定要退出登入嗎？');
+          if (confirmLogout) {
+            Utils.Auth.logout();
+          }
+        });
       }
     }
 
-    // 初始化退出登入（與manager-login.html同步）
-    function initLogout() {
-      document.getElementById('logoutLink').addEventListener('click', function() {
-        if (confirm('確定要退出登入嗎？')) {
-          // 清除所有登錄狀態
-          localStorage.removeItem(LOGGED_IN_FLEET_KEY);
-          localStorage.removeItem('loggedInRole');
-          localStorage.removeItem('currentFleetAdmin');
-          
-          // 跳轉到登入頁面
-          window.location.href = 'manager-login.html';
+    // ========== 骨架屏加載 ==========
+    function showSkeletonLoading() {
+      // 統計卡片顯示骨架屏
+      const statCards = [
+        'totalOrdersCard', 'completedOrdersCard', 
+        'cancelledOrdersCard', 'driverAcceptCard',
+        'totalIncomeCard', 'cashIncomeCard', 
+        'digitalIncomeCard'
+      ];
+      
+      statCards.forEach(id => {
+        const card = Utils.safeGetElement(id);
+        if (card) {
+          Utils.showSkeleton(card, 'stat');
         }
+      });
+
+      // 圖表區域顯示加載狀態
+      const trendChart = Utils.safeGetElement('orderTrendChart');
+      if (trendChart) {
+        Utils.showSkeleton(trendChart, 'chart');
+      }
+    }
+
+    // ========== 錯誤狀態處理 ==========
+    function showErrorState() {
+      // 統計卡片顯示錯誤
+      const statCards = [
+        'totalOrdersCard', 'completedOrdersCard', 
+        'cancelledOrdersCard', 'driverAcceptCard',
+        'totalIncomeCard', 'cashIncomeCard', 
+        'digitalIncomeCard'
+      ];
+      
+      statCards.forEach(id => {
+        const card = Utils.safeGetElement(id);
+        if (card) {
+          card.innerHTML = `
+            <div class="stat-title">${card.querySelector('.stat-title')?.textContent || ''}</div>
+            <div class="stat-value text-red-500">-</div>
+          `;
+        }
+      });
+
+      // 圖表區域顯示錯誤
+      const trendChart = Utils.safeGetElement('orderTrendChart');
+      if (trendChart) {
+        Utils.showEmptyData(trendChart, '加載數據失敗', '請刷新頁面或聯繫技術人員');
+      }
+    }
+
+    // ========== 報表數據加載 ==========
+    async function loadReportData(period = 'today') {
+      const cardEl = Utils.safeGetElement('reportCard');
+      const loadingEl = Utils.showLoading(cardEl, '載入統計數據中...');
+
+      try {
+        // 1. 加載訂單數據
+        const orderData = Utils.Storage.get(ORDER_DATA_KEY) || [];
+        const validOrders = orderData.filter(order => {
+          return order && order.id && order.status;
+        });
+
+        // 2. 根據時間週期過濾數據
+        const filteredOrders = Utils.getDateRangeData(validOrders, period);
+
+        // 3. 計算訂單統計數據
+        calculateOrderStats(filteredOrders);
+
+        // 4. 加載財務數據
+        const financeData = Utils.Storage.get(FINANCE_DATA_KEY) || [];
+        const validFinance = financeData.filter(item => {
+          return item && item.amount && !isNaN(item.amount);
+        });
+
+        // 5. 根據時間週期過濾財務數據
+        const filteredFinance = Utils.getDateRangeData(validFinance, period);
+
+        // 6. 計算收入統計數據
+        calculateIncomeStats(filteredFinance);
+
+        // 7. 生成訂單趨勢圖
+        generateOrderTrendChart(filteredOrders, period);
+
+        // 8. 生成收入佔比圖
+        generateIncomeRatioChart(filteredFinance);
+
+      } catch (e) {
+        console.error('加載報表數據失敗:', e);
+        showErrorState();
+      } finally {
+        // 隱藏加載狀態
+        Utils.hideLoading(cardEl);
+      }
+    }
+
+    // ========== 訂單統計計算 ==========
+    function calculateOrderStats(orders) {
+      // 總訂單數
+      const totalOrders = orders.length;
+      updateStatCard('totalOrdersCard', Utils.formatNumber(totalOrders));
+
+      // 完成訂單數
+      const completedOrders = orders.filter(o => o.status === 'completed').length;
+      updateStatCard('completedOrdersCard', Utils.formatNumber(completedOrders));
+
+      // 取消訂單數
+      const cancelledOrders = orders.filter(o => o.status === 'cancelled').length;
+      updateStatCard('cancelledOrdersCard', Utils.formatNumber(cancelledOrders));
+
+      // 司機接單量（去重）
+      const drivers = new Set(orders.map(o => o.driver).filter(Boolean));
+      updateStatCard('driverAcceptCard', Utils.formatNumber(drivers.size));
+    }
+
+    // ========== 收入統計計算 ==========
+    function calculateIncomeStats(financeData) {
+      // 總收入
+      const totalIncome = financeData.reduce((sum, item) => sum + Number(item.amount), 0);
+      updateStatCard('totalIncomeCard', Utils.formatAmount(totalIncome));
+
+      // 現金收入
+      const cashIncome = financeData
+        .filter(item => item.paymentType === 'cash')
+        .reduce((sum, item) => sum + Number(item.amount), 0);
+      updateStatCard('cashIncomeCard', Utils.formatAmount(cashIncome));
+
+      // 電子支付收入
+      const digitalIncome = financeData
+        .filter(item => item.paymentType === 'digital')
+        .reduce((sum, item) => sum + Number(item.amount), 0);
+      updateStatCard('digitalIncomeCard', Utils.formatAmount(digitalIncome));
+    }
+
+    // ========== 更新統計卡片 ==========
+    function updateStatCard(cardId, value) {
+      const card = Utils.safeGetElement(cardId);
+      if (card) {
+        const valueEl = card.querySelector('.stat-value');
+        if (valueEl) {
+          valueEl.textContent = value;
+        }
+      }
+    }
+
+    // ========== 生成訂單趨勢圖 ==========
+    function generateOrderTrendChart(orders, period) {
+      const chartContainer = Utils.safeGetElement('orderTrendChart');
+      
+      // 無數據時顯示空狀態
+      if (orders.length === 0) {
+        Utils.showEmptyData(chartContainer, '暫無訂單趨勢數據');
+        // 銷毀舊圖表
+        if (trendChartInstance) {
+          trendChartInstance.destroy();
+          trendChartInstance = null;
+        }
+        return;
+      }
+
+      // 準備圖表數據
+      const labels = getChartLabels(period);
+      const data = getChartDataByPeriod(orders, period);
+
+      // 銷毀舊圖表
+      if (trendChartInstance) {
+        trendChartInstance.destroy();
+      }
+
+      // 創建新圖表
+      const ctx = chartContainer;
+      trendChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: '訂單數量',
+            data: data,
+            borderColor: '#00C300',
+            backgroundColor: 'rgba(0, 195, 0, 0.1)',
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top'
+            },
+            tooltip: {
+              mode: 'index',
+              intersect: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: '訂單數量'
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: '時間'
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // ========== 生成收入佔比圖 ==========
+    function generateIncomeRatioChart(financeData) {
+      const chartContainer = Utils.safeGetElement('incomeRatioChart');
+      
+      // 無數據時顯示空狀態
+      if (financeData.length === 0) {
+        chartContainer.innerHTML = '<span class="text-sm text-gray-400">無數據</span>';
+        // 銷毀舊圖表
+        if (ratioChartInstance) {
+          ratioChartInstance.destroy();
+          ratioChartInstance = null;
+        }
+        return;
+      }
+
+      // 計算收入類型
+      const cashIncome = financeData
+        .filter(item => item.paymentType === 'cash')
+        .reduce((sum, item) => sum + Number(item.amount), 0);
+      
+      const digitalIncome = financeData
+        .filter(item => item.paymentType === 'digital')
+        .reduce((sum, item) => sum + Number(item.amount), 0);
+
+      // 銷毀舊圖表
+      if (ratioChartInstance) {
+        ratioChartInstance.destroy();
+      }
+
+      // 創建新圖表
+      const ctx = chartContainer;
+      ratioChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['現金', '電子支付'],
+          datasets: [{
+            data: [cashIncome, digitalIncome],
+            backgroundColor: [
+              '#FF9800',
+              '#00C300'
+            ],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          cutout: '70%',
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || '';
+                  const value = context.raw || 0;
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                  return `${label}: NT$ ${value.toLocaleString('zh-TW')} (${percentage}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // ========== 獲取圖表標籤 ==========
+    function getChartLabels(period) {
+      const labels = [];
+      const now = new Date();
+      
+      switch (period) {
+        case 'today':
+          // 今日：按小時
+          for (let i = 0; i < 24; i++) {
+            labels.push(`${i}:00`);
+          }
+          break;
+        case 'week':
+          // 本周：按天
+          const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+          for (let i = 6; i >= 0; i--) {
+            const date = new Date(now);
+            date.setDate(now.getDate() - i);
+            labels.push(weekdays[date.getDay()]);
+          }
+          break;
+        case 'month':
+          // 本月：按日期
+          const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+          for (let i = 1; i <= daysInMonth; i++) {
+            labels.push(`${i}日`);
+          }
+          break;
+      }
+      
+      return labels;
+    }
+
+    // ========== 獲取圖表數據 ==========
+    function getChartDataByPeriod(orders, period) {
+      const data = [];
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      switch (period) {
+        case 'today':
+          // 今日：按小時統計
+          for (let hour = 0; hour < 24; hour++) {
+            const count = orders.filter(order => {
+              if (!order.createTime) return false;
+              const orderDate = new Date(order.createTime);
+              return orderDate.getHours() === hour;
+            }).length;
+            data.push(count);
+          }
+          break;
+        case 'week':
+          // 本周：按天統計
+          for (let i = 6; i >= 0; i--) {
+            const targetDate = new Date(today);
+            targetDate.setDate(today.getDate() - i);
+            
+            const count = orders.filter(order => {
+              if (!order.createTime) return false;
+              const orderDate = new Date(order.createTime);
+              return orderDate.getDate() === targetDate.getDate() &&
+                     orderDate.getMonth() === targetDate.getMonth() &&
+                     orderDate.getFullYear() === targetDate.getFullYear();
+            }).length;
+            data.push(count);
+          }
+          break;
+        case 'month':
+          // 本月：按日期統計
+          const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+          for (let day = 1; day <= daysInMonth; day++) {
+            const count = orders.filter(order => {
+              if (!order.createTime) return false;
+              const orderDate = new Date(order.createTime);
+              return orderDate.getDate() === day;
+            }).length;
+            data.push(count);
+          }
+          break;
+      }
+      
+      return data;
+    }
+
+    // ========== 綁定時間週期切換 ==========
+    function bindPeriodTabs() {
+      const tabs = document.querySelectorAll('.period-tab');
+      tabs.forEach(tab => {
+        tab.addEventListener('click', async function() {
+          // 移除所有active類
+          tabs.forEach(t => t.classList.remove('active'));
+          // 添加當前active類
+          this.classList.add('active');
+          
+          // 獲取時間週期
+          const period = this.dataset.period || 'today';
+          
+          // 顯示骨架屏
+          showSkeletonLoading();
+          
+          // 加載對應數據
+          await loadReportData(period);
+        });
       });
     }
   </script>
