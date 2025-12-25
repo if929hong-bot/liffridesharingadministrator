@@ -808,6 +808,31 @@
             Utils.hideLoading();
           }
         };
+      },
+
+      // ========== 強制跳轉方法（解決登出跳轉問題） ==========
+      forceRedirect(url) {
+        // 方法1：標準跳轉
+        window.location.href = url;
+        
+        // 備用方案：如果上面失敗，使用replace跳轉
+        setTimeout(() => {
+          if (window.location.href.indexOf(url) === -1) {
+            window.location.replace(url);
+          }
+        }, 500);
+        
+        // 最終備用：使用HTML鏈接模擬點擊
+        setTimeout(() => {
+          if (window.location.href.indexOf(url) === -1) {
+            const link = document.createElement('a');
+            link.href = url;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          }
+        }, 1000);
       }
     };
 
@@ -819,7 +844,7 @@
       RENT_SETTING_KEY: 'rentSettings',
       BANK_SETTING_KEY: 'bankSettings',
       PAYMENT_KEY: 'paymentRecords',
-      LOGIN_PAGE: 'administrator-login.html',
+      LOGIN_PAGE: 'administrator-login.html', // 登出目標頁面
       SESSION_EXPIRE_HOURS: 8
     };
 
@@ -853,7 +878,7 @@
         bindSidebarToggle();
         bindFormEvents();
         bindModalEvents();
-        bindLogoutEvent();
+        bindLogoutEvent(); // 優先綁定登出事件
         bindFilterEvents();
 
         // 強制聚焦測試
@@ -1099,34 +1124,49 @@
       });
     }
 
+    // ========== 登出功能增強（核心修改） ==========
     function bindLogoutEvent() {
       const logoutBtn = Utils.safeGetElement('logout-btn');
-      if (logoutBtn) {
-        logoutBtn.addEventListener('click', async (e) => {
-          e.stopPropagation();
+      if (!logoutBtn) return;
+
+      // 移除所有舊的事件監聽器（防止重複綁定）
+      const newLogoutBtn = logoutBtn.cloneNode(true);
+      logoutBtn.parentNode.replaceChild(newLogoutBtn, logoutBtn);
+      
+      // 重新綁定登出事件
+      newLogoutBtn.addEventListener('click', async (e) => {
+        // 阻止事件冒泡和默認行為
+        e.stopPropagation();
+        e.preventDefault();
+        
+        // 確認登出
+        if (!confirm('確定要登出超管後台嗎？')) return;
+        
+        try {
+          // 顯示登出加載狀態
+          Utils.showLoading('正在登出...');
           
-          if (confirm('確定要登出超管後台嗎？')) {
-            Utils.showLoading('正在登出...');
-            
-            try {
-              // 清除登入狀態
-              Utils.Storage.remove(CONFIG.LOGGED_KEY);
-              Utils.Storage.remove('currentAdmin');
-              
-              // 延遲跳轉
-              await new Promise(resolve => setTimeout(resolve, 800));
-              
-              // 跳轉到登入頁
-              window.location.href = CONFIG.LOGIN_PAGE;
-            } catch (error) {
-              console.error('登出失敗:', error);
-              Utils.showAlert('錯誤', '登出失敗，請手動刷新頁面', 'error');
-            } finally {
-              Utils.hideLoading();
-            }
-          }
-        });
-      }
+          // 1. 清除所有相關存儲數據
+          Utils.Storage.remove(CONFIG.LOGGED_KEY);
+          Utils.Storage.remove('currentAdmin');
+          Utils.Storage.clearAllAdminData();
+          
+          // 2. 清除sessionStorage
+          sessionStorage.clear();
+          
+          // 3. 延遲確保數據清除完成
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // 4. 強制跳轉到登入頁（多重保障）
+          Utils.forceRedirect(CONFIG.LOGIN_PAGE);
+          
+        } catch (error) {
+          console.error('登出處理失敗:', error);
+          Utils.hideLoading();
+          // 即使出錯也強制跳轉
+          Utils.forceRedirect(CONFIG.LOGIN_PAGE);
+        }
+      });
     }
 
     function bindFilterEvents() {
@@ -1505,203 +1545,208 @@
         if (index >= 0 && index < managers.length) {
           // 更新狀態
           managers[index].status = action === 'suspend' ? '停權' : '正常';
-          managers[index].statusUpdateTime = new Date().toLocaleString('zh-TW');
+          managers[index].statusUpdate
+                    managers[index].statusUpdateTime = new Date().toLocaleString('zh-TW');
           
-          // 保存數據
+          // 保存更新後的數據
           Utils.Storage.set(CONFIG.MANAGERS_KEY, managers);
-          
-          // 關閉模態框
-          Utils.closeAllModals();
-          
-          // 顯示成功提示
-          Utils.showAlert('成功', `管理員狀態已${action === 'suspend' ? '停權' : '恢復'}！`, 'success');
           
           // 重新加載列表
           await loadManagerList();
+          
+          // 關閉模態框並提示
+          Utils.closeAllModals();
+          const newStatus = action === 'suspend' ? '停權' : '正常';
+          Utils.showAlert('操作成功', `車隊管理員狀態已變更為${newStatus}`, 'success');
+          
+          // 重置全局變量
+          window.currentManagerId = undefined;
+          window.currentStatusAction = undefined;
+          
           syncToDashboard();
         }
       } catch (error) {
         console.error('確認狀態變更失敗:', error);
-        Utils.showAlert('錯誤', '變更管理員狀態時發生錯誤', 'error');
+        Utils.showAlert('錯誤', '更新管理員狀態時發生錯誤', 'error');
       }
     }
 
     function openDetailModal(manager) {
-      const detailContent = Utils.safeGetElement('detail-content');
-      if (!detailContent) return;
-      
-      detailContent.innerHTML = `
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="bg-gray-700 p-3 rounded-lg">
-            <p class="text-xs text-gray-400">車隊ID</p>
-            <p class="font-mono">${manager.fleetId || '-'}</p>
+      try {
+        const detailContent = Utils.safeGetElement('detail-content');
+        if (!detailContent) return;
+        
+        // 構建詳細信息HTML
+        detailContent.innerHTML = `
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <p class="text-sm text-gray-400">車隊ID</p>
+              <p class="font-mono">${manager.fleetId || '-'}</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-400">車隊名稱</p>
+              <p>${manager.fleetName || '-'}</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-400">管理員姓名</p>
+              <p>${manager.name || '-'}</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-400">聯繫電話</p>
+              <p class="font-mono">${manager.phone || '-'}</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-400">LINE ID</p>
+              <p>${manager.lineId || '-'}</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-400">電子信箱</p>
+              <p>${manager.email || '-'}</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-400">管理員帳號</p>
+              <p class="font-mono bg-gray-700 px-2 py-1 rounded">${manager.account || '-'}</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-400">初始密碼</p>
+              <p class="font-mono bg-gray-700 px-2 py-1 rounded">${manager.password || '-'}</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-400">當前狀態</p>
+              <span class="status-badge ${manager.status === '正常' ? 'status-active' : 'status-suspended'}">
+                ${manager.status || '-'}
+              </span>
+            </div>
+            <div>
+              <p class="text-sm text-gray-400">狀態更新時間</p>
+              <p class="text-sm text-gray-400">${manager.statusUpdateTime || '-'}</p>
+            </div>
+            <div class="md:col-span-2">
+              <p class="text-sm text-gray-400">審核通過時間</p>
+              <p class="text-sm text-gray-400">${manager.approveTime || '-'}</p>
+            </div>
           </div>
-          <div class="bg-gray-700 p-3 rounded-lg">
-            <p class="text-xs text-gray-400">車隊名稱</p>
-            <p>${manager.fleetName || '-'}</p>
-          </div>
-          <div class="bg-gray-700 p-3 rounded-lg">
-            <p class="text-xs text-gray-400">管理員姓名</p>
-                      <p>${manager.name || '-'}</p>
-        </div>
-        <div class="bg-gray-700 p-3 rounded-lg">
-          <p class="text-xs text-gray-400">聯繫電話</p>
-          <p class="font-mono">${manager.phone || '-'}</p>
-        </div>
-        <div class="bg-gray-700 p-3 rounded-lg">
-          <p class="text-xs text-gray-400">Line ID</p>
-          <p>${manager.lineId || '-'}</p>
-        </div>
-        <div class="bg-gray-700 p-3 rounded-lg">
-          <p class="text-xs text-gray-400">電子郵件</p>
-          <p>${manager.email || '-'}</p>
-        </div>
-        <div class="bg-gray-700 p-3 rounded-lg">
-          <p class="text-xs text-gray-400">管理員帳號</p>
-          <p class="font-mono">${manager.account || '-'}</p>
-        </div>
-        <div class="bg-gray-700 p-3 rounded-lg">
-          <p class="text-xs text-gray-400">初始密碼</p>
-          <p class="font-mono">${manager.password || '-'}</p>
-        </div>
-        <div class="bg-gray-700 p-3 rounded-lg">
-          <p class="text-xs text-gray-400">當前狀態</p>
-          <p>
-            <span class="status-badge ${manager.status === '正常' ? 'status-active' : 'status-suspended'}">
-              ${manager.status || '-'}
-            </span>
-          </p>
-        </div>
-        <div class="bg-gray-700 p-3 rounded-lg">
-          <p class="text-xs text-gray-400">審核通過時間</p>
-          <p class="text-sm text-gray-300">${manager.approveTime || '-'}</p>
-        </div>
-        ${manager.statusUpdateTime ? `
-        <div class="bg-gray-700 p-3 rounded-lg">
-          <p class="text-xs text-gray-400">狀態更新時間</p>
-          <p class="text-sm text-gray-300">${manager.statusUpdateTime || '-'}</p>
-        </div>
-        ` : ''}
-      </div>
-      <div class="bg-gray-700 p-3 rounded-lg mt-4">
-        <p class="text-xs text-gray-400 mb-2">註冊原始數據</p>
-        <pre class="text-xs text-gray-300 overflow-auto max-h-40 p-2 bg-gray-800 rounded">${JSON.stringify(manager.registerData || {}, null, 2)}</pre>
-      </div>
-    `;
-    
-    // 打開詳細信息模態框
-    Utils.openModal('detail-modal');
-  }
-
-  async function exportPaymentRecords() {
-    try {
-      Utils.showLoading('正在匯出數據...');
-      
-      const payments = Utils.safeParseJSON(Utils.Storage.get(CONFIG.PAYMENT_KEY) || '[]') || [];
-      
-      // 獲取過濾條件
-      const fleetFilter = Utils.safeGetElement('payment-fleet-filter')?.value || '';
-      const typeFilter = Utils.safeGetElement('payment-type-filter')?.value || '';
-      const statusFilter = Utils.safeGetElement('payment-status-filter')?.value || '';
-      
-      // 應用過濾
-      let filteredPayments = [...payments];
-      if (fleetFilter) filteredPayments = filteredPayments.filter(p => p.fleetId === fleetFilter);
-      if (typeFilter) filteredPayments = filteredPayments.filter(p => p.type === typeFilter);
-      if (statusFilter) filteredPayments = filteredPayments.filter(p => p.status === statusFilter);
-      
-      // 轉換為CSV格式
-      const headers = ['紀錄ID', '車隊ID', '車隊名稱', '繳費金額', '繳費類型', '繳費日期', '繳費狀態'];
-      const rows = [headers.join(',')];
-      
-      filteredPayments.forEach((payment, index) => {
-        // 狀態文字
-        let statusText = '';
-        switch(payment.status) {
-          case 'paid': statusText = '已繳費'; break;
-          case 'unpaid': statusText = '未繳費'; break;
-          case 'overdue': statusText = '逾期'; break;
-          default: statusText = payment.status || '未知';
-        }
+        `;
         
-        // 繳費類型文字
-        let typeText = '';
-        switch(payment.type) {
-          case 'monthly': typeText = '月繳'; break;
-          case 'quarterly': typeText = '季繳'; break;
-          case 'halfyear': typeText = '半年繳'; break;
-          case 'yearly': typeText = '年繳'; break;
-          default: typeText = payment.type || '未知';
-        }
-        
-        const row = [
-          `PAY-${payment.id || index + 1}`,
-          payment.fleetId || '',
-          `"${payment.fleetName || ''}"`, // 包含中文需要加引號
-          `NT$ ${payment.amount || 0}`,
-          typeText,
-          payment.payDate || '',
-          statusText
-        ].join(',');
-        
-        rows.push(row);
-      });
-      
-      // 創建CSV文件
-      const csvContent = rows.join('\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      
-      // 創建下載鏈接
-      const link = document.createElement('a');
-      link.setAttribute('href', url);
-      link.setAttribute('download', `繳費紀錄_${new Date().toLocaleDateString('zh-TW').replace(/\//g, '-')}.csv`);
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      
-      // 觸發下載
-      link.click();
-      
-      // 清理
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      
-      Utils.showAlert('匯出成功', '繳費紀錄已匯出為CSV文件', 'success');
-    } catch (error) {
-      console.error('匯出繳費紀錄失敗:', error);
-      Utils.showAlert('錯誤', '匯出繳費紀錄時發生錯誤', 'error');
-    } finally {
-      Utils.hideLoading();
+        // 打開詳細模態框
+        Utils.openModal('detail-modal');
+      } catch (error) {
+        console.error('打開詳細模態框失敗:', error);
+        Utils.showAlert('錯誤', '加載管理員詳細信息失敗', 'error');
+      }
     }
-  }
 
-  // ========== 同步數據到後台（模擬Firebase同步） ==========
-  function syncToDashboard() {
-    // 這裡可以添加與Firebase的同步邏輯
-    console.log('🔄 數據已同步到後台');
-    
-    // 模擬同步延遲
-    setTimeout(() => {
-      // 重新加載所有列表
-      loadAuditList();
-      loadManagerList();
-      loadPaymentRecords();
-      loadFleetFilterOptions();
-    }, 300);
-  }
+    async function exportPaymentRecords() {
+      try {
+        const payments = Utils.safeParseJSON(Utils.Storage.get(CONFIG.PAYMENT_KEY) || '[]') || [];
+        
+        if (payments.length === 0) {
+          Utils.showAlert('提示', '暫無繳費紀錄可匯出', 'info');
+          return;
+        }
+        
+        // 構建CSV內容
+        const headers = ['紀錄ID', '車隊ID', '車隊名稱', '繳費金額(NT$)', '繳費類型', '繳費日期', '繳費狀態'];
+        const rows = [headers.join(',')];
+        
+        payments.forEach((payment, index) => {
+          // 格式化數據
+          const id = `PAY-${payment.id || index + 1}`;
+          const fleetId = payment.fleetId || '';
+          const fleetName = payment.fleetName ? `"${payment.fleetName.replace(/"/g, '""')}"` : '';
+          const amount = payment.amount || 0;
+          
+          // 處理繳費類型
+          let typeText = '';
+          switch(payment.type) {
+            case 'monthly': typeText = '月繳'; break;
+            case 'quarterly': typeText = '季繳'; break;
+            case 'halfyear': typeText = '半年繳'; break;
+            case 'yearly': typeText = '年繳'; break;
+            default: typeText = payment.type || '';
+          }
+          
+          // 處理繳費狀態
+          let statusText = '';
+          switch(payment.status) {
+            case 'paid': statusText = '已繳費'; break;
+            case 'unpaid': statusText = '未繳費'; break;
+            case 'overdue': statusText = '逾期'; break;
+            default: statusText = payment.status || '';
+          }
+          
+          const payDate = payment.payDate || '';
+          rows.push([id, fleetId, fleetName, amount, typeText, payDate, statusText].join(','));
+        });
+        
+        // 創建CSV文件並下載
+        const csvContent = rows.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        
+        a.href = url;
+        a.download = `車隊繳費紀錄_${new Date().toLocaleDateString('zh-TW').replace(/\//g, '-')}.csv`;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        
+        // 清理資源
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 100);
+        
+        Utils.showAlert('成功', '繳費紀錄已開始下載', 'success');
+      } catch (error) {
+        console.error('匯出繳費紀錄失敗:', error);
+        Utils.showAlert('錯誤', '生成繳費紀錄文件時發生錯誤', 'error');
+      }
+    }
 
-  // ========== 錯誤邊界處理 ==========
-  window.addEventListener('error', (e) => {
-    console.error('全局錯誤捕獲:', e.error);
-    Utils.hideLoading();
-    Utils.showAlert('系統錯誤', `發生未預期的錯誤：${e.error.message.substring(0, 100)}`, 'error');
-  });
+    function syncToDashboard() {
+      // 同步首頁數據（例如顯示最新設定時間）
+      try {
+        const rentSettings = Utils.safeParseJSON(Utils.Storage.get(CONFIG.RENT_SETTING_KEY) || '{}');
+        const bankSettings = Utils.safeParseJSON(Utils.Storage.get(CONFIG.BANK_SETTING_KEY) || '{}');
+        
+        // 可在首頁添加設定更新時間顯示（此處僅示範同步邏輯）
+        console.log('✅ 數據已同步到首頁:', {
+          rentLastUpdate: rentSettings.updateTime,
+          bankLastUpdate: bankSettings.updateTime
+        });
+      } catch (error) {
+        console.error('同步首頁數據失敗:', error);
+      }
+    }
 
-  window.addEventListener('unhandledrejection', (e) => {
-    console.error('未處理的Promise錯誤:', e.reason);
-    Utils.hideLoading();
-    Utils.showAlert('系統錯誤', `發生未預期的錯誤：${e.reason.message.substring(0, 100)}`, 'error');
-  });
-</script>
+    // ========== 異常處理增強 ==========
+    // 捕獲全局錯誤，避免頁面崩潰
+    window.addEventListener('error', (errorEvent) => {
+      console.error('全局未捕獲錯誤:', errorEvent.error);
+      
+      // 僅在生產環境顯示用戶友好提示
+      if (process?.env?.NODE_ENV !== 'development') {
+        Utils.showAlert(
+          '系統異常',
+          '頁面發生未知錯誤，部分功能可能無法正常使用，建議重新登錄或聯繫技術支持',
+          'error'
+        );
+      }
+    });
+
+    // 捕獲未處理的Promise拒絕
+    window.addEventListener('unhandledrejection', (event) => {
+      console.error('未處理的Promise拒絕:', event.reason);
+      
+      if (process?.env?.NODE_ENV !== 'development') {
+        Utils.showAlert(
+          '數據加載失敗',
+          '部分數據加載異常，建議刷新頁面或稍後再試',
+          'error'
+        );
+      }
+    });
+  </script>
 </body>
 </html>
