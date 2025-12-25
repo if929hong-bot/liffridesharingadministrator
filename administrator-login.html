@@ -3,613 +3,167 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>超管後台 - 登入</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <title>超級管理員後台 - 登入</title>
   <style>
-    /* 全局重置 */
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      font-family: "Microsoft JhengHei", sans-serif;
     }
-    
     body {
-      background: linear-gradient(135deg, #222 0%, #444 100%);
+      background-color: #444;
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
-      font-family: "Microsoft JhengHei", "PingFang SC", sans-serif;
     }
-    
-    .login-box {
-      background: white;
+    .login-container {
+      background-color: white;
       padding: 2.5rem;
-      border-radius: 12px;
+      border-radius: 10px;
       width: 100%;
       max-width: 380px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
       position: relative;
-      overflow: hidden;
     }
-    
-    /* 登入框頂部裝飾 */
-    .login-box::before {
+    .login-container::before {
       content: '';
       position: absolute;
       top: 0;
       left: 0;
       right: 0;
-      height: 6px;
-      background: linear-gradient(90deg, #10b981, #059669);
+      height: 4px;
+      background: #22c55e;
     }
-    
-    .login-box h1 {
+    .login-title {
       text-align: center;
-      color: #222;
-      margin-bottom: 0.8rem;
-      font-size: 1.8rem;
-      font-weight: 700;
+      font-size: 1.6rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+      color: #333;
     }
-    
-    .login-box p {
+    .login-desc {
       text-align: center;
       color: #666;
       margin-bottom: 2rem;
-      font-size: 0.95rem;
     }
-    
     .form-group {
       margin-bottom: 1.5rem;
-      position: relative;
     }
-    
     .form-group label {
       display: block;
-      color: #333;
       margin-bottom: 0.5rem;
-      font-size: 0.95rem;
+      color: #333;
       font-weight: 500;
     }
-    
     .form-group input {
       width: 100%;
-      padding: 0.9rem 1rem 0.9rem 2.5rem;
+      padding: 0.9rem;
       border: 1px solid #ddd;
       border-radius: 6px;
       font-size: 1rem;
-      transition: all 0.2s ease;
-      font-family: inherit;
     }
-    
     .form-group input:focus {
       outline: none;
-      border-color: #10b981;
-      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+      border-color: #22c55e;
     }
-    
-    /* 輸入框圖標 */
-    .form-icon {
-      position: absolute;
-      left: 0.8rem;
-      top: 2.4rem;
-      color: #999;
-      font-size: 1rem;
-    }
-    
-    /* 錯誤提示 */
-    #error-msg {
-      color: #ef4444;
+    .error-message {
+      color: #dc2626;
       text-align: center;
       margin-bottom: 1rem;
       display: none;
-      padding: 0.8rem;
-      background: #fef2f2;
-      border-radius: 6px;
-      font-size: 0.9rem;
-      border: 1px solid #fee2e2;
     }
-    
-    #error-msg.show {
-      display: block;
-      animation: shake 0.5s ease;
-    }
-    
-    /* 加載狀態 */
-    .loading-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.5);
-      z-index: 999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      display: none;
-    }
-    
-    .loading-spinner {
-      background: white;
-      padding: 1.5rem;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      gap: 0.8rem;
-      color: #333;
-      font-size: 1rem;
-    }
-    
-    /* 按鈕樣式 */
-    button {
+    .login-btn {
       width: 100%;
       padding: 0.9rem;
-      background: #10b981;
+      background-color: #22c55e;
       color: white;
       border: none;
       border-radius: 6px;
       font-size: 1rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
       font-weight: 500;
-      font-family: inherit;
-      position: relative;
-      overflow: hidden;
+      cursor: pointer;
+      transition: background 0.2s;
     }
-    
-    button:hover {
-      background: #059669;
-      transform: translateY(-1px);
-    }
-    
-    button:active {
-      transform: translateY(0);
-    }
-    
-    button:disabled {
-      background: #94a3b8;
-      cursor: not-allowed;
-      transform: none;
-    }
-    
-    /* 動畫效果 */
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      25% { transform: translateX(-5px); }
-      75% { transform: translateX(5px); }
-    }
-    
-    @keyframes pulse {
-      0% { opacity: 1; }
-      50% { opacity: 0.7; }
-      100% { opacity: 1; }
-    }
-    
-    .pulse {
-      animation: pulse 1.5s infinite;
-    }
-    
-    /* 響應式調整 */
-    @media (max-width: 480px) {
-      .login-box {
-        padding: 1.8rem;
-      }
-      
-      .login-box h1 {
-        font-size: 1.5rem;
-      }
+    .login-btn:hover {
+      background-color: #16a34a;
     }
   </style>
-  <!-- 植入通用穩定性工具類 -->
-  <script>
-    /**
-     * 全局工具類 - 提升網站穩定性、統一處理通用邏輯
-     * 適用於超級管理員後台系統
-     */
-    const Utils = {
-      // ========== 基礎工具方法 ==========
-      safeParseJSON(str) {
-        try {
-          return str && str !== 'null' && str !== 'undefined' ? JSON.parse(str) : null;
-        } catch (e) {
-          console.error('JSON解析失敗:', e, '原始字串:', str);
-          return null;
-        }
-      },
-
-      safeGetElement(id) {
-        const el = document.getElementById(id);
-        if (!el) console.warn(`[Utils] 元素#${id}不存在`);
-        return el;
-      },
-
-      // 驗證輸入是否為空
-      isEmpty(value) {
-        return value === null || value === undefined || value.trim() === '';
-      },
-
-      // 驗證手機號碼格式
-      validatePhone(phone) {
-        if (this.isEmpty(phone)) return false;
-        // 台灣手機號碼格式驗證
-        const phoneRegex = /^09\d{8}$/;
-        return phoneRegex.test(phone.trim());
-      },
-
-      // ========== 本地存儲管理（帶過期機制） ==========
-      Storage: {
-        set(key, data, expireHours = 24) {
-          try {
-            const value = typeof data === 'string' ? data : JSON.stringify(data);
-            localStorage.setItem(key, value);
-            
-            // 設置過期時間
-            if (expireHours) {
-              const expireTime = Date.now() + expireHours * 60 * 60 * 1000;
-              localStorage.setItem(`${key}_expire`, expireTime);
-            }
-          } catch (e) {
-            console.error('[Storage] 儲存失敗:', e);
-            alert('本地存儲空間不足，無法保存登入狀態！');
-          }
-        },
-
-        get(key) {
-          try {
-            // 檢查過期時間
-            const expireTime = localStorage.getItem(`${key}_expire`);
-            if (expireTime && Date.now() > Number(expireTime)) {
-              this.remove(key);
-              return null;
-            }
-            
-            const value = localStorage.getItem(key);
-            return value;
-          } catch (e) {
-            console.error('[Storage] 讀取失敗:', e);
-            return null;
-          }
-        },
-
-        remove(key) {
-          try {
-            localStorage.removeItem(key);
-            localStorage.removeItem(`${key}_expire`);
-          } catch (e) {
-            console.error('[Storage] 移除失敗:', e);
-          }
-        },
-
-        clearAllAdminData() {
-          const keys = Object.keys(localStorage);
-          keys.forEach(key => {
-            if (key.includes('admin') || key.includes('logged')) {
-              this.remove(key);
-            }
-          });
-        }
-      },
-
-      // ========== 登入安全管理 ==========
-      Auth: {
-        // 檢查是否已登入
-        checkLoginStatus(loginKey) {
-          const loggedIn = Utils.Storage.get(loginKey);
-          return loggedIn === '1';
-        },
-
-        // 設置登入狀態
-        setLoginStatus(loginKey, expireHours = 8) {
-          Utils.Storage.set(loginKey, '1', expireHours);
-        },
-
-        // 清除登入狀態
-        clearLoginStatus(loginKey) {
-          Utils.Storage.remove(loginKey);
-        },
-
-        // 跳轉到後台頁面
-        redirectToAdmin() {
-          window.location.href = 'administrator.html';
-        }
-      },
-
-      // ========== UI增強方法 ==========
-      // 顯示錯誤提示
-      showError(element, message) {
-        if (!element) return;
-        
-        element.textContent = message;
-        element.classList.add('show');
-        
-        // 3秒後自動隱藏
-        setTimeout(() => {
-          this.hideError(element);
-        }, 3000);
-      },
-
-      // 隱藏錯誤提示
-      hideError(element) {
-        if (!element) return;
-        element.classList.remove('show');
-      },
-
-      // 顯示加載狀態
-      showLoading(message = '處理中...') {
-        const loadingEl = document.createElement('div');
-        loadingEl.className = 'loading-overlay';
-        loadingEl.innerHTML = `
-          <div class="loading-spinner">
-            <<i class="fa fa-spinner fa-spin"></</i>
-            <span>${message}</span>
-          </div>
-        `;
-        
-        document.body.appendChild(loadingEl);
-        loadingEl.style.display = 'flex';
-        return loadingEl;
-      },
-
-      // 隱藏加載狀態
-      hideLoading() {
-        const loadingEl = document.querySelector('.loading-overlay');
-        if (loadingEl) {
-          loadingEl.remove();
-        }
-      },
-
-      // 禁用按鈕並顯示加載狀態
-      disableButton(button, text = '處理中...') {
-        if (!button) return;
-        
-        button.disabled = true;
-        const originalText = button.innerHTML;
-        button.innerHTML = `<<i class="fa fa-spinner fa-spin mr-2"></</i>${text}`;
-        
-        // 保存原始文本，用於恢復
-        button.dataset.originalText = originalText;
-        
-        return originalText;
-      },
-
-      // 恢復按鈕狀態
-      enableButton(button) {
-        if (!button) return;
-        
-        button.disabled = false;
-        const originalText = button.dataset.originalText || '登入系統';
-        button.innerHTML = originalText;
-      },
-
-      // 表單驗證
-      validateForm(fields) {
-        for (const field of fields) {
-          const { element, validator, errorMessage } = field;
-          
-          if (!element) continue;
-          
-          const value = element.value.trim();
-          
-          // 執行驗證函數
-          if (validator && !validator(value)) {
-            this.showError(Utils.safeGetElement('error-msg'), errorMessage);
-            // 焦點定位到錯誤字段
-            element.focus();
-            return false;
-          }
-        }
-        
-        return true;
-      },
-
-      // 防止重複提交
-      preventDoubleSubmit(button, submitHandler) {
-        let isSubmitting = false;
-        
-        return async function() {
-          if (isSubmitting) return;
-          
-          isSubmitting = true;
-          const originalText = Utils.disableButton(button);
-          
-          try {
-            await submitHandler();
-          } catch (error) {
-            console.error('提交失敗:', error);
-            Utils.showError(Utils.safeGetElement('error-msg'), '系統錯誤，請稍後再試');
-          } finally {
-            isSubmitting = false;
-            Utils.enableButton(button, originalText);
-          }
-        };
-      }
-    };
-  </script>
 </head>
 <body>
-  <div class="login-box">
-    <h1>超級管理員後台</h1>
-    <p>請輸入帳號密碼登入</p>
-    
+  <div class="login-container">
+    <h2 class="login-title">超級管理員後台</h2>
+    <p class="login-desc">請輸入帳號密碼登入</p>
+
     <div class="form-group">
       <label>帳號</label>
-      <<i class="fa fa-user form-icon"></</i>
-      <input type="text" id="acc" placeholder="請輸入帳號" autocomplete="username">
+      <input type="text" id="admin-account" placeholder="請輸入帳號">
     </div>
-    
+
     <div class="form-group">
       <label>密碼</label>
-      <<i class="fa fa-lock form-icon"></</i>
-      <input type="password" id="pwd" placeholder="請輸入密碼" autocomplete="current-password">
+      <input type="password" id="admin-password" placeholder="請輸入密碼">
     </div>
-    
-    <div id="error-msg">帳號或密碼錯誤</div>
-    
-    <button id="loginBtn">登入系統</button>
+
+    <div class="error-message" id="login-error">帳號或密碼錯誤</div>
+
+    <button class="login-btn" id="login-submit">登入系統</button>
   </div>
 
   <script>
-    // 全局配置（加入兩組超管帳號密碼）
-    const ADMIN_CONFIG = {
-      // 超管帳號列表
-      ADMIN_ACCOUNTS: [
-        { acc: '0975521219', pwd: 'fffishau' },
-        { acc: 'admin123', pwd: 'ccc456789' }
-      ],
-      LOG_KEY: 'admin_logged',
-      SESSION_EXPIRE_HOURS: 8 // 登入會話有效期8小時
-    };
+    // 你的超管帳號密碼
+    const ADMIN_LIST = [
+      { account: "0975521219", password: "fffishau" },
+      { account: "admin123", password: "ccc456789" }
+    ];
+    const LOGIN_STATUS_KEY = "super_admin_logged";
 
-    // 頁面加載初始化
-    document.addEventListener('DOMContentLoaded', function() {
-      try {
-        // 1. 檢查是否已登入，若已登入則跳轉
-        checkLoggedInStatus();
-        
-        // 2. 初始化登入表單
-        initLoginForm();
-        
-        // 3. 綁定表單事件
-        bindFormEvents();
-      } catch (error) {
-        console.error('頁面初始化錯誤:', error);
-        Utils.showError(Utils.safeGetElement('error-msg'), '系統初始化失敗，請刷新頁面');
+    // 頁面加載完成後初始化
+    document.addEventListener('DOMContentLoaded', () => {
+      // 若已登入，直接跳轉後台
+      if (localStorage.getItem(LOGIN_STATUS_KEY) === "1") {
+        window.location.href = "administrator.html";
       }
+
+      // 綁定登入按鈕事件
+      document.getElementById('login-submit').addEventListener('click', handleLogin);
+      // 按Enter鍵提交
+      document.getElementById('admin-password').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') handleLogin();
+      });
     });
 
-    // ========== 登入狀態檢查 ==========
-    function checkLoggedInStatus() {
-      // 使用工具類檢查登入狀態（包含過期檢查）
-      if (Utils.Auth.checkLoginStatus(ADMIN_CONFIG.LOG_KEY)) {
-        Utils.Auth.redirectToAdmin();
-      }
-    }
-
-    // ========== 登入表單初始化 ==========
-    function initLoginForm() {
-      // 獲取表單元素
-      const accInput = Utils.safeGetElement('acc');
-      const pwdInput = Utils.safeGetElement('pwd');
-      const loginBtn = Utils.safeGetElement('loginBtn');
+    // 登入處理函數
+    function handleLogin() {
+      const accountInput = document.getElementById('admin-account');
+      const passwordInput = document.getElementById('admin-password');
+      const errorEl = document.getElementById('login-error');
       
-      // 焦點定位到帳號輸入框
-      if (accInput) {
-        accInput.focus();
-      }
-      
-      // 設置默認提示文本
-      if (accInput && accInput.placeholder === '') {
-        accInput.placeholder = '請輸入帳號';
-      }
-      
-      if (pwdInput && pwdInput.placeholder === '') {
-        pwdInput.placeholder = '請輸入密碼';
-      }
-      
-      // 隱藏錯誤提示
-      Utils.hideError(Utils.safeGetElement('error-msg'));
-    }
+      const account = accountInput.value.trim();
+      const password = passwordInput.value.trim();
 
-    // ========== 表單事件綁定 ==========
-    function bindFormEvents() {
-      const loginBtn = Utils.safeGetElement('loginBtn');
-      const accInput = Utils.safeGetElement('acc');
-      const pwdInput = Utils.safeGetElement('pwd');
-      const errorMsg = Utils.safeGetElement('error-msg');
-
-      // 綁定登入按鈕點擊事件（防止重複提交）
-      if (loginBtn) {
-        loginBtn.addEventListener('click', Utils.preventDoubleSubmit(loginBtn, handleLogin));
+      // 驗證輸入是否為空
+      if (!account || !password) {
+        errorEl.textContent = "請填寫帳號和密碼";
+        errorEl.style.display = "block";
+        return;
       }
 
-      // 綁定按Enter鍵提交
-      const formInputs = [accInput, pwdInput];
-      formInputs.forEach(input => {
-        if (input) {
-          input.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-              loginBtn.click();
-            }
-          });
-        }
-      });
+      // 比對帳號密碼
+      const isMatch = ADMIN_LIST.some(item => 
+        item.account === account && item.password === password
+      );
 
-      // 輸入框獲取焦點時隱藏錯誤提示
-      formInputs.forEach(input => {
-        if (input) {
-          input.addEventListener('focus', function() {
-            Utils.hideError(errorMsg);
-          });
-        }
-      });
-    }
-
-    // ========== 登入處理邏輯 ==========
-    async function handleLogin() {
-      const accInput = Utils.safeGetElement('acc');
-      const pwdInput = Utils.safeGetElement('pwd');
-      const errorMsg = Utils.safeGetElement('error-msg');
-
-      // 1. 表單驗證
-      const isValid = Utils.validateForm([
-        {
-          element: accInput,
-          validator: (value) => !Utils.isEmpty(value),
-          errorMessage: '請輸入帳號'
-        },
-        {
-          element: pwdInput,
-          validator: (value) => !Utils.isEmpty(value),
-          errorMessage: '請輸入密碼'
-        }
-      ]);
-
-      // 驗證失敗則返回
-      if (!isValid) return;
-
-      // 2. 获取並清理輸入值
-      const acc = accInput.value.trim();
-      const pwd = pwdInput.value.trim();
-
-      // 3. 顯示加載狀態
-      const loadingEl = Utils.showLoading('正在驗證登入信息...');
-
-      try {
-        // 模擬網絡延遲，提升用戶體驗
-        await new Promise(resolve => setTimeout(resolve, 800));
-
-        // 4. 驗證帳號密碼（比對帳號列表）
-        const matchedAdmin = ADMIN_CONFIG.ADMIN_ACCOUNTS.find(item => 
-          item.acc === acc && item.pwd === pwd
-        );
-
-        if (matchedAdmin) {
-          // 登入成功 - 設置登入狀態（帶過期時間）
-          Utils.Auth.setLoginStatus(ADMIN_CONFIG.LOG_KEY, ADMIN_CONFIG.SESSION_EXPIRE_HOURS);
-          
-          // 記錄登入日志
-          console.log(`超管登入成功 - 帳號: ${acc}, 時間: ${new Date().toLocaleString()}`);
-          
-          // 跳轉到後台頁面
-          Utils.Auth.redirectToAdmin();
-        } else {
-          // 登入失敗 - 顯示錯誤提示
-          Utils.showError(errorMsg, '帳號或密碼錯誤，請重新輸入');
-          
-          // 記錄失敗日志
-          console.warn(`超管登入失敗 - 嘗試帳號: ${acc}, 時間: ${new Date().toLocaleString()}`);
-          
-          // 清空密碼輸入框
-          pwdInput.value = '';
-          pwdInput.focus();
-        }
-      } catch (error) {
-        // 異常處理
-        console.error('登入處理異常:', error);
-        Utils.showError(errorMsg, '系統異常，請稍後再試');
-      } finally {
-        // 隱藏加載狀態
-        Utils.hideLoading(loadingEl);
+      if (isMatch) {
+        // 登入成功：記錄狀態並跳轉
+        localStorage.setItem(LOGIN_STATUS_KEY, "1");
+        window.location.href = "administrator.html";
+      } else {
+        // 登入失敗：顯示錯誤
+        errorEl.textContent = "帳號或密碼錯誤";
+        errorEl.style.display = "block";
+        passwordInput.value = ""; // 清空密碼
       }
     }
   </script>
