@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>車隊管理員系統 - 首頁</title>
-  <!-- 引入Font Awesome（加載/驗證提示需要） -->
   <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
   <style>
     * {
@@ -19,7 +18,7 @@
       display: flex;
       min-height: 100vh;
     }
-    /* 未登錄提示遮罩（新增） */
+    /* 未登錄提示遮罩 */
     .unauth-overlay {
       position: fixed;
       inset: 0;
@@ -100,13 +99,23 @@
     button:hover {
       background: #00A600;
     }
-    /* 移除原來的price-container分欄樣式（因為不需要分早晚班） */
+    /* 提示樣式 */
+    .alert {
+      padding: 12px 16px;
+      border-radius: 4px;
+      margin: 10px 0;
+      color: white;
+    }
+    .alert.error {
+      background: #ff4444;
+    }
+    .alert.success {
+      background: #00C853;
+    }
   </style>
-  <!-- 植入通用穩定性工具類 -->
   <script>
     /**
-     * 全局工具類 - 提升網站穩定性、統一處理通用邏輯
-     * 適用於所有車隊管理系統頁面
+     * 全局工具類 - 統一處理通用邏輯
      */
     const Utils = {
       // ========== 基礎工具方法 ==========
@@ -177,36 +186,67 @@
         }
       },
 
-      // ========== 登錄狀態管理 ==========
+      // ========== 登錄狀態管理（強化版） ==========
       Auth: {
         KEYS: {
           LOGGED_IN: 'loggedInFleetAdmin',
           BACKUP: 'currentFleetAdmin',
-          EXPIRE: 'adminExpireTime'
+          APPROVED: 'approvedFleetAdmins'
         },
 
+        // 強化：雙重驗證（登入狀態 + 審核狀態）
         checkLoginStatus() {
+          // 1. 獲取登入狀態
           let adminData = Utils.Storage.get(Utils.Auth.KEYS.LOGGED_IN);
           if (!adminData) {
             adminData = Utils.Storage.get(Utils.Auth.KEYS.BACKUP);
           }
 
+          // 2. 驗證基本信息
           const hasValidAccount = adminData && (
             adminData.帳號 || adminData.username || adminData.account || adminData.phone
           );
-
           if (!hasValidAccount) {
             Utils.Storage.clearAllFleetData();
             return false;
           }
 
+          // 3. 驗證審核狀態（核心：防止跳過審核）
+          const approvedList = Utils.Storage.get(Utils.Auth.KEYS.APPROVED) || [];
+          const isApproved = approvedList.some(admin => {
+            const accMatch = admin.帳號 === adminData.帳號 || admin.username === adminData.username;
+            const isApprovedStatus = admin.approved === true || admin.審核狀態 === '已通過';
+            return accMatch && isApprovedStatus;
+          });
+
+          if (!isApproved) {
+            Utils.Storage.clearAllFleetData();
+            return false;
+          }
+
+          // 4. 刷新登入狀態
           Utils.Storage.set(Utils.Auth.KEYS.LOGGED_IN, adminData, 24);
           return true;
         },
 
         redirectToLogin() {
-          alert('登錄已過期或未登錄，請重新登入！');
-          window.location.href = 'manager-login.html';
+          const overlay = Utils.safeGetElement('unauthOverlay');
+          if (overlay) {
+            overlay.innerHTML = `
+              <div class="text-center max-w-md">
+                <i class="fa fa-exclamation-circle text-4xl text-red-500 mb-4"></i>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">未登錄/帳號未審核</h2>
+                <p class="text-gray-600 mb-6">請先完成車隊管理員註冊並通過審核後登入</p>
+                <a href="manager-login.html" class="inline-block py-3 px-6 bg-#00C853 text-white rounded-lg font-medium hover:bg-#00A600 transition-all">
+                  返回登入頁面
+                </a>
+              </div>
+            `;
+            overlay.classList.remove('hidden');
+          } else {
+            alert('您尚未登入或帳號未通過審核，請重新操作！');
+            window.location.href = 'manager-login.html';
+          }
         },
 
         logout() {
@@ -263,19 +303,16 @@
   </script>
 </head>
 <body>
-  <!-- 未登錄提示遮罩（新增） -->
+  <!-- 未登錄提示遮罩 -->
   <div id="unauthOverlay" class="unauth-overlay hidden">
     <div class="text-center max-w-md">
-      <i class="fa fa-exclamation-circle text-4xl text-red-500 mb-4"></i>
-      <h2 class="text-2xl font-bold text-gray-800 mb-2">未登錄或登錄已過期</h2>
-      <p class="text-gray-600 mb-6">請先完成車隊管理員登錄</p>
-      <a href="manager-login.html" class="inline-block py-3 px-6 bg-#00C853 text-white rounded-lg font-medium hover:bg-#00A600 transition-all">
-        返回登入頁面
-      </a>
+      <i class="fa fa-spinner fa-spin text-4xl text-gray-500 mb-4"></i>
+      <h2 class="text-2xl font-bold text-gray-800 mb-2">驗證中...</h2>
+      <p class="text-gray-600">請稍候，正在檢查您的登入狀態和審核信息</p>
     </div>
   </div>
 
-  <!-- 左側菜單連結已100%確認正確 -->
+  <!-- 左側菜單 -->
   <div class="sidebar">
     <a href="admin-dashboard.html" class="sidebar-item active">首頁</a>
     <a href="admin-area.html" class="sidebar-item">區域管理</a>
@@ -286,7 +323,7 @@
     <a href="javascript:void(0)" class="sidebar-item" id="logoutLink">退出登入</a>
   </div>
 
-  <!-- 主內容版面完全不變 -->
+  <!-- 主內容 -->
   <div class="main">
     <!-- 1. 繳租金額填寫 -->
     <div class="module">
@@ -335,10 +372,9 @@
       </div>
     </div>
 
-    <!-- 3. 價格設定（修改後：移除早晚班，只保留一組設定） -->
+    <!-- 3. 價格設定 -->
     <div class="module" id="priceModule">
       <div class="module-title">價格設定</div>
-      <!-- 移除原來的price-container和分欄，直接放一組表單 -->
       <div class="form-row">
         <div class="form-label">起步價格</div>
         <input type="text" id="startPrice" value="100">
@@ -377,66 +413,53 @@
   <script>
     // 頁面加載初始化
     document.addEventListener('DOMContentLoaded', function() {
-      // 1. 登錄狀態檢查（核心穩定性）
+      // 1. 強制驗證登入+審核狀態（核心修復）
       if (!Utils.Auth.checkLoginStatus()) {
-        Utils.safeGetElement('unauthOverlay')?.classList.remove('hidden');
+        Utils.Auth.redirectToLogin();
         return;
       }
 
-      // 2. 初始化繳費類型切換（增強穩定性）
+      // 2. 初始化功能
       initPaymentType();
-
-      // 3. 初始化價格設定儲存（增加驗證）
       initPriceSave();
-
-      // 4. 初始化繳費資訊提交（增加驗證）
       initRemitSubmit();
-
-      // 5. 初始化退出登錄（工具類統一處理）
       initLogout();
-
-      // 6. 加載已保存的價格設定（本地存儲恢復）
       loadSavedPriceConfig();
     });
 
-    // ========== 繳費類型切換（增強穩定性） ==========
+    // ========== 繳費類型切換 ==========
     function initPaymentType() {
       const paymentType = Utils.safeGetElement('paymentType');
       const totalAmount = Utils.safeGetElement('totalAmount');
 
       if (paymentType && totalAmount) {
-        // 初始值設置（防止默認值丟失）
         totalAmount.value = `NT$ ${paymentType.value}`;
 
-        // 變更事件（增加空值檢查）
         paymentType.addEventListener('change', function() {
-          const value = this.value || '10000'; // 默認值兜底
+          const value = this.value || '10000';
           totalAmount.value = `NT$ ${value}`;
         });
       }
     }
 
-    // ========== 價格設定儲存（增加數字驗證） ==========
+    // ========== 價格設定儲存 ==========
     function initPriceSave() {
       const saveBtn = Utils.safeGetElement('savePriceBtn');
       if (!saveBtn) return;
 
       saveBtn.addEventListener('click', function() {
-        // 獲取所有價格輸入框
         const priceInputs = [
           Utils.safeGetElement('startPrice'),
           Utils.safeGetElement('kmPrice'),
           Utils.safeGetElement('minPrice'),
           Utils.safeGetElement('fixedReturn'),
           Utils.safeGetElement('percentReturn')
-        ].filter(el => el); // 過濾空元素
+        ].filter(el => el);
 
-        // 批量驗證數字
         if (!Utils.validateFormNumbers(priceInputs)) {
           return;
         }
 
-        // 構建價格配置數據
         const priceConfig = {
           startPrice: Utils.safeGetElement('startPrice').value,
           kmPrice: Utils.safeGetElement('kmPrice').value,
@@ -445,13 +468,12 @@
           percentReturn: Utils.safeGetElement('percentReturn').value
         };
 
-        // 儲存到本地（7天過期）
         Utils.Storage.set('priceConfig', priceConfig, 7 * 24);
         alert('價格設定已成功保存！');
       });
     }
 
-    // ========== 繳費資訊提交（增加驗證） ==========
+    // ========== 繳費資訊提交 ==========
     function initRemitSubmit() {
       const submitBtn = Utils.safeGetElement('submitRemitBtn');
       const remitCode = Utils.safeGetElement('remitCode');
@@ -460,7 +482,6 @@
       if (!submitBtn) return;
 
       submitBtn.addEventListener('click', function() {
-        // 驗證匯款後五碼
         if (remitCode) {
           const codeValue = remitCode.value.trim();
           if (!/^\d{5}$/.test(codeValue)) {
@@ -470,13 +491,6 @@
           }
         }
 
-        // 驗證文件上傳（可選，根據業務需求調整）
-        // if (!remitFile?.files?.length) {
-        //   alert('請上傳匯款截圖！');
-        //   return;
-        // }
-
-        // 構建繳費數據
         const remitData = {
           paymentType: Utils.safeGetElement('paymentType')?.value || '10000',
           totalAmount: Utils.safeGetElement('totalAmount')?.value || 'NT$ 10000',
@@ -484,32 +498,17 @@
           remitTime: new Date().toLocaleString('zh-TW')
         };
 
-        // 儲存繳費記錄（本地存儲）
         const remitHistory = Utils.Storage.get('remitHistory') || [];
         remitHistory.push(remitData);
-        Utils.Storage.set('remitHistory', remitHistory, 30 * 24); // 30天保存
+        Utils.Storage.set('remitHistory', remitHistory, 30 * 24);
 
         alert('繳費資訊已提交成功！');
-        // 重置表單
         if (remitCode) remitCode.value = '';
         if (remitFile) remitFile.value = '';
       });
     }
 
-    // ========== 加載已保存的價格設定 ==========
-    function loadSavedPriceConfig() {
-      const priceConfig = Utils.Storage.get('priceConfig');
-      if (!priceConfig) return;
-
-      // 恢復價格設定到輸入框
-      if (priceConfig.startPrice) Utils.safeGetElement('startPrice').value = priceConfig.startPrice;
-      if (priceConfig.kmPrice) Utils.safeGetElement('kmPrice').value = priceConfig.kmPrice;
-      if (priceConfig.minPrice) Utils.safeGetElement('minPrice').value = priceConfig.minPrice;
-      if (priceConfig.fixedReturn) Utils.safeGetElement('fixedReturn').value = priceConfig.fixedReturn;
-      if (priceConfig.percentReturn) Utils.safeGetElement('percentReturn').value = priceConfig.percentReturn;
-    }
-
-    // ========== 退出登錄初始化 ==========
+    // ========== 退出登錄 ==========
     function initLogout() {
       const logoutLink = Utils.safeGetElement('logoutLink');
       if (logoutLink) {
@@ -519,6 +518,18 @@
           }
         });
       }
+    }
+
+    // ========== 加載已保存的價格設定 ==========
+    function loadSavedPriceConfig() {
+      const priceConfig = Utils.Storage.get('priceConfig');
+      if (!priceConfig) return;
+
+      if (priceConfig.startPrice) Utils.safeGetElement('startPrice').value = priceConfig.startPrice;
+      if (priceConfig.kmPrice) Utils.safeGetElement('kmPrice').value = priceConfig.kmPrice;
+      if (priceConfig.minPrice) Utils.safeGetElement('minPrice').value = priceConfig.minPrice;
+      if (priceConfig.fixedReturn) Utils.safeGetElement('fixedReturn').value = priceConfig.fixedReturn;
+      if (priceConfig.percentReturn) Utils.safeGetElement('percentReturn').value = priceConfig.percentReturn;
     }
   </script>
 </body>
