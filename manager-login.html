@@ -163,9 +163,9 @@
         alertEl.className = `utils-alert ${type}`;
         
         const iconMap = {
-          success: '<i class="fa fa-check-circle"></i>',
-          error: '<i class="fa fa-times-circle"></i>',
-          warning: '<i class="fa fa-exclamation-circle"></i>'
+          success: '<<i class="fa fa-check-circle"></</i>',
+          error: '<<i class="fa fa-times-circle"></</i>',
+          warning: '<<i class="fa fa-exclamation-circle"></</i>'
         };
         
         alertEl.innerHTML = `
@@ -464,7 +464,7 @@
         
         try {
           if (submitBtn) {
-            Utils.showLoading(submitBtn, '<i class="fa fa-spinner fa-spin mr-2"></i> 驗證中...');
+            Utils.showLoading(submitBtn, '驗證中...');
           }
           
           const loginSuccess = await Utils.AdminAuth.login(
@@ -537,7 +537,7 @@
   <div class="w-full max-w-md bg-white rounded-xl shadow-card p-8 sm:p-10">
     <div class="text-center mb-8">
       <div class="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
-        <i class="fa fa-building text-primary text-3xl"></i>
+        <!-- 刪除這裡的icon -->
       </div>
       <h2 class="text-[clamp(1.5rem,3vw,1.8rem)] font-bold text-gray-800">車隊管理員登入</h2>
       <p class="text-gray-500 mt-1">請輸入審核通過的帳號密碼</p>
@@ -547,13 +547,11 @@
       <div class="form-group">
         <label class="form-label">管理員帳號</label>
         <div class="relative">
-          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-            <i class="fa fa-user"></i>
-          </span>
+          <!-- 刪除這裡的icon -->
           <input 
             type="text" 
             id="manager-username" 
-            class="form-input pl-10" 
+            class="form-input" 
             placeholder="請輸入審核通過的帳號" 
             required
             autocomplete="username"
@@ -564,13 +562,11 @@
       <div class="form-group">
         <label class="form-label">密碼</label>
         <div class="relative">
-          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-            <i class="fa fa-lock"></i>
-          </span>
+          <!-- 刪除這裡的icon -->
           <input 
             type="password" 
             id="manager-password" 
-            class="form-input pl-10" 
+            class="form-input" 
             placeholder="請輸入密碼" 
             required
             autocomplete="current-password"
@@ -579,17 +575,17 @@
       </div>
       
       <div class="text-red-500 text-sm text-center hidden mt-2" id="login-error">
-        <i class="fa fa-exclamation-circle mr-1"></i> 帳號未審核或密碼錯誤！
+        帳號未審核或密碼錯誤！
       </div>
       
       <button type="submit" class="btn-primary w-full font-medium mt-2">
-        <i class="fa fa-sign-in mr-2"></i> 登入
+        登入
       </button>
     </form>
     
     <div class="mt-4 text-right">
       <a href="forgot-password.html" class="text-link text-sm">
-        <i class="fa fa-question-circle mr-1"></i> 忘記密碼？
+        忘記密碼？
       </a>
     </div>
     
@@ -600,7 +596,7 @@
     </div>
     
     <div class="mt-4 text-xs text-gray-500 text-center">
-      <p><i class="fa fa-shield mr-1"></i> 登入即表示您同意遵守系統使用規範</p>
+      <p>登入即表示您同意遵守系統使用規範</p>
     </div>
   </div>
 </body>
